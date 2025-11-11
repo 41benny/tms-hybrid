@@ -1,74 +1,96 @@
 @extends('layouts.app', ['title' => 'Tambah Customer'])
 
 @section('content')
-<form method="post" action="{{ route('customers.store') }}" class="space-y-4">
-    @csrf
-    <div class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 p-6">
-        <h2 class="text-lg font-semibold mb-4">Data Customer</h2>
+<div class="max-w-4xl mx-auto space-y-6">
+    {{-- Breadcrumb / Back Button --}}
+    <div class="flex items-center gap-3">
+        <x-button :href="route('customers.index')" variant="ghost" size="sm">
+            ← Kembali
+        </x-button>
+        <div class="text-sm text-slate-500 dark:text-slate-400">
+            <span>Customers</span> / <span class="text-slate-900 dark:text-slate-100">Tambah Baru</span>
+        </div>
+    </div>
+
+    <form method="post" action="{{ route('customers.store') }}" class="space-y-6">
+        @csrf
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-                <label class="block text-sm font-medium mb-1">Nama <span class="text-red-500">*</span></label>
-                <input type="text" name="name" value="{{ old('name') }}" class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-3 py-2" required>
-                @error('name')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium mb-1">Telepon <span class="text-red-500">*</span></label>
-                <input type="text" name="phone" value="{{ old('phone') }}" class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-3 py-2" required>
-                @error('phone')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium mb-1">Email</label>
-                <input type="email" name="email" value="{{ old('email') }}" class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-3 py-2">
-                @error('email')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium mb-1">NPWP</label>
-                <input type="text" name="npwp" value="{{ old('npwp') }}" class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-3 py-2">
-                @error('npwp')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium mb-1">Termin Pembayaran</label>
-                <select name="payment_term" class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-3 py-2">
-                    <option value="">Pilih Termin</option>
+        {{-- Form Card --}}
+        <x-card title="Data Customer" subtitle="Lengkapi informasi customer baru">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <x-input 
+                    name="name" 
+                    label="Nama Customer" 
+                    :value="old('name')"
+                    :error="$errors->first('name')"
+                    :required="true"
+                    placeholder="Masukkan nama customer"
+                />
+                
+                <x-input 
+                    name="phone" 
+                    label="Nomor Telepon" 
+                    type="tel"
+                    :value="old('phone')"
+                    :error="$errors->first('phone')"
+                    :required="true"
+                    placeholder="Contoh: 0812-3456-7890"
+                />
+                
+                <x-input 
+                    name="email" 
+                    label="Email" 
+                    type="email"
+                    :value="old('email')"
+                    :error="$errors->first('email')"
+                    placeholder="email@example.com"
+                />
+                
+                <x-input 
+                    name="npwp" 
+                    label="NPWP" 
+                    :value="old('npwp')"
+                    :error="$errors->first('npwp')"
+                    placeholder="Nomor NPWP (opsional)"
+                />
+                
+                <x-select 
+                    name="payment_term" 
+                    label="Termin Pembayaran"
+                    :error="$errors->first('payment_term')"
+                >
+                    <option value="">Pilih termin pembayaran</option>
                     <option value="cod" @selected(old('payment_term')=='cod')>COD (Cash On Delivery)</option>
-                    <option value="net_7" @selected(old('payment_term')=='net_7')>Net 7</option>
-                    <option value="net_14" @selected(old('payment_term')=='net_14')>Net 14</option>
-                    <option value="net_30" @selected(old('payment_term')=='net_30')>Net 30</option>
-                    <option value="net_45" @selected(old('payment_term')=='net_45')>Net 45</option>
-                    <option value="net_60" @selected(old('payment_term')=='net_60')>Net 60</option>
-                </select>
-                @error('payment_term')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
+                    <option value="net_7" @selected(old('payment_term')=='net_7')>Net 7 Hari</option>
+                    <option value="net_14" @selected(old('payment_term')=='net_14')>Net 14 Hari</option>
+                    <option value="net_30" @selected(old('payment_term')=='net_30')>Net 30 Hari</option>
+                    <option value="net_45" @selected(old('payment_term')=='net_45')>Net 45 Hari</option>
+                    <option value="net_60" @selected(old('payment_term')=='net_60')>Net 60 Hari</option>
+                </x-select>
             </div>
-        </div>
-        
-        <div class="mt-4">
-            <label class="block text-sm font-medium mb-1">Alamat</label>
-            <textarea name="address" rows="3" class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-3 py-2">{{ old('address') }}</textarea>
-            @error('address')
-                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-            @enderror
-        </div>
-    </div>
+            
+            <div class="mt-6">
+                <x-textarea 
+                    name="address" 
+                    label="Alamat Lengkap"
+                    :error="$errors->first('address')"
+                    :rows="4"
+                    placeholder="Masukkan alamat lengkap customer"
+                >{{ old('address') }}</x-textarea>
+            </div>
+        </x-card>
 
-    <div class="flex justify-end gap-2">
-        <a href="{{ route('customers.index') }}" class="px-4 py-2 rounded border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800">Batal</a>
-        <button type="submit" class="px-4 py-2 rounded bg-indigo-600 hover:bg-indigo-700 text-white">Simpan</button>
-    </div>
-</form>
+        {{-- Action Buttons --}}
+        <x-card>
+            <div class="flex justify-end gap-3">
+                <x-button :href="route('customers.index')" variant="outline">
+                    Batal
+                </x-button>
+                <x-button type="submit" variant="primary">
+                    💾 Simpan Customer
+                </x-button>
+            </div>
+        </x-card>
+    </form>
+</div>
 @endsection
-

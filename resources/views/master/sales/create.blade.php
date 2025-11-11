@@ -1,30 +1,30 @@
-@extends('layouts.app', ['title' => 'Tambah Vendor'])
+@extends('layouts.app', ['title' => 'Tambah Sales'])
 
 @section('content')
 <div class="max-w-4xl mx-auto space-y-6">
     {{-- Breadcrumb / Back Button --}}
     <div class="flex items-center gap-3">
-        <x-button :href="route('vendors.index')" variant="ghost" size="sm">
+        <x-button :href="route('sales.index')" variant="ghost" size="sm">
             ← Kembali
         </x-button>
         <div class="text-sm text-slate-500 dark:text-slate-400">
-            <span>Vendors</span> / <span class="text-slate-900 dark:text-slate-100">Tambah Baru</span>
+            <span>Sales</span> / <span class="text-slate-900 dark:text-slate-100">Tambah Baru</span>
         </div>
     </div>
 
-    <form method="post" action="{{ route('vendors.store') }}" class="space-y-6">
+    <form method="post" action="{{ route('sales.store') }}" class="space-y-6">
         @csrf
         
         {{-- Form Card --}}
-        <x-card title="Data Vendor" subtitle="Lengkapi informasi vendor baru">
+        <x-card title="Data Sales" subtitle="Lengkapi informasi sales baru">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <x-input 
                     name="name" 
-                    label="Nama Vendor" 
+                    label="Nama Lengkap" 
                     :value="old('name')"
                     :error="$errors->first('name')"
                     :required="true"
-                    placeholder="Masukkan nama vendor"
+                    placeholder="Masukkan nama lengkap"
                 />
                 
                 <x-input 
@@ -33,7 +33,6 @@
                     type="tel"
                     :value="old('phone')"
                     :error="$errors->first('phone')"
-                    :required="true"
                     placeholder="Contoh: 0812-3456-7890"
                 />
                 
@@ -44,20 +43,8 @@
                     :value="old('email')"
                     :error="$errors->first('email')"
                     placeholder="email@example.com"
+                    class="md:col-span-2"
                 />
-                
-                <x-select 
-                    name="vendor_type" 
-                    label="Tipe Vendor"
-                    :error="$errors->first('vendor_type')"
-                    :required="true"
-                >
-                    <option value="">Pilih tipe vendor</option>
-                    <option value="trucking" @selected(old('vendor_type')=='trucking')>Trucking</option>
-                    <option value="freight_forwarder" @selected(old('vendor_type')=='freight_forwarder')>Freight Forwarder</option>
-                    <option value="supplier" @selected(old('vendor_type')=='supplier')>Supplier</option>
-                    <option value="other" @selected(old('vendor_type')=='other')>Lainnya</option>
-                </x-select>
                 
                 <div class="md:col-span-2">
                     <label class="flex items-center gap-3 p-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 cursor-pointer transition-colors">
@@ -69,35 +56,26 @@
                             class="w-5 h-5 rounded border-slate-300 dark:border-slate-600 text-indigo-600 focus:ring-2 focus:ring-indigo-500"
                         >
                         <div>
-                            <div class="font-medium text-slate-900 dark:text-slate-100">Status Aktif</div>
-                            <div class="text-sm text-slate-500 dark:text-slate-400">Vendor ini dapat digunakan untuk transaksi</div>
+                            <div class="font-medium text-slate-900 dark:text-slate-100">✅ Status Aktif</div>
+                            <div class="text-sm text-slate-500 dark:text-slate-400">Sales dapat melakukan penjualan</div>
                         </div>
                     </label>
                 </div>
-            </div>
-            
-            <div class="mt-6">
-                <x-textarea 
-                    name="address" 
-                    label="Alamat Lengkap"
-                    :error="$errors->first('address')"
-                    :rows="4"
-                    placeholder="Masukkan alamat lengkap vendor"
-                >{{ old('address') }}</x-textarea>
             </div>
         </x-card>
 
         {{-- Action Buttons --}}
         <x-card>
             <div class="flex justify-end gap-3">
-                <x-button :href="route('vendors.index')" variant="outline">
+                <x-button :href="route('sales.index')" variant="outline">
                     Batal
                 </x-button>
                 <x-button type="submit" variant="primary">
-                    💾 Simpan Vendor
+                    💾 Simpan Sales
                 </x-button>
             </div>
         </x-card>
     </form>
 </div>
 @endsection
+

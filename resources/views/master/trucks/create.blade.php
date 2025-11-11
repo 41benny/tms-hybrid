@@ -1,24 +1,39 @@
 @extends('layouts.app', ['title' => 'Tambah Truck'])
 
 @section('content')
-<form method="post" action="{{ route('trucks.store') }}" class="space-y-4">
-    @csrf
-    <div class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 p-6">
-        <h2 class="text-lg font-semibold mb-4">Data Truck</h2>
+<div class="max-w-4xl mx-auto space-y-6">
+    {{-- Breadcrumb / Back Button --}}
+    <div class="flex items-center gap-3">
+        <x-button :href="route('trucks.index')" variant="ghost" size="sm">
+            ← Kembali
+        </x-button>
+        <div class="text-sm text-slate-500 dark:text-slate-400">
+            <span>Trucks</span> / <span class="text-slate-900 dark:text-slate-100">Tambah Baru</span>
+        </div>
+    </div>
+
+    <form method="post" action="{{ route('trucks.store') }}" class="space-y-6">
+        @csrf
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-                <label class="block text-sm font-medium mb-1">No. Polisi <span class="text-red-500">*</span></label>
-                <input type="text" name="plate_number" value="{{ old('plate_number') }}" class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-3 py-2" required>
-                @error('plate_number')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium mb-1">Tipe Kendaraan <span class="text-red-500">*</span></label>
-                <select name="vehicle_type" class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-3 py-2" required>
-                    <option value="">Pilih Tipe</option>
+        {{-- Form Card --}}
+        <x-card title="Data Kendaraan" subtitle="Lengkapi informasi kendaraan baru">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <x-input 
+                    name="plate_number" 
+                    label="Nomor Polisi" 
+                    :value="old('plate_number')"
+                    :error="$errors->first('plate_number')"
+                    :required="true"
+                    placeholder="Contoh: B 1234 XYZ"
+                />
+                
+                <x-select 
+                    name="vehicle_type" 
+                    label="Tipe Kendaraan"
+                    :error="$errors->first('vehicle_type')"
+                    :required="true"
+                >
+                    <option value="">Pilih tipe kendaraan</option>
                     <option value="Tronton" @selected(old('vehicle_type')=='Tronton')>Tronton</option>
                     <option value="Fuso" @selected(old('vehicle_type')=='Fuso')>Fuso</option>
                     <option value="CDD" @selected(old('vehicle_type')=='CDD')>CDD</option>
@@ -27,52 +42,76 @@
                     <option value="Container" @selected(old('vehicle_type')=='Container')>Container</option>
                     <option value="Pickup" @selected(old('vehicle_type')=='Pickup')>Pickup</option>
                     <option value="Engkel" @selected(old('vehicle_type')=='Engkel')>Engkel</option>
-                </select>
-                @error('vehicle_type')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium mb-1">Kapasitas (Ton) <span class="text-red-500">*</span></label>
-                <input type="number" step="0.01" name="capacity_tonase" value="{{ old('capacity_tonase') }}" class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-3 py-2" required>
-                @error('capacity_tonase')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium mb-1">Vendor (Jika Bukan Milik Sendiri)</label>
-                <select name="vendor_id" class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-3 py-2">
-                    <option value="">Pilih Vendor</option>
+                </x-select>
+                
+                <x-input 
+                    name="capacity_tonase" 
+                    label="Kapasitas (Ton)" 
+                    type="number"
+                    step="0.01"
+                    :value="old('capacity_tonase')"
+                    :error="$errors->first('capacity_tonase')"
+                    :required="true"
+                    placeholder="Contoh: 10.5"
+                />
+                
+                <x-select 
+                    name="vendor_id" 
+                    label="Vendor"
+                    :error="$errors->first('vendor_id')"
+                    helpText="Kosongkan jika milik sendiri"
+                >
+                    <option value="">Pilih vendor (opsional)</option>
                     @foreach($vendors as $v)
                         <option value="{{ $v->id }}" @selected(old('vendor_id')==$v->id)>{{ $v->name }}</option>
                     @endforeach
-                </select>
-                @error('vendor_id')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
+                </x-select>
             </div>
             
-            <div class="md:col-span-2">
-                <div class="flex items-center gap-4">
-                    <div class="flex items-center gap-2">
-                        <input type="checkbox" name="is_own_fleet" value="1" id="is_own_fleet" class="rounded border-slate-300 dark:border-slate-700" @checked(old('is_own_fleet', true))>
-                        <label for="is_own_fleet" class="text-sm">Milik Sendiri</label>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <input type="checkbox" name="is_active" value="1" id="is_active" class="rounded border-slate-300 dark:border-slate-700" @checked(old('is_active', true))>
-                        <label for="is_active" class="text-sm">Aktif</label>
-                    </div>
+            <div class="mt-6 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <label class="flex items-center gap-3 p-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 cursor-pointer transition-colors">
+                        <input 
+                            type="checkbox" 
+                            name="is_own_fleet" 
+                            value="1" 
+                            @checked(old('is_own_fleet', true))
+                            class="w-5 h-5 rounded border-slate-300 dark:border-slate-600 text-indigo-600 focus:ring-2 focus:ring-indigo-500"
+                        >
+                        <div>
+                            <div class="font-medium text-slate-900 dark:text-slate-100">🏢 Milik Sendiri</div>
+                            <div class="text-sm text-slate-500 dark:text-slate-400">Kendaraan milik perusahaan</div>
+                        </div>
+                    </label>
+                    
+                    <label class="flex items-center gap-3 p-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 cursor-pointer transition-colors">
+                        <input 
+                            type="checkbox" 
+                            name="is_active" 
+                            value="1" 
+                            @checked(old('is_active', true))
+                            class="w-5 h-5 rounded border-slate-300 dark:border-slate-600 text-indigo-600 focus:ring-2 focus:ring-indigo-500"
+                        >
+                        <div>
+                            <div class="font-medium text-slate-900 dark:text-slate-100">✅ Status Aktif</div>
+                            <div class="text-sm text-slate-500 dark:text-slate-400">Kendaraan siap digunakan</div>
+                        </div>
+                    </label>
                 </div>
             </div>
-        </div>
-    </div>
+        </x-card>
 
-    <div class="flex justify-end gap-2">
-        <a href="{{ route('trucks.index') }}" class="px-4 py-2 rounded border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800">Batal</a>
-        <button type="submit" class="px-4 py-2 rounded bg-indigo-600 hover:bg-indigo-700 text-white">Simpan</button>
-    </div>
-</form>
+        {{-- Action Buttons --}}
+        <x-card>
+            <div class="flex justify-end gap-3">
+                <x-button :href="route('trucks.index')" variant="outline">
+                    Batal
+                </x-button>
+                <x-button type="submit" variant="primary">
+                    💾 Simpan Kendaraan
+                </x-button>
+            </div>
+        </x-card>
+    </form>
+</div>
 @endsection
-

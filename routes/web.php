@@ -7,8 +7,19 @@ Route::get('/', function () {
 });
 
 use App\Http\Controllers\Operations\JobOrderController;
+use App\Http\Controllers\Operations\ShipmentLegController;
 
 Route::resource('job-orders', JobOrderController::class);
+Route::get('job-orders/{jobOrder}/legs/create', [ShipmentLegController::class, 'create'])->name('job-orders.legs.create');
+Route::post('job-orders/{jobOrder}/legs', [ShipmentLegController::class, 'store'])->name('job-orders.legs.store');
+Route::get('job-orders/{jobOrder}/legs/{leg}/edit', [ShipmentLegController::class, 'edit'])->name('job-orders.legs.edit');
+Route::put('job-orders/{jobOrder}/legs/{leg}', [ShipmentLegController::class, 'update'])->name('job-orders.legs.update');
+Route::delete('job-orders/{jobOrder}/legs/{leg}', [ShipmentLegController::class, 'destroy'])->name('job-orders.legs.destroy');
+Route::post('legs/{leg}/additional-costs', [ShipmentLegController::class, 'storeAdditionalCost'])->name('legs.additional-costs.store');
+Route::put('additional-costs/{cost}', [ShipmentLegController::class, 'updateAdditionalCost'])->name('additional-costs.update');
+Route::delete('additional-costs/{cost}', [ShipmentLegController::class, 'destroyAdditionalCost'])->name('additional-costs.destroy');
+Route::get('api/truck-driver', [ShipmentLegController::class, 'getDriverByTruck'])->name('api.truck-driver');
+
 use App\Http\Controllers\Operations\TransportController;
 
 Route::resource('transports', TransportController::class);
@@ -31,6 +42,8 @@ Route::get('/ai-assistant', [AiAssistantController::class, 'index'])->name('ai-a
 Route::post('/ai-assistant/ask', [AiAssistantController::class, 'ask'])->name('ai-assistant.ask');
 use App\Http\Controllers\Master\CustomerController as MasterCustomerController;
 use App\Http\Controllers\Master\DriverController as MasterDriverController;
+use App\Http\Controllers\Master\EquipmentController as MasterEquipmentController;
+use App\Http\Controllers\Master\SalesController as MasterSalesController;
 use App\Http\Controllers\Master\TruckController as MasterTruckController;
 use App\Http\Controllers\Master\VendorController as MasterVendorController;
 
@@ -38,6 +51,8 @@ Route::resource('customers', MasterCustomerController::class);
 Route::resource('vendors', MasterVendorController::class);
 Route::resource('trucks', MasterTruckController::class);
 Route::resource('drivers', MasterDriverController::class);
+Route::resource('sales', MasterSalesController::class);
+Route::resource('equipment', MasterEquipmentController::class);
 use App\Http\Controllers\Accounting\ReportAccountingController;
 
 Route::prefix('reports')->name('reports.')->group(function () {
