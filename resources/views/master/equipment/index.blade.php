@@ -17,7 +17,7 @@
                             name="q" 
                             value="{{ request('q') }}" 
                             placeholder="Cari type..." 
-                            class="rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            class="rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-4 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                         >
                         <x-button variant="outline" type="submit">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -40,8 +40,8 @@
     {{-- Table Section --}}
     <x-card :noPadding="true">
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
-                <thead class="bg-slate-50 dark:bg-slate-950">
+            <table class="min-w-full divide-y divide-slate-200 dark:divide-[#2d2d2d]">
+                <thead class="bg-slate-50 dark:bg-[#252525]">
                     <tr>
                         <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                             Jenis Muatan
@@ -54,9 +54,9 @@
                         </th>
                     </tr>
                 </thead>
-                <tbody class="bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-800">
+                <tbody class="bg-white dark:bg-[#1e1e1e] divide-y divide-slate-200 dark:divide-[#2d2d2d]">
                     @forelse($items as $item)
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                        <tr class="hover:bg-slate-50 dark:hover:bg-[#252525] transition-colors">
                             <td class="px-6 py-4">
                                 <x-badge variant="default">{{ $item->category ?? '-' }}</x-badge>
                             </td>
@@ -97,7 +97,7 @@
         </div>
         
         @if($items->hasPages())
-            <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-800">
+            <div class="px-6 py-4 border-t border-slate-200 dark:border-[#2d2d2d]">
                 {{ $items->links() }}
             </div>
         @endif

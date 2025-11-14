@@ -1,6 +1,6 @@
 <div class="overflow-x-auto">
-    <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
-        <thead class="bg-slate-50 dark:bg-slate-950">
+    <table class="min-w-full divide-y divide-slate-200 dark:divide-[#2d2d2d]">
+        <thead class="bg-slate-50 dark:bg-[#252525]">
             <tr>
                 <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase">Job Number</th>
                 <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase">Customer</th>
@@ -11,9 +11,9 @@
                 <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase">Aksi</th>
             </tr>
         </thead>
-        <tbody class="bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-800">
+        <tbody class="bg-white dark:bg-[#1e1e1e] divide-y divide-slate-200 dark:divide-[#2d2d2d]">
             @forelse($orders as $order)
-                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                <tr class="hover:bg-slate-50 dark:hover:bg-[#252525] transition-colors">
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="font-medium text-slate-900 dark:text-slate-100">{{ $order->job_number }}</div>
                         <div class="text-xs text-slate-500">{{ $order->order_date->format('d M Y') }}</div>

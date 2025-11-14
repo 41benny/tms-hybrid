@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class VendorBillItem extends Model
 {
     protected $fillable = [
-        'vendor_bill_id', 'transport_id', 'description', 'qty', 'unit_price', 'subtotal',
+        'vendor_bill_id', 'transport_id', 'shipment_leg_id', 'description', 'qty', 'unit_price', 'subtotal',
     ];
 
     protected $casts = [
@@ -20,5 +20,15 @@ class VendorBillItem extends Model
     public function vendorBill(): BelongsTo
     {
         return $this->belongsTo(VendorBill::class);
+    }
+
+    public function shipmentLeg(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Operations\ShipmentLeg::class);
+    }
+
+    public function transport(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Operations\Transport::class);
     }
 }

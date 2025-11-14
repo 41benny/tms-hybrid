@@ -9,6 +9,9 @@ class LegMainCost extends Model
 {
     protected $fillable = [
         'shipment_leg_id',
+        'vendor_id',
+        'pic_name',
+        'pic_phone',
         'vendor_cost',
         'uang_jalan',
         'bbm',
@@ -27,6 +30,9 @@ class LegMainCost extends Model
         'admin_fee',
         'billable_rate',
         'premium_billable',
+        'cost_type',
+        'pic_amount',
+        'pic_notes',
     ];
 
     protected function casts(): array
@@ -46,12 +52,18 @@ class LegMainCost extends Model
             'admin_fee' => 'decimal:2',
             'billable_rate' => 'decimal:2',
             'premium_billable' => 'decimal:2',
+            'pic_amount' => 'decimal:2',
         ];
     }
 
     public function shipmentLeg(): BelongsTo
     {
         return $this->belongsTo(ShipmentLeg::class);
+    }
+
+    public function vendor(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Master\Vendor::class);
     }
 
     public function getTotalAttribute(): float
@@ -65,6 +77,7 @@ class LegMainCost extends Model
                $this->pph23 +  // PPH 23 dipotong (minus)
                $this->freight_cost +
                $this->premium_cost +  // Insurance premium
-               $this->admin_fee;  // Insurance admin fee
+               $this->admin_fee +  // Insurance admin fee
+               $this->pic_amount;  // PIC payment
     }
 }

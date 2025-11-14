@@ -18,7 +18,7 @@ class ShipmentLegController extends Controller
     public function create(JobOrder $jobOrder)
     {
         $vendors = Vendor::where('is_active', true)->orderBy('name')->get();
-        $trucks = Truck::where('is_active', true)->orderBy('plate_number')->get();
+        $trucks = Truck::with('driver')->where('is_active', true)->orderBy('plate_number')->get();
         $drivers = Driver::where('is_active', true)->orderBy('name')->get();
 
         return view('job-orders.legs.create', compact('jobOrder', 'vendors', 'trucks', 'drivers'));
@@ -27,8 +27,8 @@ class ShipmentLegController extends Controller
     public function store(Request $request, JobOrder $jobOrder)
     {
         $validated = $request->validate([
-            'cost_category' => ['required', Rule::in(['trucking', 'vendor', 'pelayaran', 'asuransi'])],
-            'vendor_id' => ['nullable', 'exists:vendors,id'],
+            'cost_category' => ['required', Rule::in(['trucking', 'vendor', 'pelayaran', 'asuransi', 'pic'])],
+            'vendor_id' => ['nullable', 'exists:vendors,id'], // Optional untuk trucking, required untuk kategori lainnya
             'truck_id' => ['nullable', 'exists:trucks,id'],
             'driver_id' => ['nullable', 'exists:drivers,id'],
             'vessel_name' => ['nullable', 'string', 'max:255'],
@@ -59,6 +59,12 @@ class ShipmentLegController extends Controller
             'admin_fee' => ['nullable', 'numeric', 'min:0'],
             'billable_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'premium_billable' => ['nullable', 'numeric', 'min:0'],
+            // PIC costs
+            'cost_type' => ['nullable', 'string', 'max:255'],
+            'pic_name' => ['nullable', 'string', 'max:255'],
+            'pic_phone' => ['nullable', 'string', 'max:50'],
+            'pic_amount' => ['nullable', 'numeric', 'min:0'],
+            'pic_notes' => ['nullable', 'string'],
         ]);
 
         // Determine executor_type based on cost_category
@@ -105,10 +111,21 @@ class ShipmentLegController extends Controller
             $costData['admin_fee'] = $validated['admin_fee'] ?? 0;
             $costData['billable_rate'] = $validated['billable_rate'] ?? 0;
             $costData['premium_billable'] = $validated['premium_billable'] ?? 0;
+        } elseif ($validated['cost_category'] == 'pic') {
+            $costData['cost_type'] = $validated['cost_type'] ?? null;
+            $costData['pic_name'] = $validated['pic_name'] ?? null;
+            $costData['pic_phone'] = $validated['pic_phone'] ?? null;
+            $costData['pic_amount'] = $validated['pic_amount'] ?? 0;
+            $costData['pic_notes'] = $validated['pic_notes'] ?? null;
         }
 
         $mainCost = new LegMainCost($costData);
         $mainCost->save();
+
+        // Auto-create Driver Advance for trucking (own fleet)
+        if ($validated['cost_category'] === 'trucking' && $leg->driver_id) {
+            $this->autoCreateDriverAdvance($leg);
+        }
 
         return redirect()->route('job-orders.show', $jobOrder)->with('success', 'Leg berhasil ditambahkan');
     }
@@ -117,7 +134,7 @@ class ShipmentLegController extends Controller
     {
         $leg->load('mainCost');
         $vendors = Vendor::where('is_active', true)->orderBy('name')->get();
-        $trucks = Truck::where('is_active', true)->orderBy('plate_number')->get();
+        $trucks = Truck::with('driver')->where('is_active', true)->orderBy('plate_number')->get();
         $drivers = Driver::where('is_active', true)->orderBy('name')->get();
 
         return view('job-orders.legs.edit', compact('jobOrder', 'leg', 'vendors', 'trucks', 'drivers'));
@@ -126,8 +143,8 @@ class ShipmentLegController extends Controller
     public function update(Request $request, JobOrder $jobOrder, ShipmentLeg $leg)
     {
         $validated = $request->validate([
-            'cost_category' => ['required', Rule::in(['trucking', 'vendor', 'pelayaran', 'asuransi'])],
-            'vendor_id' => ['nullable', 'exists:vendors,id'],
+            'cost_category' => ['required', Rule::in(['trucking', 'vendor', 'pelayaran', 'asuransi', 'pic'])],
+            'vendor_id' => ['nullable', 'exists:vendors,id'], // Optional untuk trucking, required untuk kategori lainnya
             'truck_id' => ['nullable', 'exists:trucks,id'],
             'driver_id' => ['nullable', 'exists:drivers,id'],
             'vessel_name' => ['nullable', 'string', 'max:255'],
@@ -159,6 +176,12 @@ class ShipmentLegController extends Controller
             'admin_fee' => ['nullable', 'numeric', 'min:0'],
             'billable_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'premium_billable' => ['nullable', 'numeric', 'min:0'],
+            // PIC costs
+            'cost_type' => ['nullable', 'string', 'max:255'],
+            'pic_name' => ['nullable', 'string', 'max:255'],
+            'pic_phone' => ['nullable', 'string', 'max:50'],
+            'pic_amount' => ['nullable', 'numeric', 'min:0'],
+            'pic_notes' => ['nullable', 'string'],
         ]);
 
         // Determine executor_type based on cost_category
@@ -192,8 +215,18 @@ class ShipmentLegController extends Controller
                 'admin_fee' => $validated['admin_fee'] ?? 0,
                 'billable_rate' => $validated['billable_rate'] ?? 0,
                 'premium_billable' => $validated['premium_billable'] ?? 0,
+                'cost_type' => $validated['cost_type'] ?? null,
+                'pic_name' => $validated['pic_name'] ?? null,
+                'pic_phone' => $validated['pic_phone'] ?? null,
+                'pic_amount' => $validated['pic_amount'] ?? 0,
+                'pic_notes' => $validated['pic_notes'] ?? null,
             ]
         );
+
+        // Auto-create Driver Advance if trucking and doesn't exist yet
+        if ($validated['cost_category'] === 'trucking' && $leg->driver_id && ! $leg->driverAdvance()->exists()) {
+            $this->autoCreateDriverAdvance($leg);
+        }
 
         return redirect()->route('job-orders.show', $jobOrder)->with('success', 'Leg berhasil diupdate');
     }
@@ -213,7 +246,7 @@ class ShipmentLegController extends Controller
             'amount' => ['required', 'numeric', 'min:0'],
             'is_billable' => ['nullable', 'boolean'],
             'billable_amount' => ['nullable', 'numeric', 'min:0'],
-            'vendor_id' => ['nullable', 'exists:vendors,id'],
+            'vendor_id' => ['nullable', 'exists:vendors,id'], // Optional, bisa kosong untuk trucking
         ]);
 
         // Set default billable_amount = amount if is_billable is true
@@ -236,7 +269,7 @@ class ShipmentLegController extends Controller
             'amount' => ['required', 'numeric', 'min:0'],
             'is_billable' => ['nullable', 'boolean'],
             'billable_amount' => ['nullable', 'numeric', 'min:0'],
-            'vendor_id' => ['nullable', 'exists:vendors,id'],
+            'vendor_id' => ['nullable', 'exists:vendors,id'], // Optional, bisa kosong untuk trucking
         ]);
 
         // Set default billable_amount = amount if is_billable is true
@@ -277,5 +310,325 @@ class ShipmentLegController extends Controller
         }
 
         return $prefix.$random;
+    }
+
+    public function generateVendorBill(Request $request, ShipmentLeg $leg)
+    {
+        // Validasi
+        if (! $leg->vendor_id) {
+            return back()->with('error', 'Leg ini tidak memiliki vendor yang ditunjuk');
+        }
+
+        if ($leg->status === 'cancelled') {
+            return back()->with('error', 'Tidak bisa membuat vendor bill untuk leg yang dibatalkan');
+        }
+
+        $mainCost = $leg->mainCost;
+        if (! $mainCost) {
+            return back()->with('error', 'Leg ini tidak memiliki data biaya');
+        }
+
+        // Validate bill_mode parameter
+        $billMode = $request->input('bill_mode', 'combined'); // default to 'combined'
+        if (! in_array($billMode, ['combined', 'separate'])) {
+            return back()->with('error', 'Mode billing tidak valid');
+        }
+
+        // Check total already generated vs leg total cost
+        $totalGenerated = (float) $leg->vendorBillItems()->sum('subtotal');
+        $legTotalCost = (float) $leg->total_cost;
+        $remaining = $legTotalCost - $totalGenerated;
+
+        if ($remaining <= 0) {
+            return back()->with('error', 'Leg ini sudah fully billed. Total: Rp '.number_format($legTotalCost, 0, ',', '.'));
+        }
+
+        // Get additional costs
+        $additionalCosts = $leg->additionalCosts()->get();
+
+        if ($billMode === 'combined') {
+            // Mode GABUNG: 1 vendor bill untuk semua
+            $bill = $this->createCombinedBill($leg, $mainCost, $additionalCosts);
+
+            return redirect()->route('vendor-bills.show', $bill)
+                ->with('success', "Vendor bill {$bill->vendor_bill_number} berhasil dibuat (Mode: Gabung)!");
+        } else {
+            // Mode PISAH: 2 vendor bills
+            $bills = $this->createSeparateBills($leg, $mainCost, $additionalCosts);
+
+            return redirect()->route('vendor-bills.index')
+                ->with('success', count($bills)." vendor bill berhasil dibuat (Mode: Pisah)! Main Cost: {$bills[0]->vendor_bill_number}".
+                    (isset($bills[1]) ? ", Additional Costs: {$bills[1]->vendor_bill_number}" : ''));
+        }
+    }
+
+    protected function createCombinedBill(ShipmentLeg $leg, LegMainCost $mainCost, $additionalCosts)
+    {
+        $bill = \App\Models\Finance\VendorBill::create([
+            'vendor_id' => $leg->vendor_id,
+            'vendor_bill_number' => $this->generateBillNo(now()->toDateString()),
+            'bill_date' => now()->toDateString(),
+            'due_date' => now()->addDays(30)->toDateString(),
+            'status' => 'draft',
+            'notes' => "Auto-generated (Gabung) from Leg {$leg->leg_code} - Job Order {$leg->jobOrder->job_number}",
+        ]);
+
+        $totalAmount = 0;
+
+        // Add all main cost items
+        $totalAmount += $this->addMainCostItems($bill, $leg, $mainCost);
+
+        // Add all additional costs
+        foreach ($additionalCosts as $cost) {
+            $bill->items()->create([
+                'shipment_leg_id' => $leg->id,
+                'description' => "{$cost->cost_type} - {$cost->description}",
+                'qty' => 1,
+                'unit_price' => $cost->amount,
+                'subtotal' => $cost->amount,
+            ]);
+            $totalAmount += $cost->amount;
+        }
+
+        // Add PPH23 (potong) at the end
+        $totalAmount += $this->addPph23Item($bill, $leg, $mainCost);
+
+        $bill->update(['total_amount' => $totalAmount]);
+
+        return $bill;
+    }
+
+    protected function createSeparateBills(ShipmentLeg $leg, LegMainCost $mainCost, $additionalCosts)
+    {
+        $bills = [];
+
+        // Bill #1: Main Cost Only
+        $mainBill = \App\Models\Finance\VendorBill::create([
+            'vendor_id' => $leg->vendor_id,
+            'vendor_bill_number' => $this->generateBillNo(now()->toDateString()),
+            'bill_date' => now()->toDateString(),
+            'due_date' => now()->addDays(30)->toDateString(),
+            'status' => 'draft',
+            'notes' => "Main Cost - Leg {$leg->leg_code} - Job Order {$leg->jobOrder->job_number}",
+        ]);
+
+        $mainTotalAmount = 0;
+        $mainTotalAmount += $this->addMainCostItems($mainBill, $leg, $mainCost);
+        $mainTotalAmount += $this->addPph23Item($mainBill, $leg, $mainCost);
+
+        $mainBill->update(['total_amount' => $mainTotalAmount]);
+        $bills[] = $mainBill;
+
+        // Bill #2: Additional Costs Only (jika ada)
+        if ($additionalCosts->isNotEmpty()) {
+            $addBill = \App\Models\Finance\VendorBill::create([
+                'vendor_id' => $leg->vendor_id, // bisa NULL jika multiple vendors
+                'vendor_bill_number' => $this->generateBillNo(now()->toDateString()),
+                'bill_date' => now()->toDateString(),
+                'due_date' => now()->addDays(30)->toDateString(),
+                'status' => 'draft',
+                'notes' => "Additional Costs - Leg {$leg->leg_code} - Job Order {$leg->jobOrder->job_number}",
+            ]);
+
+            $addTotalAmount = 0;
+            foreach ($additionalCosts as $cost) {
+                $addBill->items()->create([
+                    'shipment_leg_id' => $leg->id,
+                    'description' => "{$cost->cost_type} - {$cost->description} (Vendor: ".($cost->vendor->name ?? 'N/A').')',
+                    'qty' => 1,
+                    'unit_price' => $cost->amount,
+                    'subtotal' => $cost->amount,
+                ]);
+                $addTotalAmount += $cost->amount;
+            }
+
+            $addBill->update(['total_amount' => $addTotalAmount]);
+            $bills[] = $addBill;
+        }
+
+        return $bills;
+    }
+
+    protected function addMainCostItems($bill, ShipmentLeg $leg, LegMainCost $mainCost): float
+    {
+        $totalAmount = 0;
+
+        // Tentukan base cost untuk PPN & PPH23 calculation
+        $baseCost = max($mainCost->vendor_cost ?? 0, $mainCost->freight_cost ?? 0);
+
+        // Add Main Cost Items - Vendor
+        if ($mainCost->vendor_cost > 0) {
+            $bill->items()->create([
+                'shipment_leg_id' => $leg->id,
+                'description' => "Vendor Cost - Leg #{$leg->leg_number} ({$leg->leg_code})",
+                'qty' => 1,
+                'unit_price' => $mainCost->vendor_cost,
+                'subtotal' => $mainCost->vendor_cost,
+            ]);
+            $totalAmount += $mainCost->vendor_cost;
+        }
+
+        // Add Main Cost Items - Freight (Pelayaran)
+        if ($mainCost->freight_cost > 0) {
+            $bill->items()->create([
+                'shipment_leg_id' => $leg->id,
+                'description' => "Freight Cost - {$mainCost->shipping_line} - Leg #{$leg->leg_number}",
+                'qty' => 1,
+                'unit_price' => $mainCost->freight_cost,
+                'subtotal' => $mainCost->freight_cost,
+            ]);
+            $totalAmount += $mainCost->freight_cost;
+        }
+
+        // PPN - SELALU gunakan nilai yang sudah disimpan dulu, baru auto-calculate jika tidak ada
+        $ppnAmount = 0;
+        if (isset($mainCost->ppn) && $mainCost->ppn > 0) {
+            // Gunakan PPN yang sudah diinput user
+            $ppnAmount = $mainCost->ppn;
+        } elseif ($baseCost > 0) {
+            // Auto-calculate 11% dari base cost
+            $ppnAmount = $baseCost * 0.11;
+        }
+
+        if ($ppnAmount > 0) {
+            $bill->items()->create([
+                'shipment_leg_id' => $leg->id,
+                'description' => "PPN 11% - Leg #{$leg->leg_number}",
+                'qty' => 1,
+                'unit_price' => $ppnAmount,
+                'subtotal' => $ppnAmount,
+            ]);
+            $totalAmount += $ppnAmount;
+        }
+
+        if ($mainCost->premium_cost > 0) {
+            $bill->items()->create([
+                'shipment_leg_id' => $leg->id,
+                'description' => "Insurance Premium - {$mainCost->insurance_provider} - Leg #{$leg->leg_number}",
+                'qty' => 1,
+                'unit_price' => $mainCost->premium_cost,
+                'subtotal' => $mainCost->premium_cost,
+            ]);
+            $totalAmount += $mainCost->premium_cost;
+        }
+
+        if ($mainCost->admin_fee > 0) {
+            $bill->items()->create([
+                'shipment_leg_id' => $leg->id,
+                'description' => "Admin Fee - Leg #{$leg->leg_number}",
+                'qty' => 1,
+                'unit_price' => $mainCost->admin_fee,
+                'subtotal' => $mainCost->admin_fee,
+            ]);
+            $totalAmount += $mainCost->admin_fee;
+        }
+
+        // Add PIC Cost
+        if ($mainCost->pic_amount > 0) {
+            $picType = ucfirst($mainCost->cost_type ?? 'PIC Payment');
+            $picName = $mainCost->pic_name ? " - {$mainCost->pic_name}" : '';
+            $bill->items()->create([
+                'shipment_leg_id' => $leg->id,
+                'description' => "{$picType}{$picName} - Leg #{$leg->leg_number}",
+                'qty' => 1,
+                'unit_price' => $mainCost->pic_amount,
+                'subtotal' => $mainCost->pic_amount,
+            ]);
+            $totalAmount += $mainCost->pic_amount;
+        }
+
+        return $totalAmount;
+    }
+
+    protected function addPph23Item($bill, ShipmentLeg $leg, LegMainCost $mainCost): float
+    {
+        // Tentukan base cost untuk PPH23 calculation
+        $baseCost = max($mainCost->vendor_cost ?? 0, $mainCost->freight_cost ?? 0);
+
+        // PPH23 - SELALU gunakan nilai yang sudah disimpan dulu, baru auto-calculate jika tidak ada
+        $pph23Amount = 0;
+        if (isset($mainCost->pph23) && $mainCost->pph23 > 0) {
+            // Gunakan PPH23 yang sudah diinput user
+            $pph23Amount = $mainCost->pph23;
+        } elseif ($baseCost > 0) {
+            // Auto-calculate 2% dari base cost
+            $pph23Amount = $baseCost * 0.02;
+        }
+
+        if ($pph23Amount > 0) {
+            $bill->items()->create([
+                'shipment_leg_id' => $leg->id,
+                'description' => "PPH 23 (Dipotong) - Leg #{$leg->leg_number}",
+                'qty' => 1,
+                'unit_price' => -$pph23Amount,
+                'subtotal' => -$pph23Amount,
+            ]);
+
+            return -$pph23Amount;
+        }
+
+        return 0;
+    }
+
+    protected function generateBillNo(string $date): string
+    {
+        $d = new \DateTimeImmutable($date);
+        $prefix = 'VBL-'.$d->format('Ym').'-';
+        $last = \App\Models\Finance\VendorBill::where('vendor_bill_number', 'like', $prefix.'%')
+            ->orderByDesc('id')
+            ->value('vendor_bill_number');
+        $seq = 1;
+        if ($last && preg_match('/(\d{4})$/', $last, $m)) {
+            $seq = (int) $m[1] + 1;
+        }
+
+        return $prefix.str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
+    }
+
+    protected function autoCreateDriverAdvance(ShipmentLeg $leg): void
+    {
+        // Only for own fleet with driver
+        if ($leg->executor_type !== 'own_fleet' || ! $leg->driver_id) {
+            return;
+        }
+
+        // Check if already exists
+        if ($leg->driverAdvance()->exists()) {
+            return;
+        }
+
+        $mainCost = $leg->mainCost;
+        if (! $mainCost) {
+            return;
+        }
+
+        // Calculate total advance amount
+        $totalAdvance = $mainCost->uang_jalan + $mainCost->bbm + $mainCost->toll + $mainCost->other_costs;
+
+        if ($totalAdvance <= 0) {
+            return;
+        }
+
+        // Generate advance number
+        $prefix = 'ADV-'.now()->format('Ym').'-';
+        $last = \App\Models\Operations\DriverAdvance::where('advance_number', 'like', $prefix.'%')
+            ->orderByDesc('id')
+            ->value('advance_number');
+        $seq = 1;
+        if ($last && preg_match('/(\d{4})$/', $last, $m)) {
+            $seq = (int) $m[1] + 1;
+        }
+        $advanceNumber = $prefix.str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
+
+        // Create driver advance
+        \App\Models\Operations\DriverAdvance::create([
+            'shipment_leg_id' => $leg->id,
+            'driver_id' => $leg->driver_id,
+            'advance_number' => $advanceNumber,
+            'advance_date' => now()->toDateString(),
+            'amount' => $totalAdvance,
+            'status' => 'pending',
+            'notes' => "Auto-generated from Leg {$leg->leg_code} - Job Order {$leg->jobOrder->job_number}",
+        ]);
     }
 }

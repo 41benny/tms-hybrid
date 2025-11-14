@@ -19,6 +19,8 @@ class JobOrder extends Model
         'invoice_amount',
         'status',
         'notes',
+        'cancel_reason',
+        'cancelled_at',
     ];
 
     protected function casts(): array
@@ -26,6 +28,7 @@ class JobOrder extends Model
         return [
             'order_date' => 'date',
             'invoice_amount' => 'decimal:2',
+            'cancelled_at' => 'datetime',
         ];
     }
 
@@ -95,5 +98,13 @@ class JobOrder extends Model
         }
 
         return ($this->margin / $this->total_revenue) * 100;
+    }
+
+    /**
+     * Check if job order is locked (completed or cancelled).
+     */
+    public function isLocked(): bool
+    {
+        return in_array($this->status, ['completed', 'cancelled']);
     }
 }

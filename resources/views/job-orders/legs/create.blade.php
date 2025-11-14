@@ -30,7 +30,23 @@
                     <option value="vendor" @selected(old('cost_category')=='vendor')>Vendor</option>
                     <option value="pelayaran" @selected(old('cost_category')=='pelayaran')>Pelayaran (Sea Freight)</option>
                     <option value="asuransi" @selected(old('cost_category')=='asuransi')>Asuransi (Insurance)</option>
+                    <option value="pic" @selected(old('cost_category')=='pic')>PIC (Fee/Insentif Perorangan)</option>
                 </x-select>
+
+                {{-- Vendor Field - Dinamis, tidak muncul untuk trucking --}}
+                <div id="vendor_field">
+                    <x-select 
+                        name="vendor_id" 
+                        label="Vendor"
+                        :error="$errors->first('vendor_id')"
+                        id="vendor_id"
+                    >
+                        <option value="">-- Pilih Vendor --</option>
+                        @foreach($vendors as $v)
+                            <option value="{{ $v->id }}">{{ $v->name }}</option>
+                        @endforeach
+                    </x-select>
+                </div>
 
                 {{-- Trucking Fields (Own Fleet) --}}
                 <div id="trucking_fields" class="hidden grid-cols-subgrid col-span-2 gap-6">
@@ -55,20 +71,6 @@
                         readonly
                     />
                     <input type="hidden" name="driver_id" id="driver_id">
-                </div>
-
-                {{-- Vendor Fields --}}
-                <div id="vendor_field" class="hidden">
-                    <x-select 
-                        name="vendor_id" 
-                        label="Vendor"
-                        :error="$errors->first('vendor_id')"
-                    >
-                        <option value="">-- Pilih Vendor --</option>
-                        @foreach($vendors as $v)
-                            <option value="{{ $v->id }}">{{ $v->name }}</option>
-                        @endforeach
-                    </x-select>
                 </div>
 
                 {{-- Pelayaran Fields --}}
@@ -125,32 +127,38 @@
         <x-card title="Main Cost Details" subtitle="Biaya utama untuk leg ini">
             {{-- Trucking Costs (Own Fleet) --}}
             <div id="trucking_costs" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6">
-                <x-input 
-                    name="uang_jalan" 
-                    type="number"
-                    step="0.01"
-                    label="Uang Jalan (IDR)" 
-                    :value="old('uang_jalan', 0)"
-                    placeholder="500000"
-                />
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Uang Jalan (IDR)</label>
+                    <input 
+                        type="text"
+                        id="uang_jalan_display"
+                        placeholder="500.000"
+                        class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                    >
+                    <input type="hidden" name="uang_jalan" id="uang_jalan_input" value="{{ old('uang_jalan', 0) }}">
+                </div>
 
-                <x-input 
-                    name="bbm" 
-                    type="number"
-                    step="0.01"
-                    label="BBM (IDR)" 
-                    :value="old('bbm', 0)"
-                    placeholder="300000"
-                />
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">BBM (IDR)</label>
+                    <input 
+                        type="text"
+                        id="bbm_display"
+                        placeholder="300.000"
+                        class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                    >
+                    <input type="hidden" name="bbm" id="bbm_input" value="{{ old('bbm', 0) }}">
+                </div>
 
-                <x-input 
-                    name="toll" 
-                    type="number"
-                    step="0.01"
-                    label="Tol (IDR)" 
-                    :value="old('toll', 0)"
-                    placeholder="150000"
-                />
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Tol (IDR)</label>
+                    <input 
+                        type="text"
+                        id="toll_display"
+                        placeholder="150.000"
+                        class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                    >
+                    <input type="hidden" name="toll" id="toll_input" value="{{ old('toll', 0) }}">
+                </div>
             </div>
 
             {{-- Vendor Costs --}}
@@ -359,6 +367,59 @@
                     </div>
                 </div>
             </div>
+
+            {{-- PIC Costs (Fee/Insentif Perorangan) --}}
+            <div id="pic_costs" class="hidden space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <x-select 
+                        name="cost_type" 
+                        label="Tipe Biaya"
+                        :error="$errors->first('cost_type')"
+                    >
+                        <option value="">-- Pilih Tipe --</option>
+                        <option value="fee" @selected(old('cost_type')=='fee')>Fee</option>
+                        <option value="insentif" @selected(old('cost_type')=='insentif')>Insentif</option>
+                        <option value="upah_operator" @selected(old('cost_type')=='upah_operator')>Upah Operator</option>
+                        <option value="lainnya" @selected(old('cost_type')=='lainnya')>Lainnya</option>
+                    </x-select>
+
+                    <x-input 
+                        name="pic_name" 
+                        label="Nama PIC" 
+                        :value="old('pic_name')"
+                        :error="$errors->first('pic_name')"
+                        placeholder="e.g., Budi Santoso"
+                    />
+
+                    <x-input 
+                        name="pic_phone" 
+                        label="No HP PIC" 
+                        :value="old('pic_phone')"
+                        :error="$errors->first('pic_phone')"
+                        placeholder="e.g., 08123456789"
+                    />
+
+                    <x-input 
+                        name="pic_amount" 
+                        type="number"
+                        step="0.01"
+                        label="Jumlah Pembayaran (IDR)" 
+                        :value="old('pic_amount', 0)"
+                        :error="$errors->first('pic_amount')"
+                        placeholder="e.g., 500000"
+                    />
+
+                    <div class="md:col-span-2">
+                        <x-textarea 
+                            name="pic_notes" 
+                            label="Catatan"
+                            :error="$errors->first('pic_notes')"
+                            placeholder="Catatan tambahan (opsional)..."
+                            :rows="2"
+                        >{{ old('pic_notes') }}</x-textarea>
+                    </div>
+                </div>
+            </div>
         </x-card>
 
         {{-- Actions --}}
@@ -434,20 +495,25 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Setup main cost formatted inputs (only vendor and freight)
+    // Setup main cost formatted inputs
     setupFormattedInput('vendor_cost_display', 'vendor_cost_input');
     setupFormattedInput('freight_cost_display', 'freight_cost_input');
+    setupFormattedInput('uang_jalan_display', 'uang_jalan_input');
+    setupFormattedInput('bbm_display', 'bbm_input');
+    setupFormattedInput('toll_display', 'toll_input');
     
     // Fields containers
     const truckingFields = document.getElementById('trucking_fields');
-    const vendorField = document.getElementById('vendor_field');
     const vesselField = document.getElementById('vessel_field');
+    const vendorField = document.getElementById('vendor_field');
+    const vendorSelect = document.getElementById('vendor_id');
     
     // Cost containers
     const truckingCosts = document.getElementById('trucking_costs');
     const vendorCosts = document.getElementById('vendor_costs');
     const pelayaranCosts = document.getElementById('pelayaran_costs');
     const asuransiCosts = document.getElementById('asuransi_costs');
+    const picCosts = document.getElementById('pic_costs');
     
     // Truck & driver
     const truckSelect = document.getElementById('truck_id');
@@ -458,33 +524,42 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateFields() {
         // Hide all fields first
         truckingFields.classList.add('hidden');
-        vendorField.classList.add('hidden');
         vesselField.classList.add('hidden');
+        vendorField.classList.add('hidden');
         
         truckingCosts.classList.add('hidden');
         vendorCosts.classList.add('hidden');
         pelayaranCosts.classList.add('hidden');
         asuransiCosts.classList.add('hidden');
+        picCosts.classList.add('hidden');
         
         // Show relevant fields based on selection
         const value = costCategory.value;
         
         if (value === 'trucking') {
-            // Own Fleet - show truck, driver, uang jalan, BBM, tol
+            // Own Fleet - show truck, driver, uang jalan, BBM, tol (TIDAK ADA vendor field)
             truckingFields.classList.remove('hidden');
             truckingFields.classList.add('grid');
             truckingCosts.classList.remove('hidden');
+            // Clear vendor selection when trucking is selected
+            if (vendorSelect) vendorSelect.value = '';
         } else if (value === 'vendor') {
-            // Vendor - show vendor, vendor cost, PPN, PPH23
+            // Vendor - show vendor field, vendor cost, PPN, PPH23
             vendorField.classList.remove('hidden');
             vendorCosts.classList.remove('hidden');
         } else if (value === 'pelayaran') {
-            // Sea Freight - show vessel, shipping line, freight cost, container
+            // Sea Freight - show vendor field, vessel, shipping line, freight cost, container
+            vendorField.classList.remove('hidden');
             vesselField.classList.remove('hidden');
             pelayaranCosts.classList.remove('hidden');
         } else if (value === 'asuransi') {
-            // Insurance - show insurance form
+            // Insurance - show vendor field, insurance form
+            vendorField.classList.remove('hidden');
             asuransiCosts.classList.remove('hidden');
+        } else if (value === 'pic') {
+            // PIC - show vendor field, PIC form
+            vendorField.classList.remove('hidden');
+            picCosts.classList.remove('hidden');
         }
     }
 

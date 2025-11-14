@@ -26,4 +26,17 @@ class VendorBill extends Model
     {
         return $this->hasMany(VendorBillItem::class);
     }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(CashBankTransaction::class, 'vendor_bill_id')
+            ->where('sumber', 'vendor_payment')
+            ->orderBy('tanggal', 'desc');
+    }
+
+    public function paymentRequests(): HasMany
+    {
+        return $this->hasMany(\App\Models\Operations\PaymentRequest::class, 'vendor_bill_id')
+            ->orderBy('request_date', 'desc');
+    }
 }

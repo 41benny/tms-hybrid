@@ -1,0 +1,285 @@
+@extends('layouts.app', ['title' => 'Detail Pengajuan Pembayaran'])
+
+@section('content')
+    <div class="mb-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">{{ $request->request_number }}</h1>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Detail pengajuan pembayaran vendor</p>
+            </div>
+            @if($request->status === 'pending' && Auth::check() && (Auth::user()->role ?? 'admin') === 'super_admin')
+            <div class="flex items-center gap-2">
+                <button 
+                    onclick="document.getElementById('reject_modal').classList.remove('hidden')"
+                    class="flex-1 sm:flex-none px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Tolak
+                </button>
+                <form method="POST" action="{{ route('payment-requests.approve', $request) }}" class="flex-1 sm:flex-none">
+                    @csrf
+                    <button 
+                        type="submit" 
+                        onclick="return confirm('Setujui pengajuan pembayaran ini?')"
+                        class="w-full px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Setujui
+                    </button>
+                </form>
+            </div>
+            @endif
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {{-- Main Info --}}
+        <div class="lg:col-span-2 space-y-6">
+            <x-card title="Informasi Pengajuan">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Nomor Pengajuan</div>
+                        <div class="font-medium text-slate-900 dark:text-slate-100">{{ $request->request_number }}</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Tanggal Pengajuan</div>
+                        <div class="font-medium text-slate-900 dark:text-slate-100">{{ $request->request_date->format('d M Y') }}</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Diajukan Oleh</div>
+                        <div class="font-medium text-slate-900 dark:text-slate-100">{{ $request->requestedBy->name }}</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Status</div>
+                        <x-badge :variant="match($request->status) {
+                            'pending' => 'default',
+                            'approved' => 'success',
+                            'rejected' => 'danger',
+                            'paid' => 'success',
+                            default => 'default'
+                        }">{{ strtoupper($request->status) }}</x-badge>
+                    </div>
+                    <div class="col-span-2">
+                        <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Jumlah Pengajuan</div>
+                        <div class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">Rp {{ number_format($request->amount, 0, ',', '.') }}</div>
+                    </div>
+                    @if($request->vendorBankAccount)
+                    <div class="col-span-2">
+                        <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Rekening Tujuan Transfer</div>
+                        <div class="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
+                            <div class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                </svg>
+                                <div class="flex-1 min-w-0">
+                                    <div class="font-semibold text-slate-900 dark:text-slate-100">{{ $request->vendorBankAccount->bank_name }}</div>
+                                    <div class="text-sm text-slate-600 dark:text-slate-400 font-mono">{{ $request->vendorBankAccount->account_number }}</div>
+                                    <div class="text-sm text-slate-600 dark:text-slate-400">a.n. {{ $request->vendorBankAccount->account_holder_name }}</div>
+                                    @if($request->vendorBankAccount->branch)
+                                    <div class="text-xs text-slate-500 dark:text-slate-500 mt-1">Cabang: {{ $request->vendorBankAccount->branch }}</div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+                    @if($request->notes)
+                    <div class="col-span-2">
+                        <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Catatan</div>
+                        <div class="text-sm text-slate-900 dark:text-slate-100">{{ $request->notes }}</div>
+                    </div>
+                    @endif
+                </div>
+
+                @if($request->status === 'approved')
+                <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                    <div class="flex items-start gap-3 text-sm text-emerald-600 dark:text-emerald-400">
+                        <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div>
+                            <div class="font-medium">Disetujui oleh {{ $request->approvedBy->name ?? '-' }}</div>
+                            <div class="text-xs text-slate-500 dark:text-slate-400">{{ $request->approved_at ? $request->approved_at->format('d M Y H:i') : '-' }}</div>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
+                @if($request->status === 'rejected')
+                <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                    <div class="flex items-start gap-3 text-sm text-rose-600 dark:text-rose-400">
+                        <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div>
+                            <div class="font-medium">Ditolak oleh {{ $request->approvedBy->name ?? '-' }}</div>
+                            <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">{{ $request->approved_at ? $request->approved_at->format('d M Y H:i') : '-' }}</div>
+                            @if($request->rejection_reason)
+                            <div class="mt-2 text-xs text-slate-600 dark:text-slate-400">
+                                <strong>Alasan:</strong> {{ $request->rejection_reason }}
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+                @endif
+            </x-card>
+
+            {{-- Vendor Bill Info / Manual Request Info --}}
+            @if($request->payment_type === 'vendor_bill' && $request->vendorBill)
+            <x-card title="Vendor Bill Terkait">
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Nomor</div>
+                        <a href="{{ route('vendor-bills.show', $request->vendorBill) }}" class="font-medium text-blue-600 dark:text-blue-400 hover:underline">
+                            {{ $request->vendorBill->vendor_bill_number }}
+                        </a>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Vendor</div>
+                        <div class="font-medium text-slate-900 dark:text-slate-100">{{ $request->vendorBill->vendor->name }}</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Total Tagihan</div>
+                        <div class="font-medium text-slate-900 dark:text-slate-100">Rp {{ number_format($request->vendorBill->total_amount, 0, ',', '.') }}</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Status</div>
+                        <x-badge :variant="match($request->vendorBill->status) {
+                            'draft' => 'default',
+                            'received' => 'warning',
+                            'partially_paid' => 'warning',
+                            'paid' => 'success',
+                            'cancelled' => 'danger',
+                            default => 'default'
+                        }" class="text-xs">{{ strtoupper($request->vendorBill->status) }}</x-badge>
+                    </div>
+                </div>
+            </x-card>
+            @else
+            {{-- Manual Payment Request Info --}}
+            <x-card title="Informasi Pembayaran">
+                <div class="space-y-4">
+                    <div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Tipe Pengajuan</div>
+                        <x-badge variant="warning" class="text-xs">MANUAL PAYMENT</x-badge>
+                    </div>
+                    @if($request->description)
+                    <div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Deskripsi</div>
+                        <div class="font-medium text-slate-900 dark:text-slate-100">{{ $request->description }}</div>
+                    </div>
+                    @endif
+                    @if($request->vendor)
+                    <div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Vendor</div>
+                        <div class="font-medium text-slate-900 dark:text-slate-100">{{ $request->vendor->name }}</div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ $request->vendor->phone }}</div>
+                    </div>
+                    @endif
+                </div>
+            </x-card>
+            @endif
+        </div>
+
+        {{-- Sidebar --}}
+        <div>
+            <x-card title="Aksi">
+                <div class="space-y-2">
+                    <x-button :href="route('payment-requests.index')" variant="outline" class="w-full justify-center">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        Kembali ke Daftar
+                    </x-button>
+                    
+                    @if($request->payment_type === 'vendor_bill' && $request->vendorBill)
+                    <x-button :href="route('vendor-bills.show', $request->vendorBill)" variant="outline" class="w-full justify-center">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Lihat Vendor Bill
+                    </x-button>
+                    @endif
+                    
+                    @if($request->payment_type === 'manual' && $request->vendor)
+                    <x-button :href="route('vendors.edit', $request->vendor)" variant="outline" class="w-full justify-center">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                        Lihat Vendor
+                    </x-button>
+                    @endif
+
+                    @if($request->status === 'pending' && Auth::check() && (Auth::user()->id === $request->requested_by || (Auth::user()->role ?? 'admin') === 'super_admin'))
+                    <form method="POST" action="{{ route('payment-requests.destroy', $request) }}" onsubmit="return confirm('Yakin ingin menghapus pengajuan ini?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="w-full px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Hapus Pengajuan
+                        </button>
+                    </form>
+                    @endif
+                </div>
+            </x-card>
+        </div>
+    </div>
+
+    {{-- Reject Modal --}}
+    <div id="reject_modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-[#1e1e1e] rounded-lg shadow-xl max-w-md w-full">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Tolak Pengajuan</h3>
+                    <button onclick="document.getElementById('reject_modal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <form method="POST" action="{{ route('payment-requests.reject', $request) }}">
+                    @csrf
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Alasan Penolakan <span class="text-red-500">*</span></label>
+                            <textarea 
+                                name="rejection_reason" 
+                                rows="4"
+                                required
+                                placeholder="Jelaskan alasan penolakan"
+                                class="w-full rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            ></textarea>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row items-center gap-3 pt-4">
+                            <button type="button" onclick="document.getElementById('reject_modal').classList.add('hidden')" class="w-full sm:flex-1 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                                Batal
+                            </button>
+                            <button type="submit" class="w-full sm:flex-1 px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-medium transition-colors">
+                                Tolak Pengajuan
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Close modal on outside click
+    document.getElementById('reject_modal')?.addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.add('hidden');
+        }
+    });
+    </script>
+@endsection
+

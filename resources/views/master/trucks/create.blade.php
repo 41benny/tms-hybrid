@@ -66,6 +66,18 @@
                         <option value="{{ $v->id }}" @selected(old('vendor_id')==$v->id)>{{ $v->name }}</option>
                     @endforeach
                 </x-select>
+                
+                <x-select 
+                    name="driver_id" 
+                    label="Supir / Driver"
+                    :error="$errors->first('driver_id')"
+                    helpText="Assign driver default untuk truck ini"
+                >
+                    <option value="">Pilih driver (opsional)</option>
+                    @foreach($drivers as $d)
+                        <option value="{{ $d->id }}" @selected(old('driver_id')==$d->id)>{{ $d->name }}</option>
+                    @endforeach
+                </x-select>
             </div>
             
             <div class="mt-6 space-y-4">

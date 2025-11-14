@@ -40,10 +40,13 @@
     <x-card title="Item">
         <div id="items" class="space-y-3">
             @foreach($invoice->items as $i => $it)
-                <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-3 item-row">
                     <input type="text" name="items[{{ $i }}][description]" value="{{ $it->description }}" placeholder="Deskripsi" class="rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2">
                     <input type="number" step="0.01" min="0" name="items[{{ $i }}][qty]" value="{{ $it->qty }}" placeholder="Qty" class="rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2">
-                    <input type="number" step="0.01" min="0" name="items[{{ $i }}][unit_price]" value="{{ $it->unit_price }}" placeholder="Harga" class="rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2">
+                    <div>
+                        <input type="text" data-formatted-input="unit_price" value="{{ number_format($it->unit_price, 0, ',', '.') }}" placeholder="1.000.000" class="rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2 w-full">
+                        <input type="hidden" name="items[{{ $i }}][unit_price]" class="unit-price-hidden" value="{{ $it->unit_price }}">
+                    </div>
                     <input type="text" name="items[{{ $i }}][job_order_id]" value="{{ $it->job_order_id }}" placeholder="Job Order ID (opsional)" class="rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2">
                     <input type="text" name="items[{{ $i }}][transport_id]" value="{{ $it->transport_id }}" placeholder="Transport ID (opsional)" class="rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2">
                 </div>
@@ -59,10 +62,13 @@
 </form>
 
 <template id="itemRow">
-    <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-3 item-row">
         <input type="text" name="items[IDX][description]" placeholder="Deskripsi" class="rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2">
         <input type="number" step="0.01" min="0" name="items[IDX][qty]" placeholder="Qty" class="rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2">
-        <input type="number" step="0.01" min="0" name="items[IDX][unit_price]" placeholder="Harga" class="rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2">
+        <div>
+            <input type="text" data-formatted-input="unit_price" placeholder="1.000.000" class="rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2 w-full">
+            <input type="hidden" name="items[IDX][unit_price]" class="unit-price-hidden">
+        </div>
         <input type="text" name="items[IDX][job_order_id]" placeholder="Job Order ID (opsional)" class="rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2">
         <input type="text" name="items[IDX][transport_id]" placeholder="Transport ID (opsional)" class="rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2">
     </div>
@@ -74,7 +80,48 @@ document.addEventListener('DOMContentLoaded', () => {
     const tpl = document.getElementById('itemRow').innerHTML;
     const add = document.getElementById('addItem');
     let idx = {{ count($invoice->items) }};
-    add.addEventListener('click', () => { wrap.insertAdjacentHTML('beforeend', tpl.replaceAll('IDX', idx++)); });
+    
+    // Format number with thousand separator
+    function formatNumber(num) {
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+    
+    function setupFormattedInput(displayInput, hiddenInput) {
+        displayInput.addEventListener('input', function() {
+            let value = this.value.replace(/\./g, ''); // Remove dots
+            value = value.replace(/[^\d]/g, ''); // Only digits
+            
+            if (value) {
+                this.value = formatNumber(value);
+                hiddenInput.value = value;
+            } else {
+                this.value = '';
+                hiddenInput.value = '0';
+            }
+        });
+    }
+    
+    // Setup existing rows
+    document.querySelectorAll('.item-row').forEach(row => {
+        const displayInput = row.querySelector('[data-formatted-input="unit_price"]');
+        const hiddenInput = row.querySelector('.unit-price-hidden');
+        if (displayInput && hiddenInput) {
+            setupFormattedInput(displayInput, hiddenInput);
+        }
+    });
+    
+    // Add new row
+    add.addEventListener('click', () => {
+        wrap.insertAdjacentHTML('beforeend', tpl.replaceAll('IDX', idx++));
+        
+        // Setup formatted input for the newly added row
+        const lastRow = wrap.lastElementChild;
+        const displayInput = lastRow.querySelector('[data-formatted-input="unit_price"]');
+        const hiddenInput = lastRow.querySelector('.unit-price-hidden');
+        if (displayInput && hiddenInput) {
+            setupFormattedInput(displayInput, hiddenInput);
+        }
+    });
 });
 </script>
 @endsection

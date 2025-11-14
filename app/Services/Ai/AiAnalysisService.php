@@ -5,7 +5,6 @@ namespace App\Services\Ai;
 use App\Models\Finance\Invoice;
 use App\Models\Finance\VendorBill;
 use App\Models\Operations\JobOrder;
-use App\Models\Operations\Transport;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 

@@ -15,6 +15,8 @@ class LegAdditionalCost extends Model
         'is_billable',
         'billable_amount',
         'vendor_id',
+        'pic_name',
+        'pic_phone',
     ];
 
     protected function casts(): array

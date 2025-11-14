@@ -13,7 +13,7 @@ class JobOrderController extends Controller
 {
     public function index(Request $request)
     {
-        $query = JobOrder::query()->with(['customer', 'sales', 'shipmentLegs']);
+        $query = JobOrder::query()->with(['customer', 'sales', 'shipmentLegs', 'items.equipment']);
 
         if ($status = $request->get('status')) {
             $query->where('status', $status);
@@ -105,6 +105,10 @@ class JobOrderController extends Controller
 
     public function edit(JobOrder $job_order)
     {
+        if ($job_order->isLocked()) {
+            return back()->with('error', 'Job Order yang sudah completed atau cancelled tidak bisa di-edit');
+        }
+
         $customers = Customer::orderBy('name')->get();
         $salesList = Sales::where('is_active', true)->orderBy('name')->get();
         $equipments = \App\Models\Master\Equipment::orderBy('name')->get();
@@ -120,6 +124,10 @@ class JobOrderController extends Controller
 
     public function update(Request $request, JobOrder $job_order)
     {
+        if ($job_order->isLocked()) {
+            return back()->with('error', 'Job Order yang sudah completed atau cancelled tidak bisa di-edit');
+        }
+
         $data = $request->validate([
             'customer_id' => ['required', 'exists:customers,id'],
             'sales_id' => ['nullable', 'exists:sales,id'],
@@ -136,6 +144,11 @@ class JobOrderController extends Controller
             'items.*.quantity' => ['nullable', 'numeric', 'min:0.01'],
             'items.*.serial_numbers' => ['nullable', 'string'],
         ]);
+
+        // Prevent change status dari cancelled/completed ke status lain
+        if (in_array($job_order->status, ['completed', 'cancelled'])) {
+            $data['status'] = $job_order->status; // Lock status
+        }
 
         $job_order->update($data);
 
@@ -154,9 +167,98 @@ class JobOrderController extends Controller
 
     public function destroy(JobOrder $job_order)
     {
+        // Hanya superadmin yang bisa delete
+        if (! auth()->user()->isSuperAdmin()) {
+            abort(403, 'Hanya superadmin yang bisa menghapus Job Order');
+        }
+
+        // Prevent delete jika ada transaksi finansial yang sudah dibayar
+        $hasPaidDriverAdvances = $job_order->shipmentLegs()
+            ->whereHas('driverAdvance', function ($q) {
+                $q->whereIn('status', ['dp_paid', 'settled']);
+            })
+            ->exists();
+
+        if ($hasPaidDriverAdvances) {
+            return back()->with('error',
+                'Tidak bisa menghapus Job Order karena ada Driver Advance yang sudah dibayar!'
+            );
+        }
+
+        $hasPaidVendorBills = $job_order->shipmentLegs()
+            ->whereHas('vendorBillItems.vendorBill', function ($q) {
+                $q->whereIn('status', ['partially_paid', 'paid']);
+            })
+            ->exists();
+
+        if ($hasPaidVendorBills) {
+            return back()->with('error',
+                'Tidak bisa menghapus Job Order karena ada Vendor Bill yang sudah dibayar!'
+            );
+        }
+
+        $hasPaidInvoices = \App\Models\Finance\Invoice::whereHas('items', function ($q) use ($job_order) {
+            $q->where('job_order_id', $job_order->id);
+        })
+            ->whereIn('status', ['partially_paid', 'paid'])
+            ->exists();
+
+        if ($hasPaidInvoices) {
+            return back()->with('error',
+                'Tidak bisa menghapus Job Order karena ada Invoice yang sudah dibayar!'
+            );
+        }
+
+        // Safe to delete
         $job_order->delete();
 
         return redirect()->route('job-orders.index')->with('success', 'Job Order berhasil dihapus');
+    }
+
+    public function cancel(Request $request, JobOrder $job_order)
+    {
+        // Prevent cancel jika sudah completed atau cancelled
+        if ($job_order->isLocked()) {
+            return back()->with('error', 'Job Order sudah tidak bisa di-cancel');
+        }
+
+        // Prevent cancel jika ada transaksi finansial yang sudah dibayar
+        $hasPaidDriverAdvances = $job_order->shipmentLegs()
+            ->whereHas('driverAdvance', function ($q) {
+                $q->whereIn('status', ['dp_paid', 'settled']);
+            })
+            ->exists();
+
+        if ($hasPaidDriverAdvances) {
+            return back()->with('error',
+                'Tidak bisa cancel Job Order karena ada Driver Advance yang sudah dibayar!'
+            );
+        }
+
+        $hasPaidVendorBills = $job_order->shipmentLegs()
+            ->whereHas('vendorBillItems.vendorBill', function ($q) {
+                $q->whereIn('status', ['partially_paid', 'paid']);
+            })
+            ->exists();
+
+        if ($hasPaidVendorBills) {
+            return back()->with('error',
+                'Tidak bisa cancel Job Order karena ada Vendor Bill yang sudah dibayar!'
+            );
+        }
+
+        $data = $request->validate([
+            'cancel_reason' => ['required', 'string', 'min:10', 'max:1000'],
+        ]);
+
+        $job_order->update([
+            'status' => 'cancelled',
+            'cancel_reason' => $data['cancel_reason'],
+            'cancelled_at' => now(),
+        ]);
+
+        return redirect()->route('job-orders.show', $job_order)
+            ->with('success', 'Job Order berhasil di-cancel');
     }
 
     protected function generateJobNumber(string $date): string

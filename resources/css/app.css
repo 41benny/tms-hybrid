@@ -11,3 +11,30 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* Styling untuk dropdown select di dark mode */
+@layer base {
+    select {
+        color-scheme: light dark;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+        select option {
+            background-color: #252525;
+            color: #f1f5f9;
+        }
+        
+        select option:checked {
+            background-color: #3d3d3d;
+        }
+    }
+    
+    .dark select option {
+        background-color: #252525;
+        color: #f1f5f9;
+    }
+    
+    .dark select option:checked {
+        background-color: #3d3d3d;
+    }
+}

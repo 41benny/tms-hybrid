@@ -1,6 +1,6 @@
 @props(['title' => null, 'subtitle' => null, 'headerClass' => '', 'bodyClass' => '', 'noPadding' => false])
 
-<div {{ $attributes->merge(['class' => 'rounded-xl border border-slate-200 dark:border-[#2d2d2d] bg-white dark:bg-[#252525] shadow-lg shadow-slate-200/50 dark:shadow-black/20 overflow-hidden']) }}>
+<div {{ $attributes->merge(['class' => 'rounded-xl border border-slate-200 dark:border-[#2d2d2d] bg-white dark:bg-[#252525] shadow-sm overflow-hidden']) }}>
     @if($title || $subtitle || isset($header))
         <div class="px-6 py-4 border-b border-slate-200 dark:border-[#2d2d2d] bg-gradient-to-r from-slate-50 to-transparent dark:from-[#2d2d2d]/30 dark:to-transparent {{ $headerClass }}">
             @isset($header)

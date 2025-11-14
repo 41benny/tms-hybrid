@@ -65,7 +65,8 @@
             </div>
             <div>
                 <label class="block text-sm mb-1">Nominal</label>
-                <input type="number" step="0.01" min="0" name="amount" value="{{ $prefill['amount'] ?? '' }}" class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2" required>
+                <input type="text" id="amount_display" placeholder="1.000.000" class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2" required>
+                <input type="hidden" name="amount" id="amount_input" value="{{ $prefill['amount'] ?? '' }}">
             </div>
             <div>
                 <label class="block text-sm mb-1">No. Referensi</label>
@@ -83,5 +84,37 @@
         <button class="px-4 py-2 rounded bg-indigo-600 text-white">Simpan</button>
     </div>
 </form>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const amountDisplay = document.getElementById('amount_display');
+    const amountInput = document.getElementById('amount_input');
+    
+    // Format number with thousand separator
+    function formatNumber(num) {
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+    
+    if (amountDisplay && amountInput) {
+        amountDisplay.addEventListener('input', function() {
+            let value = this.value.replace(/\./g, ''); // Remove dots
+            value = value.replace(/[^\d]/g, ''); // Only digits
+            
+            if (value) {
+                this.value = formatNumber(value);
+                amountInput.value = value;
+            } else {
+                this.value = '';
+                amountInput.value = '';
+            }
+        });
+        
+        // Initialize with existing value
+        if (amountInput.value && parseFloat(amountInput.value) > 0) {
+            amountDisplay.value = formatNumber(amountInput.value);
+        }
+    }
+});
+</script>
 @endsection
 

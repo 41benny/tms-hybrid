@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class InvoiceItem extends Model
 {
     protected $fillable = [
-        'invoice_id', 'job_order_id', 'transport_id', 'description', 'qty', 'unit_price', 'subtotal',
+        'invoice_id', 'job_order_id', 'transport_id', 'shipment_leg_id', 'description', 'qty', 'unit_price', 'subtotal',
     ];
 
     protected $casts = [
@@ -20,5 +20,20 @@ class InvoiceItem extends Model
     public function invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class);
+    }
+
+    public function jobOrder(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Operations\JobOrder::class);
+    }
+
+    public function shipmentLeg(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Operations\ShipmentLeg::class);
+    }
+
+    public function transport(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Operations\Transport::class);
     }
 }

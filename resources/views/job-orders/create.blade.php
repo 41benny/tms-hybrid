@@ -2,15 +2,23 @@
 
 @section('content')
 <div class="max-w-5xl mx-auto space-y-6">
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Create New Order</h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Buat job order baru</p>
-        </div>
-        <x-button :href="route('job-orders.index')" variant="ghost" size="sm">
-            ✕ Close
-        </x-button>
-    </div>
+    {{-- Header Card --}}
+    <x-card>
+        <x-slot:header>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Create New Order</h1>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Buat job order baru</p>
+                </div>
+                <x-button :href="route('job-orders.index')" variant="ghost" size="sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Close
+                </x-button>
+            </div>
+        </x-slot:header>
+    </x-card>
 
     <form method="post" action="{{ route('job-orders.store') }}" class="space-y-6">
         @csrf
@@ -57,15 +65,19 @@
                     placeholder="e.g., Surabaya, Indonesia"
                 />
 
-                <x-input 
-                    name="invoice_amount" 
-                    type="number"
-                    step="0.01"
-                    label="Nilai Tagihan (IDR)" 
-                    :value="old('invoice_amount', 0)"
-                    :error="$errors->first('invoice_amount')"
-                    id="invoice_amount"
-                />
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Nilai Tagihan (IDR)</label>
+                    <input 
+                        type="text"
+                        id="invoice_amount_display"
+                        placeholder="1.000.000"
+                        class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                    >
+                    <input type="hidden" name="invoice_amount" id="invoice_amount" value="{{ old('invoice_amount', 0) }}">
+                    @error('invoice_amount')
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
 
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Preview</label>
@@ -273,17 +285,45 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Format number with thousand separator
+    function formatNumber(num) {
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+    
+    function parseNumber(str) {
+        return parseFloat(str.replace(/\./g, '')) || 0;
+    }
+    
     // Format rupiah preview
     function formatRupiah(amount) {
         return 'Rp ' + new Intl.NumberFormat('id-ID').format(amount);
     }
 
-    // Update invoice preview
-    if (invoiceInput && invoicePreview) {
-        invoiceInput.addEventListener('input', function() {
-            const value = parseFloat(this.value) || 0;
-            invoicePreview.textContent = formatRupiah(value);
+    // Setup formatted input for invoice amount
+    const invoiceDisplayInput = document.getElementById('invoice_amount_display');
+    if (invoiceDisplayInput && invoiceInput && invoicePreview) {
+        invoiceDisplayInput.addEventListener('input', function() {
+            let value = this.value.replace(/\./g, ''); // Remove dots
+            value = value.replace(/[^\d]/g, ''); // Only digits
+            
+            if (value) {
+                this.value = formatNumber(value);
+                invoiceInput.value = value;
+            } else {
+                this.value = '';
+                invoiceInput.value = '0';
+            }
+            
+            // Update preview
+            const amount = parseFloat(invoiceInput.value) || 0;
+            invoicePreview.textContent = formatRupiah(amount);
         });
+        
+        // Initialize with old value if exists
+        if (invoiceInput.value && parseFloat(invoiceInput.value) > 0) {
+            invoiceDisplayInput.value = formatNumber(invoiceInput.value);
+            invoicePreview.textContent = formatRupiah(invoiceInput.value);
+        }
     }
 
     // Add button listener

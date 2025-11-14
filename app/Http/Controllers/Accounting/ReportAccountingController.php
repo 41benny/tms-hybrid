@@ -114,11 +114,13 @@ class ReportAccountingController extends Controller
             if ($r->type === 'revenue') {
                 $net = (float) $r->credit - (float) $r->debit;
                 $totalRevenue += $net;
-                $revenue[] = $r + (object) ['net' => $net];
+                $r->net = $net;
+                $revenue[] = $r;
             } else {
                 $net = (float) $r->debit - (float) $r->credit;
                 $totalExpense += $net;
-                $expense[] = $r + (object) ['net' => $net];
+                $r->net = $net;
+                $expense[] = $r;
             }
         }
         $profit = $totalRevenue - $totalExpense;

@@ -17,7 +17,7 @@
                             name="q" 
                             value="{{ request('q') }}" 
                             placeholder="Cari nama..." 
-                            class="rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            class="rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-4 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                         >
                         <x-button variant="outline" type="submit">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -40,8 +40,8 @@
     {{-- Table Section --}}
     <x-card :noPadding="true">
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
-                <thead class="bg-slate-50 dark:bg-slate-950">
+            <table class="min-w-full divide-y divide-slate-200 dark:divide-[#2d2d2d]">
+                <thead class="bg-slate-50 dark:bg-[#252525]">
                     <tr>
                         <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                             Nama
@@ -53,6 +53,9 @@
                             Tipe
                         </th>
                         <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                            Rekening Bank
+                        </th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                             Status
                         </th>
                         <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
@@ -60,9 +63,9 @@
                         </th>
                     </tr>
                 </thead>
-                <tbody class="bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-800">
+                <tbody class="bg-white dark:bg-[#1e1e1e] divide-y divide-slate-200 dark:divide-[#2d2d2d]">
                     @forelse($items as $item)
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                        <tr class="hover:bg-slate-50 dark:hover:bg-[#252525] transition-colors">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="font-medium text-slate-900 dark:text-slate-100">{{ $item->name }}</div>
                             </td>
@@ -71,6 +74,29 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <x-badge variant="default">{{ $item->vendor_type }}</x-badge>
+                            </td>
+                            <td class="px-6 py-4">
+                                @if($item->bankAccounts->count() > 0)
+                                    <div class="text-sm">
+                                        @php
+                                            $primary = $item->bankAccounts->where('is_primary', true)->where('is_active', true)->first();
+                                            $displayAccount = $primary ?? $item->bankAccounts->where('is_active', true)->first();
+                                        @endphp
+                                        @if($displayAccount)
+                                            <div class="font-medium text-slate-900 dark:text-slate-100">{{ $displayAccount->bank_name }}</div>
+                                            <div class="text-xs text-slate-500 dark:text-slate-400">{{ $displayAccount->account_number }}</div>
+                                            @if($item->bankAccounts->count() > 1)
+                                                <div class="text-xs text-indigo-600 dark:text-indigo-400 mt-1">
+                                                    +{{ $item->bankAccounts->count() - 1 }} rekening lainnya
+                                                </div>
+                                            @endif
+                                        @else
+                                            <span class="text-xs text-slate-500 dark:text-slate-400">{{ $item->bankAccounts->count() }} rekening (tidak aktif)</span>
+                                        @endif
+                                    </div>
+                                @else
+                                    <span class="text-xs text-slate-400 dark:text-slate-500 italic">Belum ada rekening</span>
+                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <x-badge :variant="$item->is_active ? 'success' : 'default'">
@@ -98,7 +124,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+                            <td colspan="6" class="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
                                 <div class="flex flex-col items-center gap-2">
                                     <span class="text-4xl">📭</span>
                                     <p class="text-sm">Belum ada data vendor</p>
@@ -111,7 +137,7 @@
     </div>
         
         @if($items->hasPages())
-            <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-800">
+            <div class="px-6 py-4 border-t border-slate-200 dark:border-[#2d2d2d]">
                 {{ $items->links() }}
             </div>
         @endif

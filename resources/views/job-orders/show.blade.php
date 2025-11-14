@@ -2,36 +2,63 @@
 
 @section('content')
 <div class="space-y-6">
-    {{-- Header --}}
-    <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-            <x-button :href="route('job-orders.index')" variant="ghost" size="sm">
-                ← Kembali
-            </x-button>
-        <div>
-                <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">{{ $job->job_number }}</h1>
-                <p class="text-sm text-slate-600 dark:text-slate-400">{{ $job->customer->name }} • {{ strtoupper($job->service_type) }}</p>
+    {{-- Header Card --}}
+    <x-card>
+        <x-slot:header>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <x-button :href="route('job-orders.index')" variant="ghost" size="sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        Kembali
+                    </x-button>
+                    <div>
+                        <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">{{ $job->job_number }}</h1>
+                        <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">{{ $job->customer->name }} • {{ strtoupper($job->service_type) }}</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    @if(!$job->isLocked())
+                        <x-button :href="route('job-orders.edit', $job)" variant="outline" size="sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            Edit
+                        </x-button>
+                    @endif
+                    
+                    {{-- Cancel Order - untuk semua user (kecuali yang sudah locked) --}}
+                    @if(!$job->isLocked())
+                        <button 
+                            type="button"
+                            onclick="openCancelModal()"
+                            class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            Cancel Order
+                        </button>
+                    @endif
+
+                    {{-- Delete Order - HANYA untuk superadmin --}}
+                    @if(auth()->user()->isSuperAdmin() && !$job->isLocked())
+                        <form method="POST" action="{{ route('job-orders.destroy', $job) }}" onsubmit="return confirm('⚠️ PERINGATAN: Menghapus Job Order akan menghapus semua data terkait (Shipment Legs, Driver Advances, dll). Yakin ingin menghapus?')" class="inline">
+                            @csrf
+                            @method('DELETE')
+                            <x-button variant="danger" size="sm" type="submit">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                Hapus (Superadmin)
+                            </x-button>
+                        </form>
+                    @endif
+                </div>
             </div>
-        </div>
-        <div class="flex items-center gap-2">
-            <x-button :href="route('job-orders.edit', $job)" variant="outline" size="sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                Edit
-            </x-button>
-            <form method="POST" action="{{ route('job-orders.destroy', $job) }}" onsubmit="return confirm('Yakin ingin menghapus job order ini?')">
-                @csrf
-                @method('DELETE')
-                <x-button variant="danger" size="sm" type="submit">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    Hapus
-                </x-button>
-            </form>
-        </div>
-    </div>
+        </x-slot:header>
+    </x-card>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {{-- Left: Job Details --}}
@@ -155,6 +182,22 @@
                             </div>
                         </div>
                     </div>
+
+                    {{-- Cancel Information --}}
+                    @if($job->status === 'cancelled')
+                    <div class="pt-4 border-t border-slate-200 dark:border-slate-800">
+                        <div class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2">Cancel Information</div>
+                        <div class="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                            <div class="text-sm text-red-900 dark:text-red-100 font-medium mb-1">Alasan Cancel:</div>
+                            <div class="text-sm text-red-800 dark:text-red-200">{{ $job->cancel_reason }}</div>
+                            @if($job->cancelled_at)
+                                <div class="text-xs text-red-600 dark:text-red-400 mt-2">
+                                    Dibatalkan pada: {{ $job->cancelled_at->format('d M Y H:i') }}
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                    @endif
             </div>
         </x-card>
         </div>
@@ -185,10 +228,12 @@
                             <div class="p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors" onclick="toggleLeg({{ $leg->id }})">
                                 <div class="flex items-center gap-3">
                                     <button type="button" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-transform leg-arrow" id="arrow-{{ $leg->id }}">
-                                        ▶
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                        </svg>
                                     </button>
-                                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-600 to-indigo-800 flex items-center justify-center text-white font-bold text-sm shrink-0">
-                                        #{{ $leg->leg_number }}
+                                    <div class="px-2.5 py-1 rounded-md bg-indigo-100 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 shrink-0">
+                                        <span class="text-xs font-semibold text-indigo-700 dark:text-indigo-300">#{{ $leg->leg_number }}</span>
                                     </div>
                                     <div class="flex-1 min-w-0">
                                         <div class="font-semibold text-slate-900 dark:text-slate-100 text-sm">Leg #{{ $leg->leg_number }}</div>
@@ -201,7 +246,19 @@
                                             @elseif($leg->cost_category == 'pelayaran')
                                                 {{ $leg->vessel_name ?? 'Vessel' }} • {{ $leg->mainCost?->shipping_line ?? '-' }}
                                             @elseif($leg->cost_category == 'asuransi')
-                                                🛡️ {{ $leg->mainCost?->insurance_provider ?? 'Insurance' }}
+                                                <span class="inline-flex items-center gap-1">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                                    </svg>
+                                                    {{ $leg->mainCost?->insurance_provider ?? 'Insurance' }}
+                                                </span>
+                                            @elseif($leg->cost_category == 'pic')
+                                                <span class="inline-flex items-center gap-1">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                    </svg>
+                                                    PIC: {{ $leg->mainCost?->pic_name ?? '-' }} ({{ ucfirst($leg->mainCost?->cost_type ?? 'fee') }})
+                                                </span>
                                             @else
                                                 {{ strtoupper($leg->cost_category) }}
                                             @endif
@@ -377,6 +434,72 @@
                                                 <div class="font-medium text-blue-900 dark:text-blue-100">Rp {{ number_format($leg->mainCost->premium_billable, 0, ',', '.') }}</div>
                                             </div>
                                             @endif
+                                            @if($leg->mainCost->cost_type)
+                                            <div>
+                                                <div class="text-xs text-indigo-600 dark:text-indigo-400">Tipe</div>
+                                                <div class="font-medium text-indigo-900 dark:text-indigo-100">{{ ucfirst($leg->mainCost->cost_type) }}</div>
+                                            </div>
+                                            @endif
+                                            @if($leg->mainCost->pic_name)
+                                            <div>
+                                                <div class="text-xs text-indigo-600 dark:text-indigo-400">Nama PIC</div>
+                                                <div class="font-medium text-indigo-900 dark:text-indigo-100">{{ $leg->mainCost->pic_name }}</div>
+                                            </div>
+                                            @endif
+                                            @if($leg->mainCost->pic_phone)
+                                            <div>
+                                                <div class="text-xs text-indigo-600 dark:text-indigo-400">No HP</div>
+                                                <div class="font-medium text-indigo-900 dark:text-indigo-100">{{ $leg->mainCost->pic_phone }}</div>
+                                            </div>
+                                            @endif
+                                            @if($leg->mainCost->pic_amount > 0)
+                                            <div>
+                                                <div class="text-xs text-indigo-600 dark:text-indigo-400">Jumlah</div>
+                                                <div class="font-medium text-indigo-900 dark:text-indigo-100">Rp {{ number_format($leg->mainCost->pic_amount, 0, ',', '.') }}</div>
+                                            </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    @endif
+
+                                    {{-- Vendor Bills Generated from This Leg --}}
+                                    @if($leg->vendorBillItems()->exists())
+                                    @php
+                                        $vendorBills = \App\Models\Finance\VendorBill::query()
+                                            ->whereHas('items', function($q) use ($leg) {
+                                                $q->where('shipment_leg_id', $leg->id);
+                                            })
+                                            ->with('items')
+                                            ->get();
+                                        $legBillsCount = $vendorBills->count();
+                                    @endphp
+                                    <div class="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-4 mb-3">
+                                        <div class="font-semibold text-blue-900 dark:text-blue-100 mb-2 text-sm">
+                                            VENDOR BILLS ({{ $legBillsCount }}x Generated)
+                                        </div>
+                                        <div class="space-y-2">
+                                            @foreach($vendorBills as $vb)
+                                            <div class="flex items-center justify-between gap-3 text-sm bg-white dark:bg-slate-800 rounded p-3">
+                                                <div class="flex-1">
+                                                    <a href="{{ route('vendor-bills.show', $vb) }}" class="font-medium text-blue-600 dark:text-blue-400 hover:underline">
+                                                        {{ $vb->vendor_bill_number }}
+                                                    </a>
+                                                    <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                                        {{ $vb->bill_date->format('d M Y') }} • 
+                                                        <x-badge :variant="match($vb->status) {
+                                                            'draft' => 'default',
+                                                            'received' => 'warning',
+                                                            'partially_paid' => 'warning',
+                                                            'paid' => 'success',
+                                                            default => 'default'
+                                                        }" class="text-[10px]">{{ strtoupper($vb->status) }}</x-badge>
+                                                    </div>
+                                                </div>
+                                                <div class="text-right font-medium text-blue-900 dark:text-blue-100">
+                                                    Rp {{ number_format($vb->total_amount, 0, ',', '.') }}
+                                                </div>
+                                            </div>
+                                            @endforeach
                                         </div>
                                     </div>
                                     @endif
@@ -450,7 +573,7 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            @endforeach
+                        @endforeach
                                         </div>
                                         @else
                                         <div class="text-sm text-emerald-600 dark:text-emerald-400 text-center py-2">No additional costs</div>
@@ -458,29 +581,77 @@
                                     </div>
 
                                     {{-- Actions --}}
-                                    <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
-                                        <x-button :href="route('job-orders.legs.edit', [$job, $leg])" variant="outline" size="sm">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                            </svg>
-                                            Edit Details
-                                        </x-button>
-                                        <form method="POST" action="{{ route('job-orders.legs.destroy', [$job, $leg]) }}" onsubmit="return confirm('Hapus leg ini?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <x-button variant="ghost" size="sm" type="submit">
+                                    <div class="flex items-center justify-between gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+                                        <div class="flex-1">
+                                            @php
+                                                $totalGenerated = (float) $leg->vendorBillItems()->sum('subtotal');
+                                                $legTotalCost = (float) ($leg->mainCost ? $leg->mainCost->total : 0);
+                                                $remaining = $legTotalCost - $totalGenerated;
+                                                $billsCount = $leg->vendorBillItems()->distinct('vendor_bill_id')->count('vendor_bill_id');
+                                            @endphp
+                                            
+                                            @if($leg->vendor_id && $remaining > 0 && $leg->status != 'cancelled')
+                                            <button 
+                                                type="button" 
+                                                onclick="openGenerateBillModal({{ $leg->id }}, {{ $leg->additionalCosts->count() }})"
+                                                class="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                 </svg>
+                                                Generate Vendor Bill
+                                                @if($billsCount > 0)
+                                                    <span class="text-[10px] opacity-75">({{ $billsCount + 1 }}x)</span>
+                                                @endif
+                                            </button>
+                                            <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                                                @if($billsCount > 0)
+                                                    Sudah billed: Rp {{ number_format($totalGenerated, 0, ',', '.') }} • Sisa: Rp {{ number_format($remaining, 0, ',', '.') }}
+                                                @else
+                                                    Total: Rp {{ number_format($legTotalCost, 0, ',', '.') }}
+                                                @endif
+                                            </div>
+                                            @elseif($remaining <= 0 && $billsCount > 0)
+                                            <div class="text-xs">
+                                                <span class="text-green-600 dark:text-green-400 flex items-center gap-1">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    Fully Billed ({{ $billsCount }}x)
+                                                </span>
+                                                <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                                    Total: Rp {{ number_format($legTotalCost, 0, ',', '.') }}
+                                                </div>
+                                            </div>
+                                            @endif
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <x-button :href="route('job-orders.legs.edit', [$job, $leg])" variant="outline" size="sm">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                </svg>
+                                                Edit Details
                                             </x-button>
-                                        </form>
+                                            <form method="POST" action="{{ route('job-orders.legs.destroy', [$job, $leg]) }}" onsubmit="return confirm('Hapus leg ini?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <x-button variant="ghost" size="sm" type="submit">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </x-button>
+                                            </form>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     @empty
                         <div class="text-center py-12">
-                            <span class="text-6xl">🚛</span>
+                            <div class="flex justify-center mb-4">
+                                <svg class="w-16 h-16 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                </svg>
+                            </div>
                             <p class="mt-4 text-slate-600 dark:text-slate-400">Belum ada shipment legs</p>
                             <p class="text-sm text-slate-500 dark:text-slate-500 mt-1">Klik "Add New Leg" untuk menambahkan</p>
                         </div>
@@ -689,10 +860,12 @@ function toggleLeg(legId) {
         // Expand
         detailsDiv.classList.remove('hidden');
         arrow.style.transform = 'rotate(90deg)';
+        arrow.style.transition = 'transform 0.2s ease';
     } else {
         // Collapse
         detailsDiv.classList.add('hidden');
         arrow.style.transform = 'rotate(0deg)';
+        arrow.style.transition = 'transform 0.2s ease';
     }
 }
 
@@ -917,5 +1090,239 @@ document.getElementById('editCostModal')?.addEventListener('click', function(e) 
         closeEditCostModal();
     }
 });
+
+// Generate Vendor Bill Modal Functions
+let currentLegIdForGenerate = null;
+
+function openGenerateBillModal(legId, additionalCostsCount) {
+    currentLegIdForGenerate = legId;
+    const modal = document.getElementById('generateBillModal');
+    const additionalCostsInfo = document.getElementById('additionalCostsInfo');
+    const separateOption = document.getElementById('separateOption');
+    
+    // Show/hide "separate" option based on additional costs
+    if (additionalCostsCount > 0) {
+        additionalCostsInfo.classList.remove('hidden');
+        separateOption.classList.remove('hidden');
+    } else {
+        additionalCostsInfo.classList.add('hidden');
+        separateOption.classList.add('hidden');
+        // Default to 'combined' if no additional costs
+        document.getElementById('bill_mode_combined').checked = true;
+    }
+    
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeGenerateBillModal() {
+    const modal = document.getElementById('generateBillModal');
+    modal.classList.add('hidden');
+    document.body.style.overflow = '';
+    currentLegIdForGenerate = null;
+}
+
+function submitGenerateBill() {
+    const billMode = document.querySelector('input[name="bill_mode"]:checked').value;
+    
+    if (!currentLegIdForGenerate) {
+        alert('Error: Leg ID tidak ditemukan');
+        return;
+    }
+    
+    // Create and submit form
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/legs/${currentLegIdForGenerate}/generate-vendor-bill`;
+    
+    // Add CSRF token
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = '_token';
+    csrfInput.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    form.appendChild(csrfInput);
+    
+    // Add bill_mode input
+    const billModeInput = document.createElement('input');
+    billModeInput.type = 'hidden';
+    billModeInput.name = 'bill_mode';
+    billModeInput.value = billMode;
+    form.appendChild(billModeInput);
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// Close generate bill modal on outside click
+document.getElementById('generateBillModal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeGenerateBillModal();
+    }
+});
 </script>
+
+{{-- Generate Vendor Bill Modal --}}
+<div id="generateBillModal" class="hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-900/80 backdrop-blur-sm z-50 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-lg w-full">
+            {{-- Header --}}
+            <div class="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
+                <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    Pilih Mode Generate Vendor Bill
+                </h3>
+                <button 
+                    type="button" 
+                    onclick="closeGenerateBillModal()"
+                    class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            {{-- Body --}}
+            <div class="p-6 space-y-4">
+                <div id="additionalCostsInfo" class="hidden bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-sm text-blue-800 dark:text-blue-200">
+                    <div class="flex items-start gap-2">
+                        <svg class="w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div>
+                            <strong>Leg ini memiliki Additional Costs.</strong>
+                            <p class="mt-1 text-xs">Anda bisa memilih untuk menggabungkan semua biaya dalam 1 vendor bill, atau memisahkan main cost dan additional costs menjadi 2 vendor bill terpisah.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    {{-- Option 1: Gabung --}}
+                    <label class="flex items-start gap-3 p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer hover:border-emerald-500 dark:hover:border-emerald-500 transition-colors group">
+                        <input 
+                            type="radio" 
+                            id="bill_mode_combined"
+                            name="bill_mode" 
+                            value="combined" 
+                            checked
+                            class="mt-1 w-4 h-4 text-emerald-600 focus:ring-emerald-500">
+                        <div class="flex-1">
+                            <div class="font-medium text-slate-900 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400">
+                                Gabung dalam 1 Vendor Bill
+                            </div>
+                            <div class="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                                Main cost + semua additional costs digabung menjadi 1 vendor bill
+                            </div>
+                        </div>
+                    </label>
+
+                    {{-- Option 2: Pisah --}}
+                    <label id="separateOption" class="flex items-start gap-3 p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer hover:border-emerald-500 dark:hover:border-emerald-500 transition-colors group">
+                        <input 
+                            type="radio" 
+                            id="bill_mode_separate"
+                            name="bill_mode" 
+                            value="separate"
+                            class="mt-1 w-4 h-4 text-emerald-600 focus:ring-emerald-500">
+                        <div class="flex-1">
+                            <div class="font-medium text-slate-900 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400">
+                                Pisah Main Cost & Additional Costs
+                            </div>
+                            <div class="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                                Generate 2 vendor bills: 1 untuk main cost, 1 untuk semua additional costs
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            {{-- Footer --}}
+            <div class="flex items-center justify-end gap-3 p-6 border-t border-slate-200 dark:border-slate-700">
+                <button 
+                    type="button" 
+                    onclick="closeGenerateBillModal()"
+                    class="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors">
+                    Batal
+                </button>
+                <button 
+                    type="button" 
+                    onclick="submitGenerateBill()"
+                    class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors">
+                    Generate Vendor Bill
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Modal Cancel Order --}}
+<div id="cancelModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-xl shadow-xl max-w-md w-full">
+        <form method="POST" action="{{ route('job-orders.cancel', $job) }}" class="p-6 space-y-4">
+            @csrf
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Cancel Job Order</h3>
+                <button type="button" onclick="closeCancelModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-4">
+                <div class="text-sm text-yellow-800 dark:text-yellow-200">
+                    <strong>Perhatian:</strong> Job Order yang di-cancel tidak bisa di-edit lagi. Pastikan semua data sudah benar.
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    Alasan Cancel <span class="text-red-500">*</span>
+                </label>
+                <textarea 
+                    name="cancel_reason" 
+                    required
+                    rows="4"
+                    placeholder="Contoh: Customer tidak bisa dihubungi, vendor sudah di lokasi tapi customer tidak ada, dll."
+                    class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500 shadow-sm"
+                ></textarea>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">Minimal 10 karakter</p>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+                <button 
+                    type="button" 
+                    onclick="closeCancelModal()"
+                    class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
+                >
+                    Batal
+                </button>
+                <button 
+                    type="submit"
+                    class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
+                >
+                    Cancel Order
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openCancelModal() {
+    document.getElementById('cancelModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeCancelModal() {
+    document.getElementById('cancelModal').classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+// Close modal on outside click
+document.getElementById('cancelModal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeCancelModal();
+    }
+});
+</script>
+
 @endsection

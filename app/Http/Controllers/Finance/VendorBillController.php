@@ -17,7 +17,7 @@ class VendorBillController extends Controller
      */
     public function index(Request $request)
     {
-        $query = VendorBill::query()->with('vendor');
+        $query = VendorBill::query()->with(['vendor', 'items', 'payments']);
         if ($status = $request->get('status')) {
             $query->where('status', $status);
         }
@@ -31,6 +31,35 @@ class VendorBillController extends Controller
             $query->whereDate('bill_date', '<=', $to);
         }
         $bills = $query->latest()->paginate(15)->withQueryString();
+
+        // Calculate DPP, PPN, PPH for each bill
+        $bills->getCollection()->transform(function ($bill) {
+            $dpp = 0;
+            $ppn = 0;
+            $pph = 0;
+
+            foreach ($bill->items as $item) {
+                $desc = strtolower($item->description);
+                if (str_contains($desc, 'ppn')) {
+                    $ppn += abs($item->subtotal);
+                } elseif (str_contains($desc, 'pph') || str_contains($desc, 'pph23')) {
+                    $pph += abs($item->subtotal);
+                } else {
+                    // Exclude PPN and PPH from DPP
+                    if (! str_contains($desc, 'ppn') && ! str_contains($desc, 'pph')) {
+                        $dpp += $item->subtotal;
+                    }
+                }
+            }
+
+            $bill->dpp = $dpp;
+            $bill->ppn = $ppn;
+            $bill->pph = $pph;
+            $bill->total_paid = $bill->payments->sum('amount');
+            $bill->last_payment_date = $bill->payments->first()?->tanggal;
+
+            return $bill;
+        });
 
         $vendors = Vendor::orderBy('name')->get();
 
@@ -88,7 +117,31 @@ class VendorBillController extends Controller
      */
     public function show(VendorBill $vendor_bill)
     {
-        $vendor_bill->load(['vendor', 'items']);
+        $vendor_bill->load(['vendor', 'items.shipmentLeg', 'payments.account', 'paymentRequests.requestedBy']);
+
+        // Calculate DPP, PPN, PPH
+        $dpp = 0;
+        $ppn = 0;
+        $pph = 0;
+
+        foreach ($vendor_bill->items as $item) {
+            $desc = strtolower($item->description);
+            if (str_contains($desc, 'ppn')) {
+                $ppn += abs($item->subtotal);
+            } elseif (str_contains($desc, 'pph') || str_contains($desc, 'pph23')) {
+                $pph += abs($item->subtotal);
+            } else {
+                if (! str_contains($desc, 'ppn') && ! str_contains($desc, 'pph')) {
+                    $dpp += $item->subtotal;
+                }
+            }
+        }
+
+        $vendor_bill->dpp = $dpp;
+        $vendor_bill->ppn = $ppn;
+        $vendor_bill->pph = $pph;
+        $vendor_bill->total_paid = $vendor_bill->payments->sum('amount');
+        $vendor_bill->remaining = $vendor_bill->total_amount - $vendor_bill->total_paid;
 
         return view('vendor-bills.show', ['bill' => $vendor_bill]);
     }

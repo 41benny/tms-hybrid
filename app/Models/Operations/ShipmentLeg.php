@@ -66,6 +66,21 @@ class ShipmentLeg extends Model
         return $this->hasMany(LegAdditionalCost::class);
     }
 
+    public function vendorBillItems(): HasMany
+    {
+        return $this->hasMany(\App\Models\Finance\VendorBillItem::class);
+    }
+
+    public function invoiceItems(): HasMany
+    {
+        return $this->hasMany(\App\Models\Finance\InvoiceItem::class);
+    }
+
+    public function driverAdvance(): HasOne
+    {
+        return $this->hasOne(\App\Models\Operations\DriverAdvance::class);
+    }
+
     public function getTotalCostAttribute(): float
     {
         $mainTotal = $this->mainCost ? $this->mainCost->total : 0;
