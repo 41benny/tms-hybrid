@@ -58,6 +58,9 @@ class HutangController extends Controller
             $bill->pph = $pph;
             $bill->total_paid = $bill->payments->sum('amount');
             $bill->remaining = $bill->total_amount - $bill->total_paid;
+            $bill->has_active_payment_request = $bill->paymentRequests->contains(function ($request) {
+                return in_array($request->status, ['pending', 'approved'], true);
+            });
 
             return $bill;
         });

@@ -111,9 +111,49 @@
                 </a>
             </div>
             
+            {{-- Inventory Section --}}
+            <div class="pt-4">
+                <div class="px-3 pb-2 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-500">Inventory</div>
+                @php($inventoryDashboardAccess = $canAccessMenu('inventory.dashboard'))
+                <a href="{{ route('inventory.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('inventory.dashboard') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $inventoryDashboardAccess ? '' : 'opacity-60' }}">
+                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('inventory.dashboard') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('inventory.dashboard') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $inventoryDashboardAccess ? '' : 'opacity-80' }}">Dashboard Inventory</span>
+                </a>
+                @php($partsAccess = $canAccessMenu('parts'))
+                <a href="{{ route('parts.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('parts.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $partsAccess ? '' : 'opacity-60' }}">
+                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('parts.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('parts.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $partsAccess ? '' : 'opacity-80' }}">Sparepart</span>
+                </a>
+                @php($partPurchasesAccess = $canAccessMenu('part-purchases'))
+                <a href="{{ route('part-purchases.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('part-purchases.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $partPurchasesAccess ? '' : 'opacity-60' }}">
+                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('part-purchases.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('part-purchases.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $partPurchasesAccess ? '' : 'opacity-80' }}">Pembelian Part</span>
+                </a>
+                @php($partUsagesAccess = $canAccessMenu('part-usages'))
+                <a href="{{ route('part-usages.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('part-usages.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $partUsagesAccess ? '' : 'opacity-60' }}">
+                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('part-usages.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('part-usages.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $partUsagesAccess ? '' : 'opacity-80' }}">Pemakaian Part</span>
+                </a>
+            </div>
+            
             {{-- Finance Section --}}
             <div class="pt-4">
                 <div class="px-3 pb-2 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-500">Finance</div>
+                @php($financeDashboardAccess = $canAccessMenu('finance.dashboard'))
+                <a href="{{ route('finance.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('finance.dashboard') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $financeDashboardAccess ? '' : 'opacity-60' }}">
+                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('finance.dashboard') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('finance.dashboard') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $financeDashboardAccess ? '' : 'opacity-80' }}">Dashboard Keuangan</span>
+                </a>
                 @php($hutangAccess = $canAccessMenu('hutang'))
                 <a href="{{ route('hutang.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('hutang.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $hutangAccess ? '' : 'opacity-60' }}">
                     <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('hutang.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -141,6 +181,20 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                     </svg>
                     <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('cash-banks.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $cashBanksAccess ? '' : 'opacity-80' }}">Cash/Bank</span>
+                </a>
+                @php($journalsAccess = $canAccessMenu('journals'))
+                <a href="{{ route('journals.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('journals.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $journalsAccess ? '' : 'opacity-60' }}">
+                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('journals.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('journals.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $journalsAccess ? '' : 'opacity-80' }}">Jurnal</span>
+                </a>
+                @php($chartAccountsAccess = $canAccessMenu('chart-of-accounts'))
+                <a href="{{ route('chart-of-accounts.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('chart-of-accounts.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $chartAccountsAccess ? '' : 'opacity-60' }}">
+                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('chart-of-accounts.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                    </svg>
+                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('chart-of-accounts.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $chartAccountsAccess ? '' : 'opacity-80' }}">Chart of Accounts</span>
                 </a>
             </div>
             

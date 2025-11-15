@@ -158,6 +158,6 @@ class ReportAccountingController extends Controller
             $totals[$acc->type] += $bal;
         }
 
-        return view('reports.balance-sheet', compact('asOf','sections','totals'));
+        return view('reports.balance-sheet', compact('asOf', 'sections', 'totals'));
     }
 }

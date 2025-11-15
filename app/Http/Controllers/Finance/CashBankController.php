@@ -73,9 +73,12 @@ class CashBankController extends Controller
             'customer_id' => ['nullable', 'exists:customers,id'],
             'vendor_id' => ['nullable', 'exists:vendors,id'],
             'amount' => ['required', 'numeric', 'min:0.01'],
+            'withholding_pph23' => ['nullable', 'numeric', 'min:0'],
             'reference_number' => ['nullable', 'string'],
             'description' => ['nullable', 'string'],
         ]);
+
+        $data['withholding_pph23'] = $data['withholding_pph23'] ?? 0;
 
         $trx = CashBankTransaction::create($data);
 
@@ -92,10 +95,16 @@ class CashBankController extends Controller
 
         if ($trx->invoice_id) {
             $inv = Invoice::find($trx->invoice_id);
-            if ($inv && $data['amount'] >= $inv->total_amount) {
-                $inv->update(['status' => 'paid']);
-            } elseif ($inv) {
-                $inv->update(['status' => 'partially_paid']);
+            if ($inv) {
+                $totalPaid = CashBankTransaction::where('invoice_id', $inv->id)
+                    ->selectRaw('SUM(amount + COALESCE(withholding_pph23, 0)) as total')
+                    ->value('total') ?? 0;
+
+                if ($totalPaid >= $inv->total_amount) {
+                    $inv->update(['status' => 'paid']);
+                } elseif ($totalPaid > 0) {
+                    $inv->update(['status' => 'partially_paid']);
+                }
             }
         }
         if ($trx->vendor_bill_id) {

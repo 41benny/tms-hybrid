@@ -84,7 +84,9 @@ class JobOrderController extends Controller
             }
         }
 
-        return redirect()->route('job-orders.show', $job)->with('success', 'Job Order berhasil dibuat');
+        return redirect()
+            ->route('job-orders.show', [$job, 'view' => $request->get('view')])
+            ->with('success', 'Job Order berhasil dibuat');
     }
 
     public function show(JobOrder $job_order)
@@ -162,7 +164,9 @@ class JobOrderController extends Controller
             }
         }
 
-        return redirect()->route('job-orders.show', $job_order)->with('success', 'Job Order berhasil diupdate');
+        return redirect()
+            ->route('job-orders.show', [$job_order, 'view' => $request->get('view')])
+            ->with('success', 'Job Order berhasil diupdate');
     }
 
     public function destroy(JobOrder $job_order)
@@ -212,7 +216,9 @@ class JobOrderController extends Controller
         // Safe to delete
         $job_order->delete();
 
-        return redirect()->route('job-orders.index')->with('success', 'Job Order berhasil dihapus');
+        return redirect()
+            ->route('job-orders.index', ['view' => $request->get('view', 'table')])
+            ->with('success', 'Job Order berhasil dihapus');
     }
 
     public function cancel(Request $request, JobOrder $job_order)
@@ -257,7 +263,8 @@ class JobOrderController extends Controller
             'cancelled_at' => now(),
         ]);
 
-        return redirect()->route('job-orders.show', $job_order)
+        return redirect()
+            ->route('job-orders.show', [$job_order, 'view' => $request->get('view')])
             ->with('success', 'Job Order berhasil di-cancel');
     }
 

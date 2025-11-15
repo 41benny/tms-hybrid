@@ -6,6 +6,8 @@ use App\Models\Accounting\Journal;
 use App\Models\Finance\CashBankTransaction;
 use App\Models\Finance\Invoice;
 use App\Models\Finance\VendorBill;
+use App\Models\Inventory\PartPurchase;
+use App\Models\Inventory\PartUsage;
 use InvalidArgumentException;
 
 class JournalService
@@ -45,12 +47,17 @@ class JournalService
             ['account_code' => $revenue, 'debit' => 0, 'credit' => $total, 'desc' => 'Pendapatan Invoice '.$invoice->invoice_number, 'customer_id' => $invoice->customer_id],
         ];
 
-        return $this->posting->postGeneral([
+        $journal = $this->posting->postGeneral([
             'journal_date' => $invoice->invoice_date->toDateString(),
             'source_type' => 'invoice',
             'source_id' => $invoice->id,
             'memo' => 'Invoice '.$invoice->invoice_number,
         ], $lines);
+
+        // Balik jurnal biaya dimuka untuk shipment legs yang terkait invoice ini
+        $this->reversePrepaidsForInvoice($invoice);
+
+        return $journal;
     }
 
     public function postCustomerPayment(CashBankTransaction $trx): Journal
@@ -60,11 +67,20 @@ class JournalService
         }
         $cash = $this->map('cash');
         $ar = $this->map('ar');
-        $amt = (float) $trx->amount;
+        $cashReceived = (float) $trx->amount;
+        $withholding = (float) ($trx->withholding_pph23 ?? 0);
+        $totalApplied = $cashReceived + $withholding;
+
         $lines = [
-            ['account_code' => $cash, 'debit' => $amt, 'credit' => 0, 'desc' => 'Penerimaan invoice '.$trx->invoice?->invoice_number, 'customer_id' => $trx->customer_id],
-            ['account_code' => $ar, 'debit' => 0, 'credit' => $amt, 'desc' => 'Pelunasan invoice '.$trx->invoice?->invoice_number, 'customer_id' => $trx->customer_id],
+            ['account_code' => $cash, 'debit' => $cashReceived, 'credit' => 0, 'desc' => 'Penerimaan invoice '.$trx->invoice?->invoice_number, 'customer_id' => $trx->customer_id],
         ];
+
+        if ($withholding > 0) {
+            $pph23Claim = $this->map('pph23_claim');
+            $lines[] = ['account_code' => $pph23Claim, 'debit' => $withholding, 'credit' => 0, 'desc' => 'Piutang PPh 23 invoice '.$trx->invoice?->invoice_number, 'customer_id' => $trx->customer_id];
+        }
+
+        $lines[] = ['account_code' => $ar, 'debit' => 0, 'credit' => $totalApplied, 'desc' => 'Pelunasan invoice '.$trx->invoice?->invoice_number, 'customer_id' => $trx->customer_id];
 
         return $this->posting->postGeneral([
             'journal_date' => $trx->tanggal->toDateString(),
@@ -79,13 +95,43 @@ class JournalService
         if ($j = $this->alreadyPosted('vendor_bill', $bill->id)) {
             return $j;
         }
+
+        // Breakdown: DPP, PPN, PPh 23
+        $dpp = (float) ($bill->dpp ?? $bill->total_amount);
+        $ppn = (float) ($bill->ppn ?? 0);
+        $pph23 = (float) ($bill->pph23 ?? 0);
+        $netPayable = $dpp + $ppn - $pph23; // Total yang harus dibayar
+
         $ap = $this->map('ap');
-        $exp = $this->map('expense_vendor');
-        $amt = (float) $bill->total_amount;
-        $lines = [
-            ['account_code' => $exp, 'debit' => $amt, 'credit' => 0, 'desc' => 'Biaya vendor bill '.$bill->vendor_bill_number, 'vendor_id' => $bill->vendor_id],
-            ['account_code' => $ap, 'debit' => 0, 'credit' => $amt, 'desc' => 'Hutang vendor bill '.$bill->vendor_bill_number, 'vendor_id' => $bill->vendor_id],
-        ];
+        $lines = [];
+
+        // Cek apakah vendor bill terkait shipment leg (ada items dengan shipment_leg_id)
+        $hasShipmentLeg = $bill->items()->whereNotNull('shipment_leg_id')->exists();
+
+        if ($hasShipmentLeg) {
+            // Untuk vendor bill shipment leg: Dr Biaya Dimuka
+            $prepaid = $this->map('prepaid_expense');
+            $lines[] = ['account_code' => $prepaid, 'debit' => $dpp, 'credit' => 0, 'desc' => 'Biaya dimuka vendor bill '.$bill->vendor_bill_number, 'vendor_id' => $bill->vendor_id];
+        } else {
+            // Untuk vendor bill non-shipment: Dr Beban Vendor (langsung expense)
+            $exp = $this->map('expense_vendor');
+            $lines[] = ['account_code' => $exp, 'debit' => $dpp, 'credit' => 0, 'desc' => 'Biaya vendor bill '.$bill->vendor_bill_number, 'vendor_id' => $bill->vendor_id];
+        }
+
+        // Dr PPN Masukan (jika ada PPN)
+        if ($ppn > 0) {
+            $vatIn = $this->map('vat_in');
+            $lines[] = ['account_code' => $vatIn, 'debit' => $ppn, 'credit' => 0, 'desc' => 'PPN Masukan vendor bill '.$bill->vendor_bill_number, 'vendor_id' => $bill->vendor_id];
+        }
+
+        // Cr Hutang PPh 23 (jika ada potongan PPh 23)
+        if ($pph23 > 0) {
+            $pph23Payable = $this->map('pph23');
+            $lines[] = ['account_code' => $pph23Payable, 'debit' => 0, 'credit' => $pph23, 'desc' => 'PPh 23 dipotong vendor bill '.$bill->vendor_bill_number, 'vendor_id' => $bill->vendor_id];
+        }
+
+        // Cr Hutang Usaha (net payable)
+        $lines[] = ['account_code' => $ap, 'debit' => 0, 'credit' => $netPayable, 'desc' => 'Hutang vendor bill '.$bill->vendor_bill_number, 'vendor_id' => $bill->vendor_id];
 
         return $this->posting->postGeneral([
             'journal_date' => $bill->bill_date->toDateString(),
@@ -135,5 +181,161 @@ class JournalService
             'source_id' => $trx->id,
             'memo' => 'Pengeluaran biaya',
         ], $lines);
+    }
+
+    public function postPartPurchase(PartPurchase $purchase): Journal
+    {
+        if ($j = $this->alreadyPosted('part_purchase', $purchase->id)) {
+            return $j;
+        }
+
+        // Breakdown: DPP, PPN, PPh 23
+        $dpp = (float) ($purchase->dpp ?? $purchase->total_amount);
+        $ppn = (float) ($purchase->ppn ?? 0);
+        $pph23 = (float) ($purchase->pph23 ?? 0);
+        $netPayable = $dpp + $ppn - $pph23; // Total yang harus dibayar
+
+        $ap = $this->map('ap');
+        try {
+            $inventory = $this->map('inventory');
+        } catch (\InvalidArgumentException $e) {
+            // Fallback jika inventory belum ada
+            $inventory = $this->map('expense_vendor');
+        }
+
+        $lines = [];
+
+        // Dr Inventory/Expense (DPP)
+        $lines[] = ['account_code' => $inventory, 'debit' => $dpp, 'credit' => 0, 'desc' => 'Pembelian part '.$purchase->purchase_number, 'vendor_id' => $purchase->vendor_id];
+
+        // Dr PPN Masukan (jika ada PPN)
+        if ($ppn > 0) {
+            $vatIn = $this->map('vat_in');
+            $lines[] = ['account_code' => $vatIn, 'debit' => $ppn, 'credit' => 0, 'desc' => 'PPN Masukan pembelian part '.$purchase->purchase_number, 'vendor_id' => $purchase->vendor_id];
+        }
+
+        // Cr Hutang PPh 23 (jika ada potongan PPh 23)
+        if ($pph23 > 0) {
+            $pph23Payable = $this->map('pph23');
+            $lines[] = ['account_code' => $pph23Payable, 'debit' => 0, 'credit' => $pph23, 'desc' => 'PPh 23 dipotong pembelian part '.$purchase->purchase_number, 'vendor_id' => $purchase->vendor_id];
+        }
+
+        // Cr Hutang Usaha (net payable)
+        $lines[] = ['account_code' => $ap, 'debit' => 0, 'credit' => $netPayable, 'desc' => 'Hutang pembelian part '.$purchase->purchase_number, 'vendor_id' => $purchase->vendor_id];
+
+        return $this->posting->postGeneral([
+            'journal_date' => $purchase->purchase_date->toDateString(),
+            'source_type' => 'part_purchase',
+            'source_id' => $purchase->id,
+            'memo' => 'Pembelian part '.$purchase->purchase_number,
+        ], $lines);
+    }
+
+    public function postPartUsage(PartUsage $usage): Journal
+    {
+        if ($j = $this->alreadyPosted('part_usage', $usage->id)) {
+            return $j;
+        }
+
+        // Ensure part is loaded
+        if (! $usage->relationLoaded('part')) {
+            $usage->load('part');
+        }
+
+        try {
+            $inventory = $this->map('inventory');
+        } catch (\InvalidArgumentException $e) {
+            $inventory = $this->map('expense_vendor');
+        }
+        try {
+            $expense = $this->map('expense_maintenance');
+        } catch (\InvalidArgumentException $e) {
+            $expense = $this->map('expense_other');
+        }
+        $total = (float) $usage->total_cost;
+
+        $lines = [
+            ['account_code' => $expense, 'debit' => $total, 'credit' => 0, 'desc' => 'Pemakaian part '.$usage->part->code.' - '.$usage->usage_type, 'truck_id' => $usage->truck_id],
+            ['account_code' => $inventory, 'debit' => 0, 'credit' => $total, 'desc' => 'Pengeluaran stok part '.$usage->part->code, 'truck_id' => $usage->truck_id],
+        ];
+
+        return $this->posting->postGeneral([
+            'journal_date' => $usage->usage_date->toDateString(),
+            'source_type' => 'part_usage',
+            'source_id' => $usage->id,
+            'memo' => 'Pemakaian part '.$usage->usage_number,
+        ], $lines);
+    }
+
+    protected function reversePrepaidsForInvoice(Invoice $invoice): void
+    {
+        // Ambil transport terkait invoice ini
+        if (! $invoice->relationLoaded('transport')) {
+            $invoice->load('transport.shipmentLegs.vendorBill');
+        }
+
+        $transport = $invoice->transport;
+        if (! $transport) {
+            return;
+        }
+
+        // Ambil semua shipment legs yang terkait transport ini
+        $legs = $transport->shipmentLegs ?? collect();
+
+        foreach ($legs as $leg) {
+            // Cek apakah leg ini punya vendor bill
+            $vendorBill = $leg->vendorBill;
+            if (! $vendorBill) {
+                continue;
+            }
+
+            // Cek apakah sudah ada jurnal untuk vendor bill ini
+            $vendorBillJournal = Journal::where('source_type', 'vendor_bill')
+                ->where('source_id', $vendorBill->id)
+                ->first();
+
+            if (! $vendorBillJournal) {
+                continue;
+            }
+
+            // Cek apakah jurnal tersebut menggunakan biaya dimuka (1400)
+            $prepaidCode = $this->map('prepaid_expense');
+            $hasPrepaid = $vendorBillJournal->lines()
+                ->whereHas('account', function ($q) use ($prepaidCode) {
+                    $q->where('code', $prepaidCode);
+                })
+                ->exists();
+
+            if (! $hasPrepaid) {
+                continue;
+            }
+
+            // Cek apakah jurnal pembalik sudah dibuat
+            $reverseKey = 'prepaid_reverse_vb'.$vendorBill->id.'_inv'.$invoice->id;
+            if ($this->alreadyPosted($reverseKey, 0)) {
+                continue;
+            }
+
+            // Buat jurnal pembalik: Dr Beban Vendor, Cr Biaya Dimuka
+            $expense = $this->map('expense_vendor');
+            $amt = (float) $vendorBill->total_amount;
+
+            $lines = [
+                ['account_code' => $expense, 'debit' => $amt, 'credit' => 0, 'desc' => 'Pengakuan beban vendor bill '.$vendorBill->vendor_bill_number.' untuk invoice '.$invoice->invoice_number, 'vendor_id' => $vendorBill->vendor_id],
+                ['account_code' => $prepaidCode, 'debit' => 0, 'credit' => $amt, 'desc' => 'Pembalikan biaya dimuka vendor bill '.$vendorBill->vendor_bill_number, 'vendor_id' => $vendorBill->vendor_id],
+            ];
+
+            try {
+                $this->posting->postGeneral([
+                    'journal_date' => $invoice->invoice_date->toDateString(),
+                    'source_type' => $reverseKey,
+                    'source_id' => 0,
+                    'memo' => 'Pembalikan biaya dimuka untuk invoice '.$invoice->invoice_number,
+                ], $lines);
+            } catch (\Exception $e) {
+                // Log error but don't fail the transaction
+                \Log::warning('Failed to reverse prepaid for invoice '.$invoice->invoice_number.': '.$e->getMessage());
+            }
+        }
     }
 }

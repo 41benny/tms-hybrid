@@ -19,11 +19,11 @@ class PaymentRequestController extends Controller
 
         // Skip role filter for development
         // TODO: Implement proper authentication and role-based filtering
-        // $user = Auth::user();
-        // if ($user && ($user->role ?? 'admin') !== 'super_admin') {
-        //     // Admin hanya bisa lihat pengajuannya sendiri
-        //     $query->where('requested_by', $user->id);
-        // }
+        $user = Auth::user();
+        if ($user && ($user->role ?? 'admin') !== 'super_admin') {
+            // Admin hanya bisa lihat pengajuannya sendiri
+            $query->where('requested_by', $user->id);
+        }
 
         // Filter status
         if ($status = $request->get('status')) {

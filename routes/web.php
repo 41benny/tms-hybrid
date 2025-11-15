@@ -1,15 +1,22 @@
 <?php
 
+use App\Http\Controllers\Accounting\ChartOfAccountController;
+use App\Http\Controllers\Accounting\JournalController;
 use App\Http\Controllers\Accounting\ReportAccountingController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\AiAssistantController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Finance\CashBankController;
 use App\Http\Controllers\Finance\DriverAdvanceController;
+use App\Http\Controllers\Finance\FinanceDashboardController;
 use App\Http\Controllers\Finance\HutangController;
 use App\Http\Controllers\Finance\InvoiceController;
 use App\Http\Controllers\Finance\PaymentRequestController;
 use App\Http\Controllers\Finance\VendorBillController;
+use App\Http\Controllers\Inventory\PartController;
+use App\Http\Controllers\Inventory\PartDashboardController;
+use App\Http\Controllers\Inventory\PartPurchaseController;
+use App\Http\Controllers\Inventory\PartUsageController;
 use App\Http\Controllers\Master\CustomerController as MasterCustomerController;
 use App\Http\Controllers\Master\DriverController as MasterDriverController;
 use App\Http\Controllers\Master\EquipmentController as MasterEquipmentController;
@@ -48,6 +55,8 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('legs/{leg}/generate-vendor-bill', [ShipmentLegController::class, 'generateVendorBill'])->name('legs.generate-vendor-bill');
     Route::get('api/truck-driver', [ShipmentLegController::class, 'getDriverByTruck'])->name('api.truck-driver');
 
+    Route::get('finance/dashboard', [FinanceDashboardController::class, 'index'])->name('finance.dashboard');
+
     Route::resource('invoices', InvoiceController::class);
     Route::post('invoices/{invoice}/mark-sent', [InvoiceController::class, 'markAsSent'])->name('invoices.mark-sent');
     Route::post('invoices/{invoice}/mark-paid', [InvoiceController::class, 'markAsPaid'])->name('invoices.mark-paid');
@@ -73,6 +82,14 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('driver-advances/{driverAdvance}/settlement', [DriverAdvanceController::class, 'processSettlement'])->name('driver-advances.settlement');
 
     Route::resource('cash-banks', CashBankController::class)->only(['index', 'create', 'store', 'show']);
+
+    Route::resource('journals', JournalController::class)->except(['destroy']);
+    Route::resource('chart-of-accounts', ChartOfAccountController::class)->except(['show', 'destroy']);
+
+    Route::get('inventory/dashboard', [PartDashboardController::class, 'index'])->name('inventory.dashboard');
+    Route::resource('parts', PartController::class);
+    Route::resource('part-purchases', PartPurchaseController::class)->except(['edit', 'update', 'destroy']);
+    Route::resource('part-usages', PartUsageController::class)->except(['edit', 'update', 'destroy']);
 
     Route::get('/ai-assistant', [AiAssistantController::class, 'index'])->name('ai-assistant.index');
     Route::post('/ai-assistant/ask', [AiAssistantController::class, 'ask'])->name('ai-assistant.ask');

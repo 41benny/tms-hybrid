@@ -8,12 +8,25 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class CashBankTransaction extends Model
 {
     protected $fillable = [
-        'cash_bank_account_id', 'tanggal', 'jenis', 'sumber', 'invoice_id', 'vendor_bill_id', 'coa_id', 'customer_id', 'vendor_id', 'amount', 'reference_number', 'description',
+        'cash_bank_account_id',
+        'tanggal',
+        'jenis',
+        'sumber',
+        'invoice_id',
+        'vendor_bill_id',
+        'coa_id',
+        'customer_id',
+        'vendor_id',
+        'amount',
+        'withholding_pph23',
+        'reference_number',
+        'description',
     ];
 
     protected $casts = [
         'tanggal' => 'date',
         'amount' => 'decimal:2',
+        'withholding_pph23' => 'decimal:2',
     ];
 
     public function account(): BelongsTo

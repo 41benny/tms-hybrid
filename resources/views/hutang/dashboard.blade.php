@@ -239,11 +239,19 @@
                                         </svg>
                                     </a>
                                     @if($bill->remaining > 0)
-                                    <a href="{{ route('payment-requests.create', ['vendor_bill_id' => $bill->id]) }}" class="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300" title="Request Payment">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                    </a>
+                                        @if($bill->has_active_payment_request)
+                                            <span class="text-slate-400 dark:text-slate-600 cursor-not-allowed" title="Pembayaran sudah diajukan">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                            </span>
+                                        @else
+                                            <a href="{{ route('payment-requests.create', ['vendor_bill_id' => $bill->id]) }}" class="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300" title="Request Payment">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                            </a>
+                                        @endif
                                     @endif
                                 </div>
                             </td>

@@ -14,6 +14,7 @@
                 <div>Jenis: {{ $trx->jenis }}</div>
                 <div>Sumber: {{ str_replace('_',' ', $trx->sumber) }}</div>
                 <div>Nominal: <b>{{ number_format($trx->amount, 2, ',', '.') }}</b></div>
+                <div>Potongan PPh 23: <b>{{ number_format($trx->withholding_pph23 ?? 0, 2, ',', '.') }}</b></div>
                 <div>Ref: {{ $trx->reference_number ?: '-' }}</div>
                 <div>Deskripsi: {{ $trx->description ?: '-' }}</div>
             </div>

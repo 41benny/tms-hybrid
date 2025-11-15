@@ -69,6 +69,12 @@
                 <input type="hidden" name="amount" id="amount_input" value="{{ $prefill['amount'] ?? '' }}">
             </div>
             <div>
+                <label class="block text-sm mb-1">Potongan PPh 23</label>
+                <input type="text" id="pph23_display" placeholder="0" class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2">
+                <input type="hidden" name="withholding_pph23" id="pph23_input" value="{{ old('withholding_pph23', '0') }}">
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Isi jika customer melakukan potongan PPh 23 (misal 2% dari DPP).</p>
+            </div>
+            <div>
                 <label class="block text-sm mb-1">No. Referensi</label>
                 <input type="text" name="reference_number" class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2">
             </div>
@@ -87,33 +93,39 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const amountDisplay = document.getElementById('amount_display');
-    const amountInput = document.getElementById('amount_input');
-    
     // Format number with thousand separator
     function formatNumber(num) {
         return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     }
-    
-    if (amountDisplay && amountInput) {
-        amountDisplay.addEventListener('input', function() {
+
+    function setupMoneyInput(displayId, hiddenId) {
+        const displayEl = document.getElementById(displayId);
+        const hiddenEl = document.getElementById(hiddenId);
+
+        if (!displayEl || !hiddenEl) {
+            return;
+        }
+
+        displayEl.addEventListener('input', function() {
             let value = this.value.replace(/\./g, ''); // Remove dots
             value = value.replace(/[^\d]/g, ''); // Only digits
-            
+
             if (value) {
                 this.value = formatNumber(value);
-                amountInput.value = value;
+                hiddenEl.value = value;
             } else {
                 this.value = '';
-                amountInput.value = '';
+                hiddenEl.value = '';
             }
         });
-        
-        // Initialize with existing value
-        if (amountInput.value && parseFloat(amountInput.value) > 0) {
-            amountDisplay.value = formatNumber(amountInput.value);
+
+        if (hiddenEl.value && parseFloat(hiddenEl.value) > 0) {
+            displayEl.value = formatNumber(hiddenEl.value);
         }
     }
+
+    setupMoneyInput('amount_display', 'amount_input');
+    setupMoneyInput('pph23_display', 'pph23_input');
 });
 </script>
 @endsection

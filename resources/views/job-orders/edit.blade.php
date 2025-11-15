@@ -7,7 +7,7 @@
         <x-slot:header>
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div class="flex items-center gap-3">
-                    <x-button :href="route('job-orders.show', $job)" variant="ghost" size="sm">
+                    <x-button :href="route('job-orders.show', [$job, 'view' => request('view')])" variant="ghost" size="sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
@@ -28,7 +28,7 @@
         </x-alert>
     @endif
 
-    <form method="post" action="{{ route('job-orders.update', $job) }}" class="space-y-6">
+    <form method="post" action="{{ route('job-orders.update', [$job, 'view' => request('view')]) }}" class="space-y-6">
         @csrf
         @method('PUT')
 
@@ -121,7 +121,7 @@
 
             <x-card>
                 <div class="flex justify-end gap-3">
-                    <x-button :href="route('job-orders.show', $job)" variant="outline">
+                    <x-button :href="route('job-orders.show', [$job, 'view' => request('view')])" variant="outline">
                         Batal
                     </x-button>
                     <x-button type="submit" variant="primary" :disabled="$job->isLocked()">
@@ -133,4 +133,3 @@
     </form>
 </div>
 @endsection
-
