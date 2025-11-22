@@ -6,7 +6,7 @@
         <x-slot:header>
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Edit Akun: {{ $account->code }}</h1>
+                    <div class="text-2xl font-bold text-slate-900 dark:text-slate-100">Edit Akun: {{ $account->code }}</div>
                     <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Perbarui detail akun dan flag yang digunakan modul lain</p>
                 </div>
                 <x-button :href="route('chart-of-accounts.index')" variant="ghost">

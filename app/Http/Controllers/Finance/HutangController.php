@@ -4,14 +4,41 @@ namespace App\Http\Controllers\Finance;
 
 use App\Http\Controllers\Controller;
 use App\Models\Finance\VendorBill;
+use App\Models\Operations\PaymentRequest;
 use App\Models\Operations\DriverAdvance;
 use App\Models\Operations\ShipmentLeg;
 use Illuminate\Support\Facades\DB;
 
 class HutangController extends Controller
 {
+    /**
+     * Dashboard Hutang - Hanya untuk user dengan permission 'hutang'
+     * Menampilkan overview semua hutang vendor
+     */
     public function dashboard()
     {
+        // Payables Metrics (Pengajuan Pembayaran)
+        // Total nominal tagihan vendor (exclude cancelled)
+        $totalVendorBills = VendorBill::query()->whereNotIn('status', ['cancelled'])->sum('total_amount');
+
+        // Total sudah diajukan (pending, approved, paid) - exclude rejected/cancelled if any
+        $totalRequested = PaymentRequest::query()
+            ->whereNotIn('status', ['rejected'])
+            ->sum('amount');
+
+        // Remaining to request (sum sisa belum diajukan dari vendor bills outstanding)
+        $outstandingBills = VendorBill::query()->outstanding()->with('paymentRequests')->get();
+        $totalRemainingToRequest = $outstandingBills->sum(function ($bill) {
+            return $bill->remaining_to_request; // accessor
+        });
+
+        // Paid this month (payment requests status paid, paid_at in current month)
+        $paidThisMonth = PaymentRequest::query()
+            ->where('status', 'paid')
+            ->whereMonth('paid_at', now()->month)
+            ->whereYear('paid_at', now()->year)
+            ->sum('amount');
+
         // Hutang Vendor yang belum dibuat bill (SEMUA kategori, semua status kecuali cancelled)
         $pendingVendorLegs = ShipmentLeg::query()
             // ->whereIn('cost_category', ['vendor', 'pelayaran']) // REMOVED: Semua kategori masuk hutang
@@ -89,14 +116,14 @@ class HutangController extends Controller
                 COALESCE(leg_main_costs.pic_amount, 0) + 
                 COALESCE(leg_main_costs.ppn, 0) - 
                 COALESCE(leg_main_costs.pph23, 0)
-            ) as total_cost'))
+            ) as total_vendor_cost'))
             ->leftJoin('leg_main_costs', 'leg_main_costs.shipment_leg_id', '=', 'shipment_legs.id')
             ->where('shipment_legs.status', '!=', 'cancelled')
             ->whereNotNull('shipment_legs.vendor_id')
             ->whereDoesntHave('vendorBillItems')
             ->groupBy('shipment_legs.vendor_id')
             ->with('vendor')
-            ->orderByDesc('total_cost')
+            ->orderByDesc('total_vendor_cost')
             ->get();
 
         // Summary per driver
@@ -109,6 +136,10 @@ class HutangController extends Controller
             ->get();
 
         return view('hutang.dashboard', compact(
+            'totalVendorBills',
+            'totalRequested',
+            'totalRemainingToRequest',
+            'paidThisMonth',
             'pendingVendorLegs',
             'totalPendingVendorLegs',
             'unpaidVendorBills',

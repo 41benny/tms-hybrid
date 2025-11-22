@@ -1,0 +1,4 @@
+/* Table font size utility for all tables in app, matching sidebar text-sm */
+table, th, td {
+    font-size: 0.875rem !important; /* text-sm = 14px = 0.875rem */
+}

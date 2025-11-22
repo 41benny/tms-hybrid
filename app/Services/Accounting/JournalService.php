@@ -34,18 +34,57 @@ class JournalService
         if ($j = $this->alreadyPosted('invoice', $invoice->id)) {
             return $j;
         }
-        $total = (float) $invoice->total_amount;
-        if ($total <= 0) {
+
+        // Load items untuk breakdown DPP, PPN
+        $invoice->load('items');
+
+        // Gunakan tax_amount dari invoice untuk PPN
+        $ppn = (float) ($invoice->tax_amount ?? 0);
+        
+        // DPP adalah subtotal (total amount - tax)
+        $dpp = (float) $invoice->subtotal;
+        
+        // Jika subtotal kosong, hitung dari items
+        if ($dpp == 0) {
+            foreach ($invoice->items as $item) {
+                $dpp += $item->amount;
+            }
+        }
+
+        $totalReceivable = $invoice->total_amount;
+
+        if ($totalReceivable <= 0) {
             throw new InvalidArgumentException('Total invoice 0');
         }
 
         $ar = $this->map('ar');
         $revenue = $this->map('revenue');
+        $vatOut = $this->map('vat_out');
 
-        $lines = [
-            ['account_code' => $ar, 'debit' => $total, 'credit' => 0, 'desc' => 'Piutang Invoice '.$invoice->invoice_number, 'customer_id' => $invoice->customer_id],
-            ['account_code' => $revenue, 'debit' => 0, 'credit' => $total, 'desc' => 'Pendapatan Invoice '.$invoice->invoice_number, 'customer_id' => $invoice->customer_id],
-        ];
+        $lines = [];
+
+        // Dr. Piutang Usaha (total yang akan diterima dari customer)
+        $lines[] = ['account_code' => $ar, 'debit' => $totalReceivable, 'credit' => 0, 'desc' => 'Piutang Invoice '.$invoice->invoice_number, 'customer_id' => $invoice->customer_id];
+
+        // Cr. Pendapatan (DPP)
+        $lines[] = ['account_code' => $revenue, 'debit' => 0, 'credit' => $dpp, 'desc' => 'Pendapatan Invoice '.$invoice->invoice_number, 'customer_id' => $invoice->customer_id];
+
+        // Cr. PPN Keluaran (jika ada PPN)
+        if ($ppn > 0) {
+            $lines[] = ['account_code' => $vatOut, 'debit' => 0, 'credit' => $ppn, 'desc' => 'PPN Keluaran Invoice '.$invoice->invoice_number, 'customer_id' => $invoice->customer_id];
+        }
+
+        \Log::info('Invoice Journal Breakdown', [
+            'invoice_id' => $invoice->id,
+            'invoice_number' => $invoice->invoice_number,
+            'total_amount' => $invoice->total_amount,
+            'subtotal' => $invoice->subtotal,
+            'tax_amount' => $invoice->tax_amount,
+            'dpp' => $dpp,
+            'ppn' => $ppn,
+            'total_receivable' => $totalReceivable,
+            'lines' => $lines
+        ]);
 
         $journal = $this->posting->postGeneral([
             'journal_date' => $invoice->invoice_date->toDateString(),
@@ -96,11 +135,30 @@ class JournalService
             return $j;
         }
 
-        // Breakdown: DPP, PPN, PPh 23
-        $dpp = (float) ($bill->dpp ?? $bill->total_amount);
-        $ppn = (float) ($bill->ppn ?? 0);
-        $pph23 = (float) ($bill->pph23 ?? 0);
-        $netPayable = $dpp + $ppn - $pph23; // Total yang harus dibayar
+        // Load items untuk breakdown DPP, PPN, PPh 23
+        $bill->load('items');
+
+        $dpp = 0;
+        $ppn = 0;
+        $pph23 = 0;
+
+        // Hitung dari items
+        foreach ($bill->items as $item) {
+            $desc = strtolower($item->description);
+            if (str_contains($desc, 'ppn')) {
+                $ppn += $item->subtotal;
+            } elseif (str_contains($desc, 'pph') || str_contains($desc, 'pph23')) {
+                // PPh23 disimpan sebagai negatif, ambil nilai absolutnya untuk jurnal
+                $pph23 += abs($item->subtotal);
+            } else {
+                // DPP adalah semua item selain PPN dan PPh
+                $dpp += $item->subtotal;
+            }
+        }
+
+        // Total payable = total_amount dari vendor bill
+        // atau hitung manual: DPP + PPN - PPh23
+        $netPayable = $bill->total_amount;
 
         $ap = $this->map('ap');
         $lines = [];
@@ -132,6 +190,17 @@ class JournalService
 
         // Cr Hutang Usaha (net payable)
         $lines[] = ['account_code' => $ap, 'debit' => 0, 'credit' => $netPayable, 'desc' => 'Hutang vendor bill '.$bill->vendor_bill_number, 'vendor_id' => $bill->vendor_id];
+
+        \Log::info('Vendor Bill Journal Breakdown', [
+            'vendor_bill_id' => $bill->id,
+            'vendor_bill_number' => $bill->vendor_bill_number,
+            'total_amount' => $bill->total_amount,
+            'dpp' => $dpp,
+            'ppn' => $ppn,
+            'pph23' => $pph23,
+            'net_payable' => $netPayable,
+            'lines' => $lines
+        ]);
 
         return $this->posting->postGeneral([
             'journal_date' => $bill->bill_date->toDateString(),
@@ -267,17 +336,45 @@ class JournalService
         ], $lines);
     }
 
-    protected function reversePrepaidsForInvoice(Invoice $invoice): void
+    /**
+     * Unpost invoice (delete journal) if period is open.
+     */
+    public function unpostInvoice(Invoice $invoice): bool
     {
-        // Ambil transport terkait invoice ini
-        if (! $invoice->relationLoaded('transport')) {
-            $invoice->load('transport.shipmentLegs.vendorBill');
+        $journal = Journal::where('source_type', 'invoice')
+            ->where('source_id', $invoice->id)
+            ->first();
+
+        if (! $journal) {
+            return true; // Already unposted
         }
 
-        $transport = $invoice->transport;
-        if (! $transport) {
+        // Check period status
+        if ($journal->period && $journal->period->status !== 'open') {
+            throw new \Exception("Tidak dapat melakukan unpost karena periode akuntansi {$journal->period->month}/{$journal->period->year} sudah ditutup (Status: {$journal->period->status}).");
+        }
+
+        // Delete journal lines first (if cascade not set)
+        $journal->lines()->delete();
+        
+        // Delete journal
+        $journal->delete();
+
+        return true;
+    }
+
+    protected function reversePrepaidsForInvoice(Invoice $invoice): void
+    {
+        // Ambil transport IDs dari items
+        $transportIds = $invoice->items()->whereNotNull('transport_id')->pluck('transport_id')->unique();
+        
+        if ($transportIds->isEmpty()) {
             return;
         }
+
+        $transports = Transport::with('shipmentLegs.vendorBill')->whereIn('id', $transportIds)->get();
+
+        foreach ($transports as $transport) {
 
         // Ambil semua shipment legs yang terkait transport ini
         $legs = $transport->shipmentLegs ?? collect();
@@ -336,6 +433,7 @@ class JournalService
                 // Log error but don't fail the transaction
                 \Log::warning('Failed to reverse prepaid for invoice '.$invoice->invoice_number.': '.$e->getMessage());
             }
+        }
         }
     }
 }

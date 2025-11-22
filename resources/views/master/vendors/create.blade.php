@@ -14,7 +14,7 @@
                         Kembali
                     </x-button>
                     <div>
-                        <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">{{ isset($vendor) ? 'Edit Vendor' : 'Tambah Vendor' }}</h1>
+                        <div class="text-2xl font-bold text-slate-900 dark:text-slate-100">{{ isset($vendor) ? 'Edit Vendor' : 'Tambah Vendor' }}</div>
                         <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">{{ isset($vendor) ? 'Update informasi vendor' : 'Lengkapi informasi vendor baru' }}</p>
                     </div>
                 </div>
@@ -27,40 +27,40 @@
         @if(isset($vendor))
             @method('PUT')
         @endif
-        
+
         {{-- Form Card --}}
         <x-card title="Data Vendor" subtitle="Lengkapi informasi vendor baru">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <x-input 
-                    name="name" 
-                    label="Nama Vendor" 
+                <x-input
+                    name="name"
+                    label="Nama Vendor"
                     :value="old('name', $vendor->name ?? '')"
                     :error="$errors->first('name')"
                     :required="true"
                     placeholder="Masukkan nama vendor"
                 />
-                
-                <x-input 
-                    name="phone" 
-                    label="Nomor Telepon" 
+
+                <x-input
+                    name="phone"
+                    label="Nomor Telepon"
                     type="tel"
                     :value="old('phone', $vendor->phone ?? '')"
                     :error="$errors->first('phone')"
                     :required="true"
                     placeholder="Contoh: 0812-3456-7890"
                 />
-                
-                <x-input 
-                    name="email" 
-                    label="Email" 
+
+                <x-input
+                    name="email"
+                    label="Email"
                     type="email"
                     :value="old('email', $vendor->email ?? '')"
                     :error="$errors->first('email')"
                     placeholder="email@example.com"
                 />
-                
-                <x-select 
-                    name="vendor_type" 
+
+                <x-select
+                    name="vendor_type"
                     label="Tipe Vendor"
                     :error="$errors->first('vendor_type')"
                     :required="true"
@@ -73,39 +73,39 @@
                     <option value="asuransi" @selected(old('vendor_type', $vendor->vendor_type ?? '')=='asuransi')>Asuransi</option>
                     <option value="other" @selected(old('vendor_type', $vendor->vendor_type ?? '')=='other')>Lainnya</option>
                 </x-select>
-                
-                <x-input 
-                    name="pic_name" 
-                    label="Nama PIC" 
+
+                <x-input
+                    name="pic_name"
+                    label="Nama PIC"
                     :value="old('pic_name', $vendor->pic_name ?? '')"
                     :error="$errors->first('pic_name')"
                     placeholder="Nama person in charge"
                 />
-                
-                <x-input 
-                    name="pic_phone" 
-                    label="No. Telp PIC" 
+
+                <x-input
+                    name="pic_phone"
+                    label="No. Telp PIC"
                     type="tel"
                     :value="old('pic_phone', $vendor->pic_phone ?? '')"
                     :error="$errors->first('pic_phone')"
                     placeholder="Nomor telepon PIC"
                 />
-                
-                <x-input 
-                    name="pic_email" 
-                    label="Email PIC" 
+
+                <x-input
+                    name="pic_email"
+                    label="Email PIC"
                     type="email"
                     :value="old('pic_email', $vendor->pic_email ?? '')"
                     :error="$errors->first('pic_email')"
                     placeholder="Email PIC"
                 />
-                
+
                 <div class="md:col-span-2">
                     <label class="flex items-center gap-3 p-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 cursor-pointer transition-colors">
-                        <input 
-                            type="checkbox" 
-                            name="is_active" 
-                            value="1" 
+                        <input
+                            type="checkbox"
+                            name="is_active"
+                            value="1"
                             @checked(old('is_active', $vendor->is_active ?? true))
                             class="w-5 h-5 rounded border-slate-300 dark:border-slate-600 text-indigo-600 focus:ring-2 focus:ring-indigo-500"
                         >
@@ -116,10 +116,10 @@
                     </label>
                 </div>
             </div>
-            
+
             <div class="mt-6">
-                <x-textarea 
-                    name="address" 
+                <x-textarea
+                    name="address"
                     label="Alamat Lengkap"
                     :error="$errors->first('address')"
                     :rows="4"
@@ -149,49 +149,49 @@
                     <div class="bank-account-item bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
                         <input type="hidden" name="bank_accounts[{{ $index }}][id]" value="{{ $account->id }}">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <x-input 
-                                name="bank_accounts[{{ $index }}][bank_name]" 
-                                label="Nama Bank" 
+                            <x-input
+                                name="bank_accounts[{{ $index }}][bank_name]"
+                                label="Nama Bank"
                                 :value="$account->bank_name"
                                 :required="true"
                                 placeholder="Contoh: BCA, Mandiri, BNI"
                             />
-                            <x-input 
-                                name="bank_accounts[{{ $index }}][account_number]" 
-                                label="Nomor Rekening" 
+                            <x-input
+                                name="bank_accounts[{{ $index }}][account_number]"
+                                label="Nomor Rekening"
                                 :value="$account->account_number"
                                 :required="true"
                                 placeholder="Masukkan nomor rekening"
                             />
-                            <x-input 
-                                name="bank_accounts[{{ $index }}][account_holder_name]" 
-                                label="Nama Pemilik Rekening" 
+                            <x-input
+                                name="bank_accounts[{{ $index }}][account_holder_name]"
+                                label="Nama Pemilik Rekening"
                                 :value="$account->account_holder_name"
                                 :required="true"
                                 placeholder="Nama sesuai rekening"
                             />
-                            <x-input 
-                                name="bank_accounts[{{ $index }}][branch]" 
-                                label="Cabang (Opsional)" 
+                            <x-input
+                                name="bank_accounts[{{ $index }}][branch]"
+                                label="Cabang (Opsional)"
                                 :value="$account->branch ?? ''"
                                 placeholder="Nama cabang bank"
                             />
                             <div class="md:col-span-2 flex items-center gap-4">
                                 <label class="flex items-center gap-2">
-                                    <input 
-                                        type="checkbox" 
-                                        name="bank_accounts[{{ $index }}][is_primary]" 
-                                        value="1" 
+                                    <input
+                                        type="checkbox"
+                                        name="bank_accounts[{{ $index }}][is_primary]"
+                                        value="1"
                                         @checked($account->is_primary)
                                         class="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-indigo-600 focus:ring-2 focus:ring-indigo-500"
                                     >
                                     <span class="text-sm text-slate-700 dark:text-slate-300">Rekening Utama</span>
                                 </label>
                                 <label class="flex items-center gap-2">
-                                    <input 
-                                        type="checkbox" 
-                                        name="bank_accounts[{{ $index }}][is_active]" 
-                                        value="1" 
+                                    <input
+                                        type="checkbox"
+                                        name="bank_accounts[{{ $index }}][is_active]"
+                                        value="1"
                                         @checked($account->is_active)
                                         class="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-green-600 focus:ring-2 focus:ring-green-500"
                                     >
@@ -237,68 +237,68 @@ let bankAccountIndex = {{ isset($vendor) ? $vendor->bankAccounts->count() : 0 }}
 function addBankAccount() {
     const container = document.getElementById('bank-accounts-container');
     const noAccountsMsg = document.getElementById('no-accounts-message');
-    
+
     if (noAccountsMsg) {
         noAccountsMsg.remove();
     }
-    
+
     const template = `
         <div class="bank-account-item bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Nama Bank <span class="text-red-500">*</span></label>
-                    <input 
-                        type="text" 
-                        name="bank_accounts[${bankAccountIndex}][bank_name]" 
+                    <input
+                        type="text"
+                        name="bank_accounts[${bankAccountIndex}][bank_name]"
                         required
                         placeholder="Contoh: BCA, Mandiri, BNI"
-                        class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                        class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Nomor Rekening <span class="text-red-500">*</span></label>
-                    <input 
-                        type="text" 
-                        name="bank_accounts[${bankAccountIndex}][account_number]" 
+                    <input
+                        type="text"
+                        name="bank_accounts[${bankAccountIndex}][account_number]"
                         required
                         placeholder="Masukkan nomor rekening"
-                        class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                        class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Nama Pemilik Rekening <span class="text-red-500">*</span></label>
-                    <input 
-                        type="text" 
-                        name="bank_accounts[${bankAccountIndex}][account_holder_name]" 
+                    <input
+                        type="text"
+                        name="bank_accounts[${bankAccountIndex}][account_holder_name]"
                         required
                         placeholder="Nama sesuai rekening"
-                        class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                        class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Cabang (Opsional)</label>
-                    <input 
-                        type="text" 
-                        name="bank_accounts[${bankAccountIndex}][branch]" 
+                    <input
+                        type="text"
+                        name="bank_accounts[${bankAccountIndex}][branch]"
                         placeholder="Nama cabang bank"
-                        class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                        class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                 </div>
                 <div class="md:col-span-2 flex items-center gap-4">
                     <label class="flex items-center gap-2">
-                        <input 
-                            type="checkbox" 
-                            name="bank_accounts[${bankAccountIndex}][is_primary]" 
-                            value="1" 
+                        <input
+                            type="checkbox"
+                            name="bank_accounts[${bankAccountIndex}][is_primary]"
+                            value="1"
                             class="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-indigo-600 focus:ring-2 focus:ring-indigo-500"
                         >
                         <span class="text-sm text-slate-700 dark:text-slate-300">Rekening Utama</span>
                     </label>
                     <label class="flex items-center gap-2">
-                        <input 
-                            type="checkbox" 
-                            name="bank_accounts[${bankAccountIndex}][is_active]" 
-                            value="1" 
+                        <input
+                            type="checkbox"
+                            name="bank_accounts[${bankAccountIndex}][is_active]"
+                            value="1"
                             checked
                             class="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-green-600 focus:ring-2 focus:ring-green-500"
                         >
@@ -311,7 +311,7 @@ function addBankAccount() {
             </div>
         </div>
     `;
-    
+
     container.insertAdjacentHTML('beforeend', template);
     bankAccountIndex++;
 }
@@ -319,7 +319,7 @@ function addBankAccount() {
 function removeBankAccount(button) {
     const item = button.closest('.bank-account-item');
     const accountId = item.querySelector('input[name*="[id]"]');
-    
+
     if (accountId && accountId.value) {
         // Mark for deletion instead of removing from DOM
         const destroyInput = document.createElement('input');
@@ -332,11 +332,11 @@ function removeBankAccount(button) {
         // New item, just remove from DOM
         item.remove();
     }
-    
+
     // Check if container is empty
     const container = document.getElementById('bank-accounts-container');
     const visibleItems = container.querySelectorAll('.bank-account-item:not([style*="display: none"])');
-    
+
     if (visibleItems.length === 0) {
         const noAccountsMsg = `
             <div id="no-accounts-message" class="text-center py-8 text-slate-500 dark:text-slate-400">

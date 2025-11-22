@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Premium Light App Layout</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-amber-50 text-slate-900 p-8">
+  <div class="max-w-7xl mx-auto">
+    <!-- TOP TITLE -->
+    <header class="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+      <div>
+        <p class="text-xs font-semibold tracking-[0.35em] text-slate-500 uppercase">UI SYSTEM</p>
+        <h1 class="text-3xl md:text-4xl font-bold tracking-tight bg-gradient-to-r from-indigo-700 via-purple-600 to-amber-500 bg-clip-text text-transparent">
+          Premium Light Layout – Sidebar + Header + Content
+        </h1>
+        <p class="text-sm md:text-base text-slate-500 mt-2 max-w-2xl">
+          Template dasar untuk app kamu (POS, TMS, Finance, Owner) dengan tema terang, gradasi mewah,
+          tombol premium, dan layout yang siap di-convert ke Blade.
+        </p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button class="px-3 py-1.5 rounded-full border border-slate-200 bg-white/70 text-xs text-slate-600 shadow-sm backdrop-blur">
+          Mode: <span class="font-semibold">Light</span>
+        </button>
+        <button class="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-semibold text-white shadow-lg bg-gradient-to-r from-indigo-600 via-purple-500 to-amber-400">
+          🚀 Gunakan sebagai Layout Utama
+        </button>
+      </div>
+    </header>
+
+    <!-- APP SHELL -->
+    <div class="rounded-[2rem] border border-slate-200/70 bg-white/80 shadow-[0_24px_60px_rgba(15,23,42,0.18)] overflow-hidden backdrop-blur-sm flex h-[520px]">
+      <!-- SIDEBAR -->
+      <aside class="w-72 shrink-0 bg-gradient-to-b from-indigo-600 via-purple-600 to-amber-400 text-slate-50 relative">
+        <!-- Glow overlay -->
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.22),_transparent_60%),_radial-gradient(circle_at_bottom,_rgba(15,23,42,0.45),_transparent_60%)] mix-blend-soft-light pointer-events-none"></div>
+
+        <div class="relative flex flex-col h-full">
+          <!-- Brand / Logo -->
+          <div class="px-5 pt-5 pb-4 flex items-center gap-3">
+            <div class="h-10 w-10 rounded-2xl bg-white/10 border border-white/30 flex items-center justify-center shadow-lg">
+              <span class="text-lg font-bold tracking-tight">DP</span>
+            </div>
+            <div class="leading-tight">
+              <p class="text-[10px] uppercase tracking-[0.25em] text-indigo-100/80">PT. Dua Putra Sekincau</p>
+              <p class="text-sm font-semibold">Backoffice Suite</p>
+            </div>
+          </div>
+
+          <!-- Nav Pills -->
+          <nav class="px-3 pb-3 space-y-1 text-[13px] relative">
+            <p class="px-2 text-[10px] uppercase tracking-[0.22em] text-indigo-100/70 mb-1">Main Modules</p>
+
+            <!-- Active item -->
+            <button class="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl bg-white text-slate-900 shadow-md shadow-slate-900/20">
+              <span class="h-7 w-7 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-500 flex items-center justify-center text-xs text-white">
+                🏠
+              </span>
+              <div class="flex-1 text-left">
+                <p class="text-[12px] font-semibold leading-tight">Owner / Executive</p>
+                <p class="text-[11px] text-slate-500">Ringkasan seluruh bisnis</p>
+              </div>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-900 text-slate-50">LIVE</span>
+            </button>
+
+            <button class="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl/90 text-slate-50/90 hover:bg-white/8 transition">
+              <span class="h-7 w-7 rounded-xl bg-white/10 flex items-center justify-center text-xs">☕</span>
+              <div class="flex-1 text-left">
+                <p class="text-[12px] font-semibold leading-tight">POS & Resto</p>
+                <p class="text-[11px] text-indigo-100/80">Meja, order, pembayaran</p>
+              </div>
+            </button>
+
+            <button class="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl/90 text-slate-50/90 hover:bg-white/8 transition">
+              <span class="h-7 w-7 rounded-xl bg-white/10 flex items-center justify-center text-xs">🚛</span>
+              <div class="flex-1 text-left">
+                <p class="text-[12px] font-semibold leading-tight">TMS & Armada</p>
+                <p class="text-[11px] text-indigo-100/80">Job order & tracking</p>
+              </div>
+            </button>
+
+            <button class="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl/90 text-slate-50/90 hover:bg-white/8 transition">
+              <span class="h-7 w-7 rounded-xl bg-white/10 flex items-center justify-center text-xs">📊</span>
+              <div class="flex-1 text-left">
+                <p class="text-[12px] font-semibold leading-tight">Finance & Neraca</p>
+                <p class="text-[11px] text-indigo-100/80">Neraca, LR, cashflow</p>
+              </div>
+            </button>
+
+            <p class="px-2 pt-4 text-[10px] uppercase tracking-[0.22em] text-indigo-100/70 mb-1">Utilities</p>
+
+            <button class="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl/90 text-slate-50/90 hover:bg-white/8 transition">
+              <span class="h-7 w-7 rounded-xl bg-white/10 flex items-center justify-center text-xs">⚙️</span>
+              <span class="text-[12px] font-medium">Pengaturan Sistem</span>
+            </button>
+          </nav>
+
+          <!-- User / Footer -->
+          <div class="mt-auto px-4 pb-4 pt-3 border-t border-white/15 flex items-center justify-between text-[11px] text-indigo-50/90">
+            <div class="flex items-center gap-2">
+              <div class="h-7 w-7 rounded-full bg-white/15 border border-white/40 flex items-center justify-center text-[11px] font-semibold">
+                JR
+              </div>
+              <div class="leading-tight">
+                <p class="font-medium">Junir</p>
+                <p class="text-[10px] text-indigo-100/80">Super Admin</p>
+              </div>
+            </div>
+            <button class="px-2.5 py-1 rounded-2xl bg-white/10 border border-white/25 text-[10px] font-medium hover:bg-white/20 transition">
+              Logout
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- MAIN CONTENT AREA -->
+      <main class="flex-1 bg-gradient-to-br from-slate-50 via-white to-amber-50 p-6 flex flex-col">
+        <!-- Top bar -->
+        <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
+          <div>
+            <p class="text-[11px] uppercase tracking-[0.28em] text-slate-400">Owner / Executive</p>
+            <h2 class="text-xl md:text-2xl font-semibold tracking-tight text-slate-900">
+              Ringkasan Bisnis Konsolidasi
+            </h2>
+            <p class="text-xs text-slate-500 mt-1">
+              Periode: <span class="font-medium text-slate-700">Jan – Des 2025</span> · Semua cabang & unit usaha
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 text-xs">
+            <button class="px-3 py-1.5 rounded-2xl border border-slate-200 bg-white/80 text-slate-700 shadow-sm">
+              📅 Jan – Des 2025
+            </button>
+            <button class="px-3 py-1.5 rounded-2xl border border-slate-200 bg-white/80 text-slate-700 shadow-sm">
+              🏷 Semua Cabang
+            </button>
+            <button class="px-4 py-1.5 rounded-2xl text-xs font-semibold text-white shadow-md bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-500">
+              ⬇ Export Laporan
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI CARDS -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 text-sm">
+          <!-- Card 1 -->
+          <div class="relative rounded-2xl border border-amber-100/80 bg-gradient-to-br from-white via-amber-50/70 to-amber-100/40 shadow-sm overflow-hidden">
+            <div class="absolute -top-6 -right-8 h-20 w-20 rounded-full bg-amber-300/40 blur-2xl"></div>
+            <div class="p-4 relative">
+              <p class="text-[11px] text-amber-700/90 font-semibold tracking-wide">Pendapatan Bersih (YTD)</p>
+              <p class="mt-1 text-2xl font-bold text-slate-900">Rp 12,4 M</p>
+              <p class="mt-1 text-[11px] text-emerald-700 font-medium">▲ 18,3% vs tahun lalu</p>
+            </div>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="relative rounded-2xl border border-indigo-100 bg-gradient-to-br from-white via-indigo-50/60 to-slate-50 shadow-sm overflow-hidden">
+            <div class="absolute -bottom-6 -left-6 h-20 w-20 rounded-full bg-indigo-300/40 blur-2xl"></div>
+            <div class="p-4 relative">
+              <p class="text-[11px] text-indigo-700/90 font-semibold tracking-wide">Margin Kotor</p>
+              <p class="mt-1 text-2xl font-bold text-slate-900">32,7%</p>
+              <p class="mt-1 text-[11px] text-slate-500">Target: &gt; 30% · Status: <span class="text-emerald-600 font-medium">On Track</span></p>
+            </div>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="relative rounded-2xl border border-emerald-100 bg-gradient-to-br from-white via-emerald-50/60 to-slate-50 shadow-sm overflow-hidden">
+            <div class="absolute -top-6 -left-4 h-20 w-20 rounded-full bg-emerald-300/40 blur-2xl"></div>
+            <div class="p-4 relative">
+              <p class="text-[11px] text-emerald-700/90 font-semibold tracking-wide">Posisi Kas & Bank</p>
+              <p class="mt-1 text-2xl font-bold text-slate-900">Rp 2,1 M</p>
+              <p class="mt-1 text-[11px] text-slate-500">Termasuk semua rekening operasional & cadangan</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- LOWER SECTION: TABLE + SIDE SUMMARY -->
+        <div class="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4 text-sm">
+          <!-- Table -->
+          <div class="lg:col-span-2 rounded-2xl border border-slate-200 bg-white/90 shadow-sm overflow-hidden">
+            <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+              <p class="text-[12px] font-semibold text-slate-800">Performa Cabang Teratas</p>
+              <button class="px-2.5 py-1 rounded-xl border border-slate-200 text-[11px] text-slate-600 bg-slate-50 hover:bg-slate-100">
+                Lihat semua
+              </button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full text-xs">
+                <thead class="bg-slate-50 text-slate-500 border-b border-slate-100">
+                  <tr>
+                    <th class="text-left font-medium px-4 py-2">Cabang</th>
+                    <th class="text-right font-medium px-4 py-2">Pendapatan</th>
+                    <th class="text-right font-medium px-4 py-2">Margin</th>
+                    <th class="text-right font-medium px-4 py-2">Trend</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border-b border-slate-100">
+                    <td class="px-4 py-2 text-slate-700">DPS Lampung</td>
+                    <td class="px-4 py-2 text-right font-medium">Rp 4,8 M</td>
+                    <td class="px-4 py-2 text-right text-emerald-600">34,2%</td>
+                    <td class="px-4 py-2 text-right text-[11px] text-emerald-600">▲ Stabil</td>
+                  </tr>
+                  <tr class="border-b border-slate-100 bg-slate-50/60">
+                    <td class="px-4 py-2 text-slate-700">DPS Jakarta</td>
+                    <td class="px-4 py-2 text-right font-medium">Rp 3,1 M</td>
+                    <td class="px-4 py-2 text-right text-emerald-600">31,4%</td>
+                    <td class="px-4 py-2 text-right text-[11px] text-emerald-600">▲ Naik</td>
+                  </tr>
+                  <tr>
+                    <td class="px-4 py-2 text-slate-700">DPS Surabaya</td>
+                    <td class="px-4 py-2 text-right font-medium">Rp 2,5 M</td>
+                    <td class="px-4 py-2 text-right text-amber-600">29,1%</td>
+                    <td class="px-4 py-2 text-right text-[11px] text-amber-600">■ Waspada</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Side summary / actions -->
+          <div class="rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-indigo-50 shadow-sm p-4 flex flex-col gap-3">
+            <p class="text-[12px] font-semibold text-slate-800">Quick Actions</p>
+
+            <button class="w-full flex items-center justify-between px-3 py-2.5 rounded-2xl text-[12px] font-medium text-slate-900 bg-gradient-to-r from-indigo-500 via-purple-500 to-amber-400 text-white shadow-md">
+              <span>Generate Laporan Owner</span>
+              <span class="text-[11px] bg-white/20 px-2 py-0.5 rounded-full">PDF</span>
+            </button>
+
+            <button class="w-full flex items-center justify-between px-3 py-2.5 rounded-2xl text-[12px] font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50">
+              <span>Sync Data POS & Resto</span>
+              <span class="text-[11px] text-emerald-600">Up to date</span>
+            </button>
+
+            <button class="w-full flex items-center justify-between px-3 py-2.5 rounded-2xl text-[12px] font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50">
+              <span>Review Cashflow Bulanan</span>
+              <span class="text-[11px] text-slate-500">Last: 3 hari lalu</span>
+            </button>
+
+            <div class="mt-1 p-3 rounded-2xl bg-white/80 border border-dashed border-slate-300 text-[11px] text-slate-600">
+              <p class="font-medium mb-1 text-slate-800">Catatan untuk Dev:</p>
+              <ul class="list-disc list-inside space-y-0.5">
+                <li>Sidebar, header, dan cards ini bisa dijadikan <strong>layout base</strong>.</li>
+                <li>Ganti dummy angka dengan binding data Laravel (mis: <code>$metrics</code>).</li>
+                <li>Split menjadi komponen: <code>layouts/app.blade.php</code>, <code>partials/sidebar.blade.php</code>.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+    <!-- =================================================================== -->
+    <!-- VARIAN 2 – POS & RESTO (LIGHT LATTE)                               -->
+    <!-- =================================================================== -->
+    <section class="mt-10">
+      <div class="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <p class="text-[11px] uppercase tracking-[0.28em] text-slate-400">POS & Resto</p>
+          <h2 class="text-lg md:text-xl font-semibold tracking-tight text-slate-900">
+            Layout POS – Kasir & Meja (Latte Theme)
+          </h2>
+          <p class="text-xs text-slate-500 mt-1">Nuansa krem kopi, cocok untuk kasir resto dan coffee shop.</p>
+        </div>
+      </div>
+
+      <div class="rounded-[1.75rem] border border-amber-100/70 bg-gradient-to-r from-amber-50 via-white to-orange-50 shadow-[0_18px_45px_rgba(148,87,39,0.18)] overflow-hidden flex h-[420px]">
+        <!-- SIDEBAR POS -->
+        <aside class="w-64 shrink-0 bg-gradient-to-b from-amber-500 via-amber-400 to-orange-300 text-brown-950 relative">
+          <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.28),_transparent_60%)] mix-blend-soft-light pointer-events-none"></div>
+          <div class="relative flex flex-col h-full">
+            <div class="px-4 pt-4 pb-3 flex items-center justify-between">
+              <div>
+                <p class="text-[10px] uppercase tracking-[0.2em] text-amber-100/90">Tomorrow Coffee</p>
+                <p class="text-sm font-semibold text-brown-900">Kasir Resto</p>
+              </div>
+              <span class="px-2 py-1 rounded-full text-[10px] bg-brown-900/90 text-amber-100">Shift A</span>
+            </div>
+
+            <nav class="px-3 pb-3 space-y-1 text-[13px]">
+              <button class="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-2xl bg-white text-brown-900 shadow-md">
+                <span class="flex items-center gap-2">
+                  <span class="h-6 w-6 rounded-xl bg-amber-500 text-[11px] flex items-center justify-center text-white">⏱</span>
+                  <span class="text-[12px] font-semibold">Kasir</span>
+                </span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">ACTIVE</span>
+              </button>
+              <button class="w-full flex items-center gap-2 px-3 py-2.5 rounded-2xl/90 text-amber-50/95 hover:bg-white/10 transition">
+                <span class="h-6 w-6 rounded-xl bg-white/15 text-[11px] flex items-center justify-center">🍽</span>
+                <span class="text-[12px] font-medium">Meja & Antrian</span>
+              </button>
+              <button class="w-full flex items-center gap-2 px-3 py-2.5 rounded-2xl/90 text-amber-50/95 hover:bg-white/10 transition">
+                <span class="h-6 w-6 rounded-xl bg-white/15 text-[11px] flex items-center justify-center">📜</span>
+                <span class="text-[12px] font-medium">Daftar Menu</span>
+              </button>
+              <button class="w-full flex items-center gap-2 px-3 py-2.5 rounded-2xl/90 text-amber-50/95 hover:bg-white/10 transition">
+                <span class="h-6 w-6 rounded-xl bg-white/15 text-[11px] flex items-center justify-center">🎟</span>
+                <span class="text-[12px] font-medium">Promo & Voucher</span>
+              </button>
+            </nav>
+
+            <div class="mt-auto px-4 pb-4 pt-3 border-t border-amber-200/60 flex items-center justify-between text-[11px] text-amber-50/95">
+              <span>Kasir: Rina</span>
+              <span class="flex items-center gap-1">
+                <span class="h-2 w-2 rounded-full bg-emerald-300"></span>
+                Online
+              </span>
+            </div>
+          </div>
+        </aside>
+
+        <!-- MAIN POS -->
+        <main class="flex-1 bg-gradient-to-br from-amber-50 via-white to-amber-50 p-5 flex flex-col">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4 text-xs">
+            <div>
+              <p class="text-[11px] uppercase tracking-[0.24em] text-amber-700/80">Kasir</p>
+              <p class="text-sm font-semibold text-slate-900">Meja 12 · Dine In</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button class="px-3 py-1.5 rounded-2xl border border-amber-200 bg-white text-amber-800 font-medium">Tahan Bill</button>
+              <button class="px-4 py-1.5 rounded-2xl text-xs font-semibold text-white shadow-md bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-500">Bayar (QRIS)</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1 text-xs">
+            <div class="md:col-span-2 rounded-2xl border border-amber-100 bg-white/90 shadow-sm p-3 flex flex-col">
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-[11px] text-slate-500">Item Pesanan</p>
+                <p class="text-[11px] text-slate-400">#ORD-1023</p>
+              </div>
+              <div class="space-y-1.5 text-[12px]">
+                <div class="flex items-center justify-between">
+                  <span>Nasi Uduk Komplit</span>
+                  <span class="font-semibold">Rp 25.000</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span>Dimsum Ayam (4 pcs)</span>
+                  <span class="font-semibold">Rp 18.000</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span>Es Kopi Susu Aren</span>
+                  <span class="font-semibold">Rp 20.000</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="rounded-2xl border border-amber-100 bg-gradient-to-br from-white via-amber-50 to-orange-50 shadow-sm p-3 flex flex-col justify-between">
+              <div>
+                <p class="text-[11px] text-slate-500 mb-1">Ringkasan Pembayaran</p>
+                <div class="flex items-center justify-between text-[12px] mb-1">
+                  <span>Subtotal</span>
+                  <span>Rp 63.000</span>
+                </div>
+                <div class="flex items-center justify-between text-[12px] mb-1">
+                  <span>Service 5%</span>
+                  <span>Rp 3.150</span>
+                </div>
+                <div class="flex items-center justify-between text-[12px] font-semibold border-t border-amber-100 mt-1 pt-1">
+                  <span>Total</span>
+                  <span>Rp 66.150</span>
+                </div>
+              </div>
+              <p class="text-[11px] text-amber-700/80 mt-1">Pilih metode pembayaran lalu konfirmasi di kasir.</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- VARIAN 3 – TMS / ARMADA (LIGHT ICE CYAN)                            -->
+    <!-- =================================================================== -->
+    <section class="mt-10">
+      <div class="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <p class="text-[11px] uppercase tracking-[0.28em] text-slate-400">TMS & Armada</p>
+          <h2 class="text-lg md:text-xl font-semibold tracking-tight text-slate-900">
+            Layout TMS – Monitoring Armada (Ice Cyan)
+          </h2>
+          <p class="text-xs text-slate-500 mt-1">Tema dingin biru–cyan untuk fokus monitoring perjalanan.</p>
+        </div>
+      </div>
+
+      <div class="rounded-[1.75rem] border border-sky-100/80 bg-gradient-to-r from-sky-50 via-white to-cyan-50 shadow-[0_18px_45px_rgba(12,74,110,0.16)] overflow-hidden flex h-[420px]">
+        <!-- SIDEBAR TMS -->
+        <aside class="w-64 shrink-0 bg-gradient-to-b from-sky-600 via-cyan-600 to-slate-800 text-slate-50 relative">
+          <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.22),_transparent_55%),_radial-gradient(circle_at_bottom,_rgba(15,23,42,0.55),_transparent_60%)] mix-blend-soft-light pointer-events-none"></div>
+          <div class="relative flex flex-col h-full">
+            <div class="px-4 pt-4 pb-3 flex items-center justify-between">
+              <div>
+                <p class="text-[10px] uppercase tracking-[0.2em] text-sky-100/90">Transportation</p>
+                <p class="text-sm font-semibold">TMS Dashboard</p>
+              </div>
+              <span class="px-2 py-1 rounded-full text-[10px] bg-slate-900/90 text-sky-100">Live</span>
+            </div>
+
+            <nav class="px-3 pb-3 space-y-1 text-[13px]">
+              <button class="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-2xl bg-white text-slate-900 shadow-md">
+                <span class="flex items-center gap-2">
+                  <span class="h-6 w-6 rounded-xl bg-sky-500 text-[11px] flex items-center justify-center text-white">🛰</span>
+                  <span class="text-[12px] font-semibold">Monitoring Armada</span>
+                </span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-900 text-slate-50">LIVE</span>
+              </button>
+              <button class="w-full flex items-center gap-2 px-3 py-2.5 rounded-2xl/90 text-slate-50/95 hover:bg-white/10 transition">
+                <span class="h-6 w-6 rounded-xl bg-white/15 text-[11px] flex items-center justify-center">📄</span>
+                <span class="text-[12px] font-medium">Job Order</span>
+              </button>
+              <button class="w-full flex items-center gap-2 px-3 py-2.5 rounded-2xl/90 text-slate-50/95 hover:bg-white/10 transition">
+                <span class="h-6 w-6 rounded-xl bg-white/15 text-[11px] flex items-center justify-center">🚚</span>
+                <span class="text-[12px] font-medium">Armada Internal</span>
+              </button>
+              <button class="w-full flex items-center gap-2 px-3 py-2.5 rounded-2xl/90 text-slate-50/95 hover:bg-white/10 transition">
+                <span class="h-6 w-6 rounded-xl bg-white/15 text-[11px] flex items-center justify-center">🤝</span>
+                <span class="text-[12px] font-medium">Vendor Eksternal</span>
+              </button>
+            </nav>
+
+            <div class="mt-auto px-4 pb-4 pt-3 border-t border-sky-200/60 flex items-center justify-between text-[11px] text-sky-50/95">
+              <span>Dispatcher: Dimas</span>
+              <span class="flex items-center gap-1">
+                <span class="h-2 w-2 rounded-full bg-emerald-300"></span>
+                Semua normal
+              </span>
+            </div>
+          </div>
+        </aside>
+
+        <!-- MAIN TMS -->
+        <main class="flex-1 bg-gradient-to-br from-sky-50 via-white to-cyan-50 p-5 flex flex-col">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4 text-xs">
+            <div>
+              <p class="text-[11px] uppercase tracking-[0.24em] text-sky-700/80">Monitoring</p>
+              <p class="text-sm font-semibold text-slate-900">Perjalanan Armada Hari Ini</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button class="px-3 py-1.5 rounded-2xl border border-sky-200 bg-white text-slate-700 font-medium">Hari ini</button>
+              <button class="px-3 py-1.5 rounded-2xl border border-sky-200 bg-white text-slate-700 font-medium">7 hari</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1 text-xs">
+            <div class="md:col-span-2 rounded-2xl border border-sky-100 bg-white/90 shadow-sm p-3 flex flex-col">
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-[11px] text-slate-500">Job Order Aktif</p>
+                <p class="text-[11px] text-slate-400">Total: 24</p>
+              </div>
+              <div class="space-y-1.5 text-[12px]">
+                <div class="flex items-center justify-between">
+                  <span>#JO-24011 · Jakarta → Lampung (10 Exca)</span>
+                  <span class="text-[11px] text-emerald-600">On Trip</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span>#JO-24012 · Cilegon → Cikarang (5 Crane)</span>
+                  <span class="text-[11px] text-amber-600">Delay ringan</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span>#JO-24013 · Bandar Lampung → Medan (8 Dozer)</span>
+                  <span class="text-[11px] text-sky-600">Loading</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="rounded-2xl border border-sky-100 bg-gradient-to-br from-white via-sky-50 to-cyan-50 shadow-sm p-3 flex flex-col justify-between">
+              <div>
+                <p class="text-[11px] text-slate-500 mb-1">Status Armada</p>
+                <p class="text-[12px] text-slate-700">8 On Trip · 3 Standby · 1 Maintenance</p>
+              </div>
+              <p class="text-[11px] text-sky-700/80 mt-1">Klik salah satu job di daftar untuk melihat detail biaya jalan dan histori.</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- VARIAN 4 – FINANCE (LIGHT EMERALD)                                  -->
+    <!-- =================================================================== -->
+    <section class="mt-10 mb-10">
+      <div class="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <p class="text-[11px] uppercase tracking-[0.28em] text-slate-400">Finance & Accounting</p>
+          <h2 class="text-lg md:text-xl font-semibold tracking-tight text-slate-900">
+            Layout Finance – Neraca & Laba Rugi (Soft Emerald)
+          </h2>
+          <p class="text-xs text-slate-500 mt-1">Tema hijau lembut untuk laporan keuangan yang bersih dan tenang.</p>
+        </div>
+      </div>
+
+      <div class="rounded-[1.75rem] border border-emerald-100/80 bg-gradient-to-r from-emerald-50 via-white to-slate-50 shadow-[0_18px_45px_rgba(6,78,59,0.16)] overflow-hidden flex h-[420px]">
+        <!-- SIDEBAR FINANCE -->
+        <aside class="w-64 shrink-0 bg-gradient-to-b from-emerald-600 via-emerald-500 to-teal-500 text-emerald-50 relative">
+          <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.24),_transparent_55%)] mix-blend-soft-light pointer-events-none"></div>
+          <div class="relative flex flex-col h-full">
+            <div class="px-4 pt-4 pb-3 flex items-center justify-between">
+              <div>
+                <p class="text-[10px] uppercase tracking-[0.2em] text-emerald-100/90">Finance</p>
+                <p class="text-sm font-semibold">Keuangan Konsolidasi</p>
+              </div>
+              <span class="px-2 py-1 rounded-full text-[10px] bg-emerald-900/80 text-emerald-100">Clean</span>
+            </div>
+
+            <nav class="px-3 pb-3 space-y-1 text-[13px]">
+              <button class="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-2xl bg-white text-slate-900 shadow-md">
+                <span class="flex items-center gap-2">
+                  <span class="h-6 w-6 rounded-xl bg-emerald-500 text-[11px] flex items-center justify-center text-white">📘</span>
+                  <span class="text-[12px] font-semibold">Neraca</span>
+                </span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-900 text-slate-50">Live</span>
+              </button>
+              <button class="w-full flex items-center gap-2 px-3 py-2.5 rounded-2xl/90 text-emerald-50/95 hover:bg-white/10 transition">
+                <span class="h-6 w-6 rounded-xl bg-white/15 text-[11px] flex items-center justify-center">📗</span>
+                <span class="text-[12px] font-medium">Laba Rugi</span>
+              </button>
+              <button class="w-full flex items-center gap-2 px-3 py-2.5 rounded-2xl/90 text-emerald-50/95 hover:bg:white/10 transition">
+                <span class="h-6 w-6 rounded-xl bg-white/15 text-[11px] flex items-center justify-center">💧</span>
+                <span class="text-[12px] font-medium">Arus Kas</span>
+              </button>
+              <button class="w-full flex items-center gap-2 px-3 py-2.5 rounded-2xl/90 text-emerald-50/95 hover:bg-white/10 transition">
+                <span class="h-6 w-6 rounded-xl bg-white/15 text-[11px] flex items-center justify-center">💼</span>
+                <span class="text-[12px] font-medium">Kas & Bank</span>
+              </button>
+            </nav>
+
+            <div class="mt-auto px-4 pb-4 pt-3 border-t border-emerald-200/60 flex items-center justify-between text-[11px] text-emerald-50/95">
+              <span>Last Close: 31 Des 2025</span>
+              <span class="flex items-center gap-1">
+                <span class="h-2 w-2 rounded-full bg-emerald-300"></span>
+                Balanced
+              </span>
+            </div>
+          </div>
+        </aside>
+
+        <!-- MAIN FINANCE -->
+        <main class="flex-1 bg-gradient-to-br from-emerald-50 via-white to-slate-50 p-5 flex flex-col">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4 text-xs">
+            <div>
+              <p class="text-[11px] uppercase tracking-[0.24em] text-emerald-700/80">Ringkasan Keuangan</p>
+              <p class="text-sm font-semibold text-slate-900">Neraca Konsolidasi · Jan – Des 2025</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button class="px-3 py-1.5 rounded-2xl border border-emerald-200 bg-white text-slate-700 font-medium">Perusahaan Grup</button>
+              <button class="px-4 py-1.5 rounded-2xl text-xs font-semibold text-white shadow-md bg-gradient-to-r from-emerald-500 to-teal-500">Export Laporan</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1 text-xs">
+            <div class="rounded-2xl border border-emerald-100 bg-white/90 shadow-sm p-3">
+              <p class="text-[11px] text-slate-500 mb-1">Total Aset</p>
+              <p class="text-xl font-bold text-emerald-700">Rp 24,7 M</p>
+              <p class="text-[11px] text-emerald-700/80 mt-1">Naik 12,2% vs tahun lalu</p>
+            </div>
+            <div class="rounded-2xl border border-emerald-100 bg-white/90 shadow-sm p-3">
+              <p class="text-[11px] text-slate-500 mb-1">Total Liabilitas</p>
+              <p class="text-xl font-bold text-slate-800">Rp 9,3 M</p>
+              <p class="text-[11px] text-slate-500 mt-1">Rasio Hutang 37,6%</p>
+            </div>
+            <div class="rounded-2xl border border-emerald-100 bg-white/90 shadow-sm p-3">
+              <p class="text-[11px] text-slate-500 mb-1">Ekuitas</p>
+              <p class="text-xl font-bold text-emerald-700">Rp 15,4 M</p>
+              <p class="text-[11px] text-emerald-700/80 mt-1">Sehat · Di atas target</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    </section>
+  </div>
+    <!-- =================================================================== -->
+    <!-- VARIAN 5 – NEUTRAL SAAS (LIGHT SLATE)                               -->
+    <!-- =================================================================== -->
+    <section class="mt-10 mb-16">
+      <div class="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <p class="text-[11px] uppercase tracking-[0.28em] text-slate-400">Universal Layout</p>
+          <h2 class="text-lg md:text-xl font-semibold tracking-tight text-slate-900">
+            Layout Netral – Gaya SaaS (Bisa untuk POS, TMS, Finance, Owner)
+          </h2>
+          <p class="text-xs text-slate-500 mt-1 max-w-xl">
+            Versi lebih kalem dan netral: dominan putih–abu, dengan aksen biru lembut. Cocok kalau mau tampilan
+            profesional tanpa terlalu ramai warna.
+          </p>
+        </div>
+      </div>
+
+      <div class="rounded-[1.75rem] border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.12)] overflow-hidden flex h-[420px]">
+        <!-- SIDEBAR NEUTRAL -->
+        <aside class="w-64 shrink-0 bg-slate-900 text-slate-100 flex flex-col">
+          <div class="px-4 pt-4 pb-3 flex items-center gap-2 border-b border-slate-800">
+            <div class="h-8 w-8 rounded-xl bg-slate-800 flex items-center justify-center text-[11px] font-semibold">
+              DP
+            </div>
+            <div class="leading-tight">
+              <p class="text-[10px] uppercase tracking-[0.22em] text-slate-400">Backoffice</p>
+              <p class="text-[12px] font-medium">Dua Putra Sekincau</p>
+            </div>
+          </div>
+
+          <nav class="flex-1 px-3 py-3 space-y-1 text-[13px]">
+            <p class="px-2 text-[10px] uppercase tracking-[0.22em] text-slate-500 mb-1">Modules</p>
+
+            <button class="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl bg-slate-100 text-slate-900">
+              <span class="h-5 w-1.5 rounded-full bg-sky-500"></span>
+              <span class="text-[12px] font-semibold">Dashboard Owner</span>
+            </button>
+            <button class="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-slate-200/90 hover:bg-slate-800/80 transition">
+              <span class="h-1.5 w-1.5 rounded-full bg-slate-500"></span>
+              <span class="text-[12px] font-medium">POS & Resto</span>
+            </button>
+            <button class="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-slate-200/90 hover:bg-slate-800/80 transition">
+              <span class="h-1.5 w-1.5 rounded-full bg-slate-500"></span>
+              <span class="text-[12px] font-medium">TMS & Armada</span>
+            </button>
+            <button class="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-slate-200/90 hover:bg-slate-800/80 transition">
+              <span class="h-1.5 w-1.5 rounded-full bg-slate-500"></span>
+              <span class="text-[12px] font-medium">Finance</span>
+            </button>
+          </nav>
+
+          <div class="mt-auto px-4 pb-4 pt-3 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+            <span>v1.0 · Production</span>
+            <span class="flex items-center gap-1">
+              <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+              Healthy
+            </span>
+          </div>
+        </aside>
+
+        <!-- MAIN NEUTRAL -->
+        <main class="flex-1 bg-slate-50 p-5 flex flex-col">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4 text-xs">
+            <div>
+              <p class="text-[11px] uppercase tracking-[0.26em] text-slate-400">Overview</p>
+              <p class="text-sm font-semibold text-slate-900">Ringkasan Bisnis · Semua Modul</p>
+              <p class="text-[11px] text-slate-500 mt-1">
+                Kombinasi data dari POS, TMS, dan Finance dalam satu tampilan ringkas untuk owner.
+              </p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-medium">
+                Periode: 2025
+              </button>
+              <button class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-medium">
+                Cabang: Semua
+              </button>
+              <button class="px-4 py-1.5 rounded-xl text-xs font-semibold text-white bg-slate-900">
+                Export
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 text-xs">
+            <div class="rounded-xl border border-slate-200 bg-white p-3">
+              <p class="text-[11px] text-slate-500 mb-1">Pendapatan Bersih</p>
+              <p class="text-xl font-semibold text-slate-900">Rp 12,4 M</p>
+              <p class="text-[11px] text-emerald-600 mt-0.5">+18,3% vs tahun lalu</p>
+            </div>
+            <div class="rounded-xl border border-slate-200 bg-white p-3">
+              <p class="text-[11px] text-slate-500 mb-1">Margin Kotor</p>
+              <p class="text-xl font-semibold text-slate-900">32,7%</p>
+              <p class="text-[11px] text-slate-500 mt-0.5">Target: &gt; 30%</p>
+            </div>
+            <div class="rounded-xl border border-slate-200 bg-white p-3">
+              <p class="text-[11px] text-slate-500 mb-1">Posisi Kas & Bank</p>
+              <p class="text-xl font-semibold text-slate-900">Rp 2,1 M</p>
+              <p class="text-[11px] text-slate-500 mt-0.5">Termasuk semua rekening</p>
+            </div>
+          </div>
+
+          <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+            <div class="md:col-span-2 rounded-xl border border-slate-200 bg-white p-3">
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-[12px] font-semibold text-slate-800">Performa Modul</p>
+                <span class="text-[11px] text-slate-500">Ringkasan singkat</span>
+              </div>
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between">

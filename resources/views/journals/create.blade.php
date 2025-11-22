@@ -7,7 +7,7 @@
         <x-slot:header>
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Buat Jurnal Adjustment</h1>
+                    <div class="text-2xl font-bold text-slate-900 dark:text-slate-100">Buat Jurnal Adjustment</div>
                     <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Input jurnal penyesuaian manual</p>
                 </div>
                 <x-button :href="route('journals.index')" variant="ghost" size="sm">
@@ -22,7 +22,7 @@
 
     <form method="post" action="{{ route('journals.store') }}" class="space-y-6" @submit.prevent="submitForm">
         @csrf
-        
+
         <x-card title="Header Jurnal">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
@@ -77,10 +77,10 @@
                         <template x-for="(line, index) in formData.lines" :key="index">
                             <tr>
                                 <td class="px-3 py-2 border-b">
-                                    <select 
-                                        :name="`lines[${index}][account_id]`" 
+                                    <select
+                                        :name="`lines[${index}][account_id]`"
                                         x-model="line.account_id"
-                                        class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-1" 
+                                        class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-1"
                                         required
                                     >
                                         <option value="">Pilih Akun</option>
@@ -90,11 +90,11 @@
                                     </select>
                                 </td>
                                 <td class="px-3 py-2 border-b">
-                                    <input 
-                                        type="number" 
-                                        step="0.01" 
+                                    <input
+                                        type="number"
+                                        step="0.01"
                                         min="0"
-                                        :name="`lines[${index}][debit]`" 
+                                        :name="`lines[${index}][debit]`"
                                         x-model.number="line.debit"
                                         @input="updateTotals"
                                         class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-1 text-right"
@@ -102,11 +102,11 @@
                                     >
                                 </td>
                                 <td class="px-3 py-2 border-b">
-                                    <input 
-                                        type="number" 
-                                        step="0.01" 
+                                    <input
+                                        type="number"
+                                        step="0.01"
                                         min="0"
-                                        :name="`lines[${index}][credit]`" 
+                                        :name="`lines[${index}][credit]`"
                                         x-model.number="line.credit"
                                         @input="updateTotals"
                                         class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-1 text-right"
@@ -114,9 +114,9 @@
                                     >
                                 </td>
                                 <td class="px-3 py-2 border-b">
-                                    <input 
-                                        type="text" 
-                                        :name="`lines[${index}][description]`" 
+                                    <input
+                                        type="text"
+                                        :name="`lines[${index}][description]`"
                                         x-model="line.description"
                                         class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-1"
                                         placeholder="Keterangan"
@@ -163,35 +163,35 @@ function journalForm() {
         },
         totalDebit: 0,
         totalCredit: 0,
-        
+
         init() {
             this.updateTotals();
         },
-        
+
         addLine() {
             this.formData.lines.push({ account_id: '', debit: 0, credit: 0, description: '' });
         },
-        
+
         removeLine(index) {
             if (this.formData.lines.length > 2) {
                 this.formData.lines.splice(index, 1);
                 this.updateTotals();
             }
         },
-        
+
         updateTotals() {
             this.totalDebit = this.formData.lines.reduce((sum, line) => sum + (parseFloat(line.debit) || 0), 0);
             this.totalCredit = this.formData.lines.reduce((sum, line) => sum + (parseFloat(line.credit) || 0), 0);
         },
-        
+
         get isBalanced() {
             return Math.abs(this.totalDebit - this.totalCredit) < 0.01 && this.totalDebit > 0;
         },
-        
+
         formatNumber(num) {
             return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
         },
-        
+
         submitForm() {
             if (!this.isBalanced) {
                 alert('Total debit dan kredit harus seimbang!');

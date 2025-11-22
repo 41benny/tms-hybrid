@@ -15,10 +15,8 @@ class AiAssistantController extends Controller
     public function ask(Request $request, AiAnalysisService $ai)
     {
         $data = $request->validate(['question' => ['required', 'string', 'max:1000']]);
-        $answer = $ai->analyze($data['question']);
+        $result = $ai->analyze($data['question']);
 
-        return response()->json([
-            'answer' => $answer,
-        ]);
+        return response()->json($result);
     }
 }

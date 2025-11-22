@@ -6,7 +6,7 @@
         <x-slot:header>
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Chart of Accounts</h1>
+                    <div class="text-2xl font-bold text-slate-900 dark:text-slate-100">Chart of Accounts</div>
                     <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Kelola daftar akun dan struktur COA</p>
                 </div>
                 <x-button :href="route('chart-of-accounts.create')" variant="primary">
@@ -41,18 +41,18 @@
         <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div class="md:col-span-2">
                 <label class="text-xs uppercase text-slate-500 dark:text-slate-400">Cari Kode / Nama</label>
-                <input 
-                    type="text" 
-                    name="q" 
-                    value="{{ request('q') }}" 
-                    placeholder="Contoh: 1100 atau Kas" 
+                <input
+                    type="text"
+                    name="q"
+                    value="{{ request('q') }}"
+                    placeholder="Contoh: 1100 atau Kas"
                     class="mt-2 w-full rounded-lg border border-slate-300 dark:border-[#3d3d3d] bg-transparent px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500"
                 >
             </div>
             <div>
                 <label class="text-xs uppercase text-slate-500 dark:text-slate-400">Tipe</label>
-                <select 
-                    name="type" 
+                <select
+                    name="type"
                     class="mt-2 w-full rounded-lg border border-slate-300 dark:border-[#3d3d3d] bg-transparent px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500"
                 >
                     <option value="">Semua</option>
@@ -63,8 +63,8 @@
             </div>
             <div>
                 <label class="text-xs uppercase text-slate-500 dark:text-slate-400">Status</label>
-                <select 
-                    name="status" 
+                <select
+                    name="status"
                     class="mt-2 w-full rounded-lg border border-slate-300 dark:border-[#3d3d3d] bg-transparent px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500"
                 >
                     <option value="">Semua</option>

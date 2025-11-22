@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? config('app.name', 'TMS') }}</title>
+    @vite(['resources/css/app.css','resources/js/app.js'])
+    <link rel="stylesheet" href="{{ asset('resources/css/table-font-xs.css') }}">
     <script>
         // Apply saved theme ASAP to avoid flash
         (function() {
@@ -19,7 +21,7 @@
             }
         })();
     </script>
-    @vite(['resources/css/app.css','resources/js/app.js'])
+
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="h-full bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 dark:bg-[#1e1e1e] text-slate-900 dark:text-slate-100">
@@ -38,7 +40,7 @@
                 </div>
             </div>
         </div>
-        
+
         {{-- Navigation --}}
         @php
             $canAccessMenu = static fn (string $slug): bool => auth()->user()?->canAccessMenu($slug) ?? false;
@@ -51,7 +53,7 @@
                 </svg>
                 <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('dashboard') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $dashboardAccess ? '' : 'opacity-80' }}">Dashboard</span>
             </a>
-            
+
             {{-- Master Section --}}
             <div class="pt-4">
                 <div class="px-3 pb-2 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-500">Master Data</div>
@@ -98,7 +100,7 @@
                     <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('equipment.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $equipmentAccess ? '' : 'opacity-80' }}">Equipment</span>
                 </a>
             </div>
-            
+
             {{-- Operations Section --}}
             <div class="pt-4">
                 <div class="px-3 pb-2 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-500">Operations</div>
@@ -110,7 +112,7 @@
                     <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('job-orders.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $jobOrdersAccess ? '' : 'opacity-80' }}">Job Orders</span>
                 </a>
             </div>
-            
+
             {{-- Inventory Section --}}
             <div class="pt-4">
                 <div class="px-3 pb-2 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-500">Inventory</div>
@@ -119,31 +121,31 @@
                     <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('inventory.dashboard') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('inventory.dashboard') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $inventoryDashboardAccess ? '' : 'opacity-80' }}">Dashboard Inventory</span>
+                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('inventory.dashboard') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $inventoryDashboardAccess ? '' : 'opacity-80' }}">Inventory Dashboard</span>
                 </a>
                 @php($partsAccess = $canAccessMenu('parts'))
                 <a href="{{ route('parts.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('parts.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $partsAccess ? '' : 'opacity-60' }}">
                     <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('parts.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                     </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('parts.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $partsAccess ? '' : 'opacity-80' }}">Sparepart</span>
+                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('parts.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $partsAccess ? '' : 'opacity-80' }}">Spare Parts</span>
                 </a>
                 @php($partPurchasesAccess = $canAccessMenu('part-purchases'))
                 <a href="{{ route('part-purchases.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('part-purchases.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $partPurchasesAccess ? '' : 'opacity-60' }}">
                     <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('part-purchases.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                     </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('part-purchases.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $partPurchasesAccess ? '' : 'opacity-80' }}">Pembelian Part</span>
+                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('part-purchases.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $partPurchasesAccess ? '' : 'opacity-80' }}">Part Purchases</span>
                 </a>
                 @php($partUsagesAccess = $canAccessMenu('part-usages'))
                 <a href="{{ route('part-usages.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('part-usages.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $partUsagesAccess ? '' : 'opacity-60' }}">
                     <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('part-usages.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('part-usages.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $partUsagesAccess ? '' : 'opacity-80' }}">Pemakaian Part</span>
+                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('part-usages.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $partUsagesAccess ? '' : 'opacity-80' }}">Part Usage</span>
                 </a>
             </div>
-            
+
             {{-- Finance Section --}}
             <div class="pt-4">
                 <div class="px-3 pb-2 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-500">Finance</div>
@@ -152,14 +154,14 @@
                     <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('finance.dashboard') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('finance.dashboard') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $financeDashboardAccess ? '' : 'opacity-80' }}">Dashboard Keuangan</span>
+                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('finance.dashboard') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $financeDashboardAccess ? '' : 'opacity-80' }}">Finance Dashboard</span>
                 </a>
                 @php($hutangAccess = $canAccessMenu('hutang'))
                 <a href="{{ route('hutang.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('hutang.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $hutangAccess ? '' : 'opacity-60' }}">
                     <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('hutang.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                     </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('hutang.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $hutangAccess ? '' : 'opacity-80' }}">Dashboard Hutang</span>
+                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('hutang.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $hutangAccess ? '' : 'opacity-80' }}">Payables Dashboard</span>
                 </a>
                 @php($invoicesAccess = $canAccessMenu('invoices'))
                 <a href="{{ route('invoices.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('invoices.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $invoicesAccess ? '' : 'opacity-60' }}">
@@ -173,7 +175,7 @@
                     <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('payment-requests.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('payment-requests.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $paymentRequestsAccess ? '' : 'opacity-80' }}">Pengajuan Pembayaran</span>
+                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('payment-requests.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $paymentRequestsAccess ? '' : 'opacity-80' }}">Payment Requests</span>
                 </a>
                 @php($cashBanksAccess = $canAccessMenu('cash-banks'))
                 <a href="{{ route('cash-banks.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('cash-banks.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $cashBanksAccess ? '' : 'opacity-60' }}">
@@ -182,48 +184,119 @@
                     </svg>
                     <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('cash-banks.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $cashBanksAccess ? '' : 'opacity-80' }}">Cash/Bank</span>
                 </a>
-                @php($journalsAccess = $canAccessMenu('journals'))
+            </div>
+
+            {{-- Accounting Section --}}
+            <div class="pt-4">
+                <div class="px-3 pb-2 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-500">Accounting</div>
+                @php($journalsAccess = $canAccessMenu('accounting.journals'))
                 <a href="{{ route('journals.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('journals.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $journalsAccess ? '' : 'opacity-60' }}">
                     <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('journals.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('journals.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $journalsAccess ? '' : 'opacity-80' }}">Jurnal</span>
+                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('journals.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $journalsAccess ? '' : 'opacity-80' }}">Journals</span>
                 </a>
-                @php($chartAccountsAccess = $canAccessMenu('chart-of-accounts'))
+                @php($chartAccountsAccess = $canAccessMenu('accounting.coa'))
                 <a href="{{ route('chart-of-accounts.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('chart-of-accounts.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $chartAccountsAccess ? '' : 'opacity-60' }}">
                     <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('chart-of-accounts.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                     </svg>
                     <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('chart-of-accounts.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $chartAccountsAccess ? '' : 'opacity-80' }}">Chart of Accounts</span>
                 </a>
-            </div>
-            
-            {{-- Reports Section --}}
-            <div class="pt-4">
-                <div class="px-3 pb-2 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-500">Reports</div>
-                @php($trialBalanceAccess = $canAccessMenu('reports.trial-balance'))
+                @php($fiscalPeriodsAccess = $canAccessMenu('accounting.periods'))
+                <a href="{{ route('accounting.periods.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('accounting.periods.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $fiscalPeriodsAccess ? '' : 'opacity-60' }}">
+                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('accounting.periods.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('accounting.periods.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $fiscalPeriodsAccess ? '' : 'opacity-80' }}">Fiscal Periods</span>
+                </a>
+                @php($generalLedgerAccess = $canAccessMenu('accounting.general-ledger'))
+                <a href="{{ route('reports.general-ledger') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('reports.general-ledger') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $generalLedgerAccess ? '' : 'opacity-60' }}">
+                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.general-ledger') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.general-ledger') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $generalLedgerAccess ? '' : 'opacity-80' }}">General Ledger</span>
+                </a>
+                @php($trialBalanceAccess = $canAccessMenu('accounting.trial-balance'))
                 <a href="{{ route('reports.trial-balance') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('reports.trial-balance') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $trialBalanceAccess ? '' : 'opacity-60' }}">
                     <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.trial-balance') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
                     <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.trial-balance') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $trialBalanceAccess ? '' : 'opacity-80' }}">Trial Balance</span>
                 </a>
-                @php($profitLossAccess = $canAccessMenu('reports.profit-loss'))
+                @php($profitLossAccess = $canAccessMenu('accounting.profit-loss'))
                 <a href="{{ route('reports.profit-loss') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('reports.profit-loss') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $profitLossAccess ? '' : 'opacity-60' }}">
                     <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.profit-loss') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                     </svg>
                     <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.profit-loss') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $profitLossAccess ? '' : 'opacity-80' }}">Profit & Loss</span>
                 </a>
-                @php($balanceSheetAccess = $canAccessMenu('reports.balance-sheet'))
+                @php($balanceSheetAccess = $canAccessMenu('accounting.balance-sheet'))
                 <a href="{{ route('reports.balance-sheet') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('reports.balance-sheet') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $balanceSheetAccess ? '' : 'opacity-60' }}">
                     <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.balance-sheet') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
                     <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.balance-sheet') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $balanceSheetAccess ? '' : 'opacity-80' }}">Balance Sheet</span>
                 </a>
+                @php($fixedAssetsAccess = $canAccessMenu('fixed-assets'))
+                <a href="{{ route('fixed-assets.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('fixed-assets.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $fixedAssetsAccess ? '' : 'opacity-60' }}">
+                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('fixed-assets.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7l9-4 9 4-9 4-9-4zm0 6l9 4 9-4m-9 4v6" />
+                    </svg>
+                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('fixed-assets.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $fixedAssetsAccess ? '' : 'opacity-80' }}">Fixed Assets</span>
+                </a>
             </div>
-            
+
+            {{-- Tax Reports Section --}}
+            <div class="pt-4">
+                <div class="px-3 pb-2 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-500">Tax Reports</div>
+                @php($taxReportsAccess = $canAccessMenu('accounting.tax-reports'))
+                <a href="{{ route('reports.tax.ppn-summary') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('reports.tax.ppn-summary') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $taxReportsAccess ? '' : 'opacity-60' }}">
+                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.tax.ppn-summary') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.tax.ppn-summary') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $taxReportsAccess ? '' : 'opacity-80' }}">PPN Summary</span>
+                </a>
+
+                @php($taxInvoiceAccess = $canAccessMenu('tax-invoices'))
+                <a href="{{ route('tax-invoices.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('tax-invoices.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $taxInvoiceAccess ? '' : 'opacity-60' }}">
+                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('tax-invoices.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('tax-invoices.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $taxInvoiceAccess ? '' : 'opacity-80' }}">Faktur Pajak</span>
+                </a>
+                <a href="{{ route('reports.tax.ppn-keluaran') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('reports.tax.ppn-keluaran') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $taxReportsAccess ? '' : 'opacity-60' }}">
+                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.tax.ppn-keluaran') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.tax.ppn-keluaran') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $taxReportsAccess ? '' : 'opacity-80' }}">PPN Keluaran</span>
+                </a>
+                <a href="{{ route('reports.tax.ppn-masukan') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('reports.tax.ppn-masukan') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $taxReportsAccess ? '' : 'opacity-60' }}">
+                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.tax.ppn-masukan') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                    </svg>
+                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.tax.ppn-masukan') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $taxReportsAccess ? '' : 'opacity-80' }}">PPN Masukan</span>
+                </a>
+                <a href="{{ route('reports.tax.pph23-summary') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('reports.tax.pph23-summary') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $taxReportsAccess ? '' : 'opacity-60' }}">
+                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.tax.pph23-summary') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.tax.pph23-summary') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $taxReportsAccess ? '' : 'opacity-80' }}">PPh 23 Summary</span>
+                </a>
+                <a href="{{ route('reports.tax.pph23-dipotong') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('reports.tax.pph23-dipotong') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $taxReportsAccess ? '' : 'opacity-60' }}">
+                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.tax.pph23-dipotong') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                    </svg>
+                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.tax.pph23-dipotong') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $taxReportsAccess ? '' : 'opacity-80' }}">PPh 23 Dipotong</span>
+                </a>
+                <a href="{{ route('reports.tax.pph23-dipungut') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('reports.tax.pph23-dipungut') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $taxReportsAccess ? '' : 'opacity-60' }}">
+                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.tax.pph23-dipungut') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                    </svg>
+                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.tax.pph23-dipungut') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $taxReportsAccess ? '' : 'opacity-80' }}">PPh 23 Dipungut</span>
+                </a>
+            </div>
+
             {{-- AI Section --}}
             <div class="pt-4 pb-4">
                 <div class="px-3 pb-2 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-500">AI Tools</div>
@@ -243,14 +316,17 @@
                     <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('admin.users.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A9 9 0 1115 21v-2a6 6 0 00-5.879-6 4.5 4.5 0 10-4 0 6 6 0 00-.121 4.804z" />
                     </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('admin.users.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $userManagementAccess ? '' : 'opacity-80' }}">Manajemen User</span>
+                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('admin.users.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $userManagementAccess ? '' : 'opacity-80' }}">User Management</span>
                 </a>
             </div>
         </nav>
     </aside>
 
     {{-- Main Content --}}
-    <main class="flex-1 min-w-0 flex flex-col bg-slate-50 dark:bg-[#1e1e1e]">
+    <main class="flex-1 min-w-0 flex flex-col bg-gradient-to-br from-slate-50 via-slate-50 to-slate-200 dark:bg-[#1e1e1e]">
+        {{-- Accessibility heading for screen readers --}}
+        <h1 class="sr-only">{{ $header ?? ($title ?? 'Dashboard') }}</h1>
+
         {{-- Header --}}
         <header class="sticky top-0 z-20 border-b border-slate-200 dark:border-[#2d2d2d] bg-white dark:bg-[#1e1e1e] shadow-sm">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -259,16 +335,16 @@
                         <span class="text-xl">☰</span>
                     </button>
                     <div>
-                        <h1 class="text-lg text-slate-900 dark:text-slate-100">{{ $header ?? ($title ?? 'Dashboard') }}</h1>
+                        <div class="text-lg text-slate-900 dark:text-slate-100">{{ $header ?? ($title ?? 'Dashboard') }}</div>
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
                     {{-- Notifications --}}
                     @auth
                     <div class="relative" x-data="{ open: false }">
-                        <button 
-                            @click="open = !open" 
-                            class="relative p-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-all hover:scale-105" 
+                        <button
+                            @click="open = !open"
+                            class="relative p-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-all hover:scale-105"
                             aria-label="Notifications"
                             id="notification-button"
                         >
@@ -277,9 +353,9 @@
                             </svg>
                             <span id="notification-badge" class="absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
                         </button>
-                        
+
                         {{-- Dropdown --}}
-                        <div 
+                        <div
                             x-show="open"
                             @click.away="open = false"
                             x-transition:enter="transition ease-out duration-100"
@@ -293,21 +369,21 @@
                             id="notification-dropdown"
                         >
                             <div class="p-4 border-b border-slate-200 dark:border-[#2d2d2d] flex items-center justify-between">
-                                <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Notifikasi</h3>
-                                <button id="mark-all-read" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">Tandai semua dibaca</button>
+                                <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Notifications</h3>
+                                <button id="mark-all-read" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">Mark all as read</button>
                             </div>
                             <div id="notification-list" class="overflow-y-auto max-h-64">
                                 <div class="p-4 text-center text-sm text-slate-500 dark:text-slate-400">
-                                    Memuat notifikasi...
+                                    Loading notifications...
                                 </div>
                             </div>
                             <div class="p-2 border-t border-slate-200 dark:border-[#2d2d2d] text-center">
-                                <a href="{{ route('payment-requests.index') }}" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">Lihat semua pengajuan</a>
+                                <a href="{{ route('payment-requests.index') }}" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">View all requests</a>
                             </div>
                         </div>
                     </div>
                     @endauth
-                    
+
                     <button id="theme-toggle" class="p-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-all hover:scale-105" aria-label="Toggle dark mode" title="Toggle theme">
                         <span class="text-xl inline dark:hidden">🌙</span>
                         <span class="text-xl hidden dark:inline">☀️</span>
@@ -323,15 +399,15 @@
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg border border-slate-200 dark:border-[#2d2d2d] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors">
-                            Keluar
+                            Logout
                         </button>
                     </form>
                 </div>
             </div>
         </header>
-        
+
         {{-- Page Content --}}
-        <div class="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8">
+        <div class="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8 bg-slate-50 dark:bg-[#1e1e1e]">
             <div class="bg-white dark:bg-[#252525] rounded-2xl shadow-sm border border-slate-200 dark:border-[#2d2d2d] p-6 sm:p-8">
                 {{ $slot ?? '' }}
                 @yield('content')
@@ -339,5 +415,6 @@
         </div>
     </main>
 </div>
+@stack('scripts')
 </body>
 </html>

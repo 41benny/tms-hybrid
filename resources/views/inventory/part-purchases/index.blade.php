@@ -6,7 +6,7 @@
         <x-slot:header>
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h1 class="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100">Pembelian Part</h1>
+                    <div class="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100">Pembelian Part</div>
                     <p class="text-xs md:text-sm text-slate-600 dark:text-slate-400 mt-1">Daftar pembelian sparepart</p>
                 </div>
                 <x-button :href="route('part-purchases.create')" variant="primary" class="w-full sm:w-auto">
@@ -22,11 +22,11 @@
 
     <x-card>
         <form method="get" class="flex flex-col sm:flex-row gap-2">
-            <input 
-                type="text" 
-                name="q" 
-                value="{{ request('q') }}" 
-                placeholder="Cari no pembelian/invoice..." 
+            <input
+                type="text"
+                name="q"
+                value="{{ request('q') }}"
+                placeholder="Cari no pembelian/invoice..."
                 class="flex-1 rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-3 md:px-4 py-2 text-sm"
             >
             <select name="status" class="rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-3 md:px-4 py-2 text-sm">
@@ -135,7 +135,7 @@
                 </tbody>
             </table>
         </div>
-        
+
         @if($purchases->hasPages())
             <div class="px-4 md:px-6 py-4 border-t border-slate-200 dark:border-[#2d2d2d]">
                 {{ $purchases->links() }}

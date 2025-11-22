@@ -10,12 +10,17 @@ use App\Models\User;
 use App\Notifications\PaymentRequestCreated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class PaymentRequestController extends Controller
 {
+    /**
+     * Payment Requests - Bisa diakses user dengan permission 'payment-requests'
+     * Sales/Admin bisa ajukan pembayaran tanpa perlu akses dashboard hutang
+     */
     public function index(Request $request)
     {
-        $query = PaymentRequest::query()->with(['vendorBill.vendor', 'vendor', 'requestedBy']);
+        $query = PaymentRequest::query()->with(['vendorBill.vendor', 'vendor', 'requestedBy', 'driverAdvance.driver']);
 
         // Skip role filter for development
         // TODO: Implement proper authentication and role-based filtering
@@ -25,9 +30,15 @@ class PaymentRequestController extends Controller
             $query->where('requested_by', $user->id);
         }
 
-        // Filter status
+        // Filter status spesifik jika diminta
         if ($status = $request->get('status')) {
             $query->where('status', $status);
+        }
+
+        // Default: sembunyikan yang sudah dibayar kecuali user minta show=all atau filter status eksplisit
+        $show = $request->get('show');
+        if (! $status && $show !== 'all') {
+            $query->where('status', '!=', 'paid');
         }
 
         // Filter date range
@@ -40,41 +51,68 @@ class PaymentRequestController extends Controller
 
         $requests = $query->latest('request_date')->paginate(15)->withQueryString();
 
-        return view('payment-requests.index', compact('requests'));
+        // Vendor bills outstanding (gunakan scope + accessor)
+        $unpaidBills = VendorBill::with(['vendor', 'items', 'paymentRequests'])
+            ->outstanding()
+            ->orderBy('bill_date', 'asc')
+            ->get();
+
+        // Driver advances outstanding (belum diajukan penuh)
+        $outstandingAdvances = \App\Models\Operations\DriverAdvance::with(['driver', 'shipmentLeg.jobOrder', 'paymentRequests'])
+            ->outstanding()
+            ->orderBy('advance_date', 'asc')
+            ->get();
+
+        return view('payment-requests.index', compact('requests', 'unpaidBills', 'outstandingAdvances', 'show'));
     }
 
     public function create(Request $request)
     {
-        $vendorBillId = $request->get('vendor_bill_id');
-        $vendorBill = null;
-        $vendors = null;
+        try {
+            $vendorBillId = $request->get('vendor_bill_id');
+            $driverAdvanceId = $request->get('driver_advance_id');
+            $vendorBill = null;
+            $driverAdvance = null;
+            $vendors = null;
 
-        if ($vendorBillId) {
-            // Payment Request dari Vendor Bill
-            $vendorBill = VendorBill::with(['vendor.activeBankAccounts', 'items', 'payments'])->findOrFail($vendorBillId);
+            if ($vendorBillId) {
+                // Payment Request dari Vendor Bill
+                $vendorBill = VendorBill::with(['vendor.activeBankAccounts', 'items.shipmentLeg.jobOrder', 'paymentRequests'])->findOrFail($vendorBillId);
 
-            // Calculate remaining
-            $totalPaid = $vendorBill->payments->sum('amount');
-            $vendorBill->remaining = $vendorBill->total_amount - $totalPaid;
-        } else {
-            // Manual Payment Request - load all vendors
-            $vendors = Vendor::with('activeBankAccounts')->where('is_active', true)->orderBy('name')->get();
+                // Calculate remaining yang BELUM DIAJUKAN (bukan yang belum dibayar)
+                $totalRequested = $vendorBill->paymentRequests->sum('amount');
+                $vendorBill->remaining_to_request = $vendorBill->total_amount - $totalRequested;
+                $vendorBill->total_requested = $totalRequested;
+            } elseif ($driverAdvanceId) {
+                // Payment Request dari Driver Advance
+                $driverAdvance = \App\Models\Operations\DriverAdvance::with(['driver', 'shipmentLeg.jobOrder'])->findOrFail($driverAdvanceId);
+            } else {
+                // Manual Payment Request - load all vendors
+                $vendors = Vendor::with('activeBankAccounts')->where('is_active', true)->orderBy('name')->get();
+            }
+
+            return view('payment-requests.create', compact('vendorBill', 'driverAdvance', 'vendors'));
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal memuat form: ' . $e->getMessage());
         }
-
-        return view('payment-requests.create', compact('vendorBill', 'vendors'));
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'payment_type' => ['required', 'in:vendor_bill,manual'],
-            'vendor_bill_id' => ['required_if:payment_type,vendor_bill', 'nullable', 'exists:vendor_bills,id'],
-            'vendor_id' => ['required_if:payment_type,manual', 'nullable', 'exists:vendors,id'],
-            'vendor_bank_account_id' => ['nullable', 'exists:vendor_bank_accounts,id'],
-            'description' => ['required_if:payment_type,manual', 'nullable', 'string', 'max:255'],
-            'amount' => ['required', 'numeric', 'min:1'],
-            'notes' => ['nullable', 'string'],
-        ]);
+        try {
+            $validated = $request->validate([
+                'payment_type' => ['required', 'in:vendor_bill,manual,trucking'],
+                'vendor_bill_id' => ['required_if:payment_type,vendor_bill', 'nullable', 'exists:vendor_bills,id'],
+                'driver_advance_id' => ['required_if:payment_type,trucking', 'nullable', 'exists:driver_advances,id'],
+                'vendor_id' => ['required_if:payment_type,manual', 'nullable', 'exists:vendors,id'],
+                'vendor_bank_account_id' => ['nullable', 'exists:vendor_bank_accounts,id'],
+                'description' => ['nullable', 'string', 'max:255'],
+                'amount' => ['required', 'numeric', 'min:1'],
+                'notes' => ['nullable', 'string'],
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return back()->withErrors($e->errors())->withInput();
+        }
 
         // Generate request number
         $validated['request_number'] = $this->generateRequestNumber();
@@ -83,35 +121,78 @@ class PaymentRequestController extends Controller
         $validated['requested_by'] = Auth::id() ?? 1;
         $validated['status'] = 'pending';
 
-        // Validate amount for vendor_bill type
-        if ($validated['payment_type'] === 'vendor_bill') {
-            $vendorBill = VendorBill::with('payments')->findOrFail($validated['vendor_bill_id']);
-            $totalPaid = $vendorBill->payments->sum('amount');
-            $remaining = $vendorBill->total_amount - $totalPaid;
+        // Handle driver advance payment (uses 'trucking' type with driver_advance_id)
+        if (!empty($validated['driver_advance_id'])) {
+            $driverAdvance = \App\Models\Operations\DriverAdvance::with(['driver', 'paymentRequests'])->findOrFail($validated['driver_advance_id']);
+
+            // Calculate remaining amount that hasn't been requested yet
+            $totalRequested = $driverAdvance->paymentRequests->sum('amount');
+            $remaining = $driverAdvance->amount - $totalRequested;
 
             if ($validated['amount'] > $remaining) {
-                return back()->withErrors(['amount' => 'Jumlah melebihi sisa tagihan. Maksimal: Rp '.number_format($remaining, 0, ',', '.')]);
+                return back()->withErrors(['amount' => 'Jumlah melebihi sisa yang belum diajukan. Total: Rp '.number_format($driverAdvance->amount, 0, ',', '.').', Sudah diajukan: Rp '.number_format($totalRequested, 0, ',', '.').', Maksimal: Rp '.number_format($remaining, 0, ',', '.')]);
+            }
+
+            // Set as trucking type with description
+            $validated['payment_type'] = 'trucking';
+            $validated['description'] = 'Pembayaran DP Uang Jalan - '.$driverAdvance->advance_number.' - '.$driverAdvance->driver->name;
+            // Remove vendor_id if exists since this is driver payment
+            unset($validated['vendor_id']);
+        }
+
+        // Validate amount for vendor_bill type - cek sisa yang BELUM DIAJUKAN
+        if ($validated['payment_type'] === 'vendor_bill') {
+            $vendorBill = VendorBill::with('paymentRequests')->findOrFail($validated['vendor_bill_id']);
+            $totalRequested = $vendorBill->paymentRequests->sum('amount');
+            $remaining = $vendorBill->total_amount - $totalRequested;
+
+            if ($validated['amount'] > $remaining) {
+                return back()->withErrors(['amount' => 'Jumlah melebihi sisa yang belum diajukan. Total tagihan: Rp '.number_format($vendorBill->total_amount, 0, ',', '.').', Sudah diajukan: Rp '.number_format($totalRequested, 0, ',', '.').', Maksimal: Rp '.number_format($remaining, 0, ',', '.')]);
             }
         }
 
-        $paymentRequest = PaymentRequest::create($validated);
-
-        // Load requestedBy relationship for notification
-        $paymentRequest->load('requestedBy');
-
-        // Send notification to finance team users
-        $financeTeamUsers = User::getFinanceTeamUsers();
-        foreach ($financeTeamUsers as $user) {
-            $user->notify(new PaymentRequestCreated($paymentRequest));
+        // Validate manual payment requires vendor_id or driver_advance_id
+        if ($validated['payment_type'] === 'manual' && empty($validated['vendor_id']) && empty($validated['driver_advance_id'])) {
+            return back()->withErrors(['vendor_id' => 'Pilih vendor untuk pembayaran manual.'])->withInput();
         }
 
-        return redirect()->route('payment-requests.show', $paymentRequest)
-            ->with('success', 'Pengajuan pembayaran berhasil dibuat. Nomor: '.$paymentRequest->request_number);
+        try {
+            $paymentRequest = PaymentRequest::create($validated);
+
+            // Load requestedBy relationship for notification
+            $paymentRequest->load('requestedBy');
+
+            // Send notification to finance team users
+            $financeTeamUsers = User::getFinanceTeamUsers();
+            foreach ($financeTeamUsers as $user) {
+                $user->notify(new PaymentRequestCreated($paymentRequest));
+            }
+
+            return redirect()->route('payment-requests.show', $paymentRequest)
+                ->with('success', 'Payment request created successfully. Number: '.$paymentRequest->request_number);
+        } catch (\Exception $e) {
+            Log::error('Payment Request Store Error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'data' => $validated
+            ]);
+            return back()->withErrors(['error' => 'Failed to create payment request: ' . $e->getMessage()])->withInput();
+        }
     }
 
     public function show(PaymentRequest $payment_request)
     {
-        $payment_request->load(['vendorBill.vendor', 'vendor.activeBankAccounts', 'vendorBankAccount', 'requestedBy', 'approvedBy', 'paidBy', 'cashBankTransaction']);
+        $payment_request->load([
+            'vendorBill.vendor', 
+            'vendor.activeBankAccounts', 
+            'vendorBankAccount', 
+            'driverAdvance.driver',
+            'driverAdvance.shipmentLeg.jobOrder',
+            'requestedBy', 
+            'approvedBy', 
+            'paidBy', 
+            'cashBankTransaction'
+        ]);
 
         // Skip permission check for development
         // TODO: Implement proper authentication
@@ -142,7 +223,7 @@ class PaymentRequestController extends Controller
             'approved_at' => now(),
         ]);
 
-        return back()->with('success', 'Pengajuan pembayaran disetujui.');
+        return back()->with('success', 'Payment request approved.');
     }
 
     public function reject(Request $request, PaymentRequest $payment_request)
@@ -169,7 +250,7 @@ class PaymentRequestController extends Controller
             'approved_at' => now(),
         ]);
 
-        return back()->with('success', 'Pengajuan pembayaran ditolak.');
+        return back()->with('success', 'Payment request rejected.');
     }
 
     public function destroy(PaymentRequest $payment_request)
@@ -187,7 +268,7 @@ class PaymentRequestController extends Controller
 
         $payment_request->delete();
 
-        return redirect()->route('payment-requests.index')->with('success', 'Pengajuan pembayaran berhasil dihapus.');
+        return redirect()->route('payment-requests.index')->with('success', 'Payment request deleted successfully.');
     }
 
     protected function generateRequestNumber(): string
@@ -202,5 +283,58 @@ class PaymentRequestController extends Controller
         }
 
         return $prefix.str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Return related job order info for a payment request (vendor_bill type).
+     */
+    public function getJobInfo(PaymentRequest $payment_request)
+    {
+        $jobOrders = collect();
+
+        // Handle vendor bill payment type
+        if ($payment_request->payment_type === 'vendor_bill' && $payment_request->vendorBill) {
+            $bill = $payment_request->vendorBill->load(['items.shipmentLeg.jobOrder.customer', 'items.shipmentLeg.jobOrder.items']);
+            foreach ($bill->items as $item) {
+                if ($item->shipmentLeg && $item->shipmentLeg->jobOrder) {
+                    $jobOrders->push($item->shipmentLeg->jobOrder);
+                }
+            }
+        }
+        // Handle trucking payment type (driver advance)
+        elseif ($payment_request->payment_type === 'trucking' && $payment_request->driverAdvance) {
+            $driverAdvance = $payment_request->driverAdvance->load(['shipmentLeg.jobOrder.customer', 'shipmentLeg.jobOrder.items']);
+            if ($driverAdvance->shipmentLeg && $driverAdvance->shipmentLeg->jobOrder) {
+                $jobOrders->push($driverAdvance->shipmentLeg->jobOrder);
+            }
+        }
+
+        // Return empty if no job orders found
+        if ($jobOrders->isEmpty()) {
+            return response()->json(['job_orders' => []]);
+        }
+
+        $jobOrders = $jobOrders->unique('id');
+
+        $formatted = $jobOrders->map(function ($jo) {
+            // Cargo summary from job order items
+            $cargoSummary = $jo->items->map(function ($itm) {
+                $qty = number_format($itm->quantity, 2, ',', '.');
+                return ($itm->cargo_type ?: 'Cargo').": $qty";
+            })->implode(' | ');
+
+            return [
+                'job_number' => $jo->job_number,
+                'order_date' => optional($jo->order_date)->format('d M Y'),
+                'service_type' => $jo->service_type,
+                'customer' => $jo->customer?->name,
+                'origin' => $jo->origin,
+                'destination' => $jo->destination,
+                'status' => $jo->status,
+                'cargo_summary' => $cargoSummary,
+            ];
+        });
+
+        return response()->json(['job_orders' => $formatted]);
     }
 }

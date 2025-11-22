@@ -17,7 +17,13 @@ class VendorBillController extends Controller
      */
     public function index(Request $request)
     {
-        $query = VendorBill::query()->with(['vendor', 'items', 'payments']);
+        $query = VendorBill::query()->with(['vendor', 'items', 'payments', 'paymentRequests']);
+        $scope = $request->get('scope');
+        // Default tampilkan hanya outstanding kecuali user pilih 'all'
+        if ($scope !== 'all') {
+            $query->outstanding();
+            $scope = 'outstanding';
+        }
         if ($status = $request->get('status')) {
             $query->where('status', $status);
         }
@@ -57,13 +63,16 @@ class VendorBillController extends Controller
             $bill->pph = $pph;
             $bill->total_paid = $bill->payments->sum('amount');
             $bill->last_payment_date = $bill->payments->first()?->tanggal;
+            // Tracking pengajuan (bukan pembayaran) menggunakan accessor agar tersedia di view
+            $bill->total_requested = $bill->total_requested; // accessor value
+            $bill->remaining_to_request = $bill->remaining_to_request; // accessor value
 
             return $bill;
         });
 
         $vendors = Vendor::orderBy('name')->get();
 
-        return view('vendor-bills.index', compact('bills', 'vendors'));
+        return view('vendor-bills.index', compact('bills', 'vendors', 'scope'));
     }
 
     /**
@@ -141,6 +150,10 @@ class VendorBillController extends Controller
         $vendor_bill->ppn = $ppn;
         $vendor_bill->pph = $pph;
         $vendor_bill->total_paid = $vendor_bill->payments->sum('amount');
+        // Accessor-based tracking of pengajuan
+        $vendor_bill->total_requested = $vendor_bill->total_requested;
+        $vendor_bill->remaining_to_request = $vendor_bill->remaining_to_request;
+        // Payment-based remaining (dipakai di bagian lain bila diperlukan)
         $vendor_bill->remaining = $vendor_bill->total_amount - $vendor_bill->total_paid;
 
         return view('vendor-bills.show', ['bill' => $vendor_bill]);
@@ -201,12 +214,29 @@ class VendorBillController extends Controller
 
     public function markAsReceived(VendorBill $vendor_bill)
     {
-        $vendor_bill->update(['status' => 'received']);
-        if (class_exists(JournalService::class)) {
-            app(JournalService::class)->postVendorBill($vendor_bill);
+        // Validasi total amount
+        if ($vendor_bill->total_amount <= 0) {
+            return back()->with('error', 'Vendor bill tidak dapat diposting karena total amount = 0 atau negatif.');
         }
 
-        return back()->with('success', 'Vendor bill ditandai diterima.');
+        // Validasi ada items
+        if ($vendor_bill->items()->count() === 0) {
+            return back()->with('error', 'Vendor bill tidak dapat diposting karena tidak ada item.');
+        }
+
+        $vendor_bill->update(['status' => 'received']);
+
+        if (class_exists(JournalService::class)) {
+            try {
+                app(JournalService::class)->postVendorBill($vendor_bill);
+            } catch (\Exception $e) {
+                // Rollback status jika posting gagal
+                $vendor_bill->update(['status' => 'draft']);
+                return back()->with('error', 'Gagal membuat jurnal: ' . $e->getMessage());
+            }
+        }
+
+        return back()->with('success', 'Vendor bill ditandai diterima dan jurnal berhasil dibuat.');
     }
 
     public function markAsPaid(VendorBill $vendor_bill)
@@ -229,5 +259,84 @@ class VendorBillController extends Controller
         }
 
         return $prefix.str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Return leg/shipment info as JSON for popup on index.
+     */
+    public function getLegInfo(VendorBill $vendor_bill)
+    {
+        $vendor_bill->load(['items.shipmentLeg.truck', 'items.shipmentLeg.driver', 'items.shipmentLeg.vendor']);
+        $legs = collect();
+        foreach ($vendor_bill->items as $item) {
+            if ($item->shipmentLeg) {
+                $legs->push($item->shipmentLeg);
+            }
+        }
+        $legs = $legs->unique('id');
+
+        $formatted = $legs->map(function ($leg) {
+            $statusClass = match ($leg->status) {
+                'pending' => 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300',
+                'in_transit' => 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
+                'delivered' => 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400',
+                'cancelled' => 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400',
+                default => 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300',
+            };
+
+            return [
+                'leg_code' => $leg->leg_code,
+                'status' => $leg->status,
+                'status_label' => strtoupper(str_replace('_', ' ', $leg->status)),
+                'status_class' => $statusClass,
+                'load_date' => optional($leg->load_date)->format('d M Y'),
+                'unload_date' => optional($leg->unload_date)->format('d M Y'),
+                'quantity' => number_format($leg->quantity, 2, ',', '.'),
+                'cost_category' => ucfirst($leg->cost_category),
+                'truck' => $leg->truck?->plate_number,
+                'driver' => $leg->driver?->name,
+                'vendor' => $leg->vendor?->name,
+            ];
+        });
+
+        return response()->json(['legs' => $formatted]);
+    }
+
+    /**
+     * Return related job order info (aggregated from legs) for popup display.
+     */
+    public function getJobInfo(VendorBill $vendor_bill)
+    {
+        $vendor_bill->load(['items.shipmentLeg.jobOrder.customer', 'items.shipmentLeg.jobOrder.sales', 'items.shipmentLeg.jobOrder.items', 'items.shipmentLeg']);
+        $jobOrders = collect();
+        foreach ($vendor_bill->items as $item) {
+            if ($item->shipmentLeg && $item->shipmentLeg->jobOrder) {
+                $jobOrders->push($item->shipmentLeg->jobOrder);
+            }
+        }
+        $jobOrders = $jobOrders->unique('id');
+
+        $formatted = $jobOrders->map(function ($jo) {
+            // Cargo summary from job order items
+            $cargoSummary = $jo->items->map(function ($itm) {
+                $qty = number_format($itm->quantity, 2, ',', '.');
+                $sn = $itm->serial_number ? ' (S/N: '.$itm->serial_number.')' : '';
+                return ($itm->cargo_type ?: 'Cargo')." $qty units$sn";
+            })->implode(' — ');
+
+            return [
+                'job_number' => $jo->job_number,
+                'order_date' => optional($jo->order_date)->format('d M Y'),
+                'status' => $jo->status,
+                'customer' => $jo->customer?->name,
+                'sales' => $jo->sales?->name,
+                'origin' => $jo->origin,
+                'destination' => $jo->destination,
+                'cargo_summary' => $cargoSummary,
+                'leg_count' => $jo->shipmentLegs()->count(),
+            ];
+        });
+
+        return response()->json(['job_orders' => $formatted]);
     }
 }

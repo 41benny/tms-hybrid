@@ -13,16 +13,53 @@ class PostingService
 {
     public function ensureOpenPeriod(\DateTimeInterface $date): FiscalPeriod
     {
+        $year = (int) $date->format('Y');
+        $month = (int) $date->format('m');
+
         $period = FiscalPeriod::query()
-            ->where('year', (int) $date->format('Y'))
-            ->where('month', (int) $date->format('m'))
+            ->where('year', $year)
+            ->where('month', $month)
             ->first();
 
         if (! $period) {
-            throw new InvalidArgumentException('Periode fiskal belum dibuat.');
+            throw new InvalidArgumentException("Periode fiskal untuk {$date->format('F Y')} belum dibuat. Silakan buat periode fiskal terlebih dahulu di menu Accounting → Fiscal Periods.");
         }
+
         if ($period->status !== 'open') {
-            throw new InvalidArgumentException('Periode fiskal tidak open.');
+            throw new InvalidArgumentException("Periode fiskal {$date->format('F Y')} berstatus '{$period->status}'. Hanya periode dengan status 'open' yang bisa diposting.");
+        }
+
+        // Validasi: periode sebelumnya harus sudah closed atau locked sebelum bulan baru diposting
+        $prevYear = $month === 1 ? $year - 1 : $year;
+        $prevMonth = $month === 1 ? 12 : $month - 1;
+
+        // Cari periode sebelumnya
+        $prevPeriod = FiscalPeriod::query()
+            ->where('year', $prevYear)
+            ->where('month', $prevMonth)
+            ->first();
+
+        // Jika ada periode sebelumnya dan belum closed/locked, blok posting
+        if ($prevPeriod && ! in_array($prevPeriod->status, ['closed', 'locked'], true)) {
+            $prevLabel = (new \DateTimeImmutable(sprintf('%04d-%02d-01', $prevYear, $prevMonth)))->format('F Y');
+            throw new InvalidArgumentException("Periode sebelumnya ({$prevLabel}) belum di-close. Tutup periode tersebut terlebih dahulu sebelum membuat jurnal untuk {$date->format('F Y')}.");
+        }
+
+        // Jika periode sebelumnya tidak ada tetapi ada periode yang lebih lama masih open, juga blok
+        if (! $prevPeriod) {
+            $openEarlier = FiscalPeriod::query()
+                ->where(function ($q) use ($year, $month) {
+                    $q->where('year', $year)->where('month', '<', $month)
+                      ->orWhere('year', '<', $year);
+                })
+                ->where('status', 'open')
+                ->orderBy('year', 'desc')
+                ->orderBy('month', 'desc')
+                ->first();
+            if ($openEarlier) {
+                $earlierLabel = (new \DateTimeImmutable(sprintf('%04d-%02d-01', $openEarlier->year, $openEarlier->month)))->format('F Y');
+                throw new InvalidArgumentException("Masih ada periode terbuka ({$earlierLabel}) yang belum di-close. Tutup semua periode lebih lama sebelum mem-posting {$date->format('F Y')}.");
+            }
         }
 
         return $period;
@@ -59,7 +96,13 @@ class PostingService
                 $totalCredit += (float) ($l['credit'] ?? 0);
             }
             if (round($totalDebit, 2) !== round($totalCredit, 2) || $totalDebit <= 0) {
-                throw new InvalidArgumentException('Jurnal tidak seimbang atau nol.');
+                \Log::error('Jurnal tidak seimbang', [
+                    'total_debit' => $totalDebit,
+                    'total_credit' => $totalCredit,
+                    'lines' => $lines,
+                    'header' => $header
+                ]);
+                throw new InvalidArgumentException('Jurnal tidak seimbang atau nol. Debit: '.$totalDebit.' Credit: '.$totalCredit);
             }
 
             $journal = new Journal;

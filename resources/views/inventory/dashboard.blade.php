@@ -4,7 +4,7 @@
 <div class="space-y-4 md:space-y-6">
     <x-card>
         <x-slot:header>
-            <h1 class="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100">Dashboard Inventory</h1>
+            <div class="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100">Dashboard Inventory</div>
         </x-slot:header>
     </x-card>
 

@@ -6,7 +6,7 @@
         <x-slot:header>
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h1 class="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100">{{ $partPurchase->purchase_number }}</h1>
+                    <div class="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100">{{ $partPurchase->purchase_number }}</div>
                     <p class="text-xs md:text-sm text-slate-600 dark:text-slate-400 mt-1">{{ $partPurchase->purchase_date->format('d M Y') }}</p>
                 </div>
                 <x-button :href="route('part-purchases.index')" variant="ghost" size="sm">Kembali</x-button>

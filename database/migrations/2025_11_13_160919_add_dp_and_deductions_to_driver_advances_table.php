@@ -27,7 +27,9 @@ return new class extends Migration
         });
 
         // Update existing status enum to include 'dp_paid'
-        DB::statement("ALTER TABLE driver_advances MODIFY COLUMN status ENUM('pending', 'dp_paid', 'settled') DEFAULT 'pending'");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE driver_advances MODIFY COLUMN status ENUM('pending', 'dp_paid', 'settled') DEFAULT 'pending'");
+        }
     }
 
     /**
@@ -47,6 +49,8 @@ return new class extends Migration
         });
 
         // Revert status enum
-        DB::statement("ALTER TABLE driver_advances MODIFY COLUMN status ENUM('pending', 'paid', 'settled') DEFAULT 'pending'");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE driver_advances MODIFY COLUMN status ENUM('pending', 'paid', 'settled') DEFAULT 'pending'");
+        }
     }
 };

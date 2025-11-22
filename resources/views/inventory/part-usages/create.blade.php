@@ -6,7 +6,7 @@
         <x-slot:header>
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h1 class="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100">Tambah Pemakaian Part</h1>
+                    <div class="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100">Tambah Pemakaian Part</div>
                     <p class="text-xs md:text-sm text-slate-600 dark:text-slate-400 mt-1">Catat pemakaian sparepart</p>
                 </div>
                 <x-button :href="route('part-usages.index')" variant="ghost" size="sm">Batal</x-button>
@@ -15,7 +15,7 @@
 
         <form method="POST" action="{{ route('part-usages.store') }}" class="space-y-4 md:space-y-6">
             @csrf
-            
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tanggal Pemakaian <span class="text-red-500">*</span></label>
@@ -96,7 +96,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     const partSelect = document.getElementById('part_id');
     const stockInfo = document.getElementById('stock-info');
-    
+
     partSelect.addEventListener('change', function() {
         const selectedOption = this.options[this.selectedIndex];
         if (selectedOption.value) {

@@ -33,7 +33,7 @@ class ShipmentLegController extends Controller
             'driver_id' => ['nullable', 'exists:drivers,id'],
             'vessel_name' => ['nullable', 'string', 'max:255'],
             'load_date' => ['required', 'date'],
-            'unload_date' => ['required', 'date'],
+            'unload_date' => ['nullable', 'date'],
             'quantity' => ['required', 'numeric', 'min:0.01'],
             'serial_numbers' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
@@ -78,8 +78,22 @@ class ShipmentLegController extends Controller
         $maxLegNumber = $jobOrder->shipmentLegs()->max('leg_number');
         $legNumber = $maxLegNumber ? $maxLegNumber + 1 : 1;
 
-        // Create leg
-        $leg = new ShipmentLeg($validated);
+        // Create leg - only assign fields that belong to shipment_legs table
+        $legData = [
+            'cost_category' => $validated['cost_category'],
+            'executor_type' => $validated['executor_type'],
+            'vendor_id' => $validated['vendor_id'] ?? null,
+            'truck_id' => $validated['truck_id'] ?? null,
+            'driver_id' => $validated['driver_id'] ?? null,
+            'vessel_name' => $validated['vessel_name'] ?? null,
+            'load_date' => $validated['load_date'],
+            'unload_date' => $validated['unload_date'] ?? null,
+            'quantity' => $validated['quantity'],
+            'serial_numbers' => $validated['serial_numbers'] ?? null,
+            'notes' => $validated['notes'] ?? null,
+        ];
+
+        $leg = new ShipmentLeg($legData);
         $leg->job_order_id = $jobOrder->id;
         $leg->leg_number = $legNumber;
         $leg->leg_code = $this->generateLegCode();
@@ -93,6 +107,7 @@ class ShipmentLegController extends Controller
             $costData['uang_jalan'] = $validated['uang_jalan'] ?? 0;
             $costData['bbm'] = $validated['bbm'] ?? 0;
             $costData['toll'] = $validated['toll'] ?? 0;
+            $costData['other_costs'] = $validated['other_costs'] ?? 0;
         } elseif ($validated['cost_category'] == 'vendor') {
             $costData['vendor_cost'] = $validated['vendor_cost'] ?? 0;
             $costData['ppn'] = $validated['ppn'] ?? 0;
@@ -102,6 +117,7 @@ class ShipmentLegController extends Controller
             $costData['freight_cost'] = $validated['freight_cost'] ?? 0;
             $costData['ppn'] = $validated['ppn'] ?? 0;
             $costData['pph23'] = $validated['pph23'] ?? 0;
+            $costData['container_no'] = $validated['container_no'] ?? null;
         } elseif ($validated['cost_category'] == 'asuransi') {
             $costData['insurance_provider'] = $validated['insurance_provider'] ?? null;
             $costData['policy_number'] = $validated['policy_number'] ?? null;
@@ -148,8 +164,8 @@ class ShipmentLegController extends Controller
             'truck_id' => ['nullable', 'exists:trucks,id'],
             'driver_id' => ['nullable', 'exists:drivers,id'],
             'vessel_name' => ['nullable', 'string', 'max:255'],
-            'load_date' => ['required', 'date'],
-            'unload_date' => ['required', 'date'],
+              'load_date' => ['required', 'date'],
+              'unload_date' => ['nullable', 'date'],
             'quantity' => ['required', 'numeric', 'min:0.01'],
             'serial_numbers' => ['nullable', 'string'],
             'status' => ['required', Rule::in(['pending', 'in_transit', 'delivered', 'cancelled'])],
@@ -184,14 +200,30 @@ class ShipmentLegController extends Controller
             'pic_notes' => ['nullable', 'string'],
         ]);
 
-        // Determine executor_type based on cost_category
-        if ($validated['cost_category'] == 'trucking') {
-            $validated['executor_type'] = 'own_fleet';
-        } else {
-            $validated['executor_type'] = 'vendor';
-        }
+          // Determine executor_type based on cost_category
+          if ($validated['cost_category'] == 'trucking') {
+              $validated['executor_type'] = 'own_fleet';
+          } else {
+              $validated['executor_type'] = 'vendor';
+          }
 
-        $leg->update($validated);
+          // Update only shipment_legs columns on the leg model
+          $legData = [
+              'cost_category' => $validated['cost_category'],
+              'executor_type' => $validated['executor_type'],
+              'vendor_id' => $validated['vendor_id'] ?? null,
+              'truck_id' => $validated['truck_id'] ?? null,
+              'driver_id' => $validated['driver_id'] ?? null,
+              'vessel_name' => $validated['vessel_name'] ?? null,
+              'load_date' => $validated['load_date'],
+              'unload_date' => $validated['unload_date'] ?? null,
+              'quantity' => $validated['quantity'],
+              'serial_numbers' => $validated['serial_numbers'] ?? null,
+              'status' => $validated['status'],
+              'notes' => $validated['notes'] ?? null,
+          ];
+
+          $leg->update($legData);
 
         // Update main costs
         $leg->mainCost()->updateOrCreate(

@@ -3,7 +3,7 @@
 @section('content')
     <div class="mb-4 flex items-center justify-between">
         <div>
-            <h1 class="text-xl font-semibold">Kas/Bank</h1>
+            <div class="text-xl font-semibold">Kas/Bank</div>
             <p class="text-sm text-slate-500 dark:text-slate-400">Transaksi kas masuk/keluar</p>
         </div>
         <a href="{{ route('cash-banks.create') }}" class="px-3 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-500">+ Transaksi</a>

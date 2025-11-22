@@ -1,0 +1,2 @@
+// Add this route after the vendor-bills routes in routes/web.php:
+Route::get('vendor-bills/{vendor_bill}/leg-info', [VendorBillController::class, 'getLegInfo'])->name('vendor-bills.leg-info');

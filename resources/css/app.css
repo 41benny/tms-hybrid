@@ -12,8 +12,8 @@
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
-/* Styling untuk dropdown select di dark mode */
 @layer base {
+    /* Styling untuk dropdown select di dark mode */
     select {
         color-scheme: light dark;
     }
@@ -37,4 +37,5 @@
     .dark select option:checked {
         background-color: #3d3d3d;
     }
+
 }

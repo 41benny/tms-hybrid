@@ -28,6 +28,7 @@ class CustomerController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'contact_person' => ['nullable', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:50'],
             'email' => ['nullable', 'email', 'max:255'],
             'address' => ['nullable', 'string'],
@@ -38,5 +39,27 @@ class CustomerController extends Controller
         Customer::create($validated);
 
         return redirect()->route('customers.index')->with('success', 'Customer berhasil ditambahkan');
+    }
+
+    public function edit(Customer $customer): \Illuminate\View\View
+    {
+        return view('master.customers.create', compact('customer'));
+    }
+
+    public function update(Request $request, Customer $customer): \Illuminate\Http\RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'contact_person' => ['nullable', 'string', 'max:255'],
+            'phone' => ['required', 'string', 'max:50'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'address' => ['nullable', 'string'],
+            'npwp' => ['nullable', 'string', 'max:50'],
+            'payment_term' => ['nullable', 'string', 'max:50'],
+        ]);
+
+        $customer->update($validated);
+
+        return redirect()->route('customers.index')->with('success', 'Customer berhasil diupdate');
     }
 }

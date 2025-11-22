@@ -103,7 +103,7 @@ class CashBankController extends Controller
                 if ($totalPaid >= $inv->total_amount) {
                     $inv->update(['status' => 'paid']);
                 } elseif ($totalPaid > 0) {
-                    $inv->update(['status' => 'partially_paid']);
+                    $inv->update(['status' => 'partial']);
                 }
             }
         }

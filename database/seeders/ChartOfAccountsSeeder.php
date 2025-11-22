@@ -35,6 +35,8 @@ class ChartOfAccountsSeeder extends Seeder
             ['code' => '1600', 'name' => 'Aset Tetap', 'type' => 'asset', 'is_postable' => false],
             ['code' => '1610', 'name' => 'Kendaraan', 'type' => 'asset'],
             ['code' => '1620', 'name' => 'Akumulasi Penyusutan Kendaraan', 'type' => 'asset'],
+            ['code' => '1630', 'name' => 'Peralatan', 'type' => 'asset'],
+            ['code' => '1640', 'name' => 'Akumulasi Penyusutan Peralatan', 'type' => 'asset'],
 
             // ====== KEWAJIBAN (Kepala 2) ======
             // Hutang Usaha
@@ -56,12 +58,18 @@ class ChartOfAccountsSeeder extends Seeder
             // Hutang Jangka Pendek
             ['code' => '2400', 'name' => 'Hutang Jangka Pendek', 'type' => 'liability', 'is_postable' => false],
             ['code' => '2410', 'name' => 'Pinjaman Bank A (JK Pendek)', 'type' => 'liability'],
-            ['code' => '2420', 'name' => 'Pinjaman Bank B (JK Pendek)', 'type' => 'liability'],
+            ['code' => '2411', 'name' => 'Pinjaman Bank B (JK Pendek)', 'type' => 'liability'],
+            ['code' => '2412', 'name' => 'Pinjaman Bank C (JK Pendek)', 'type' => 'liability'],
+            ['code' => '2413', 'name' => 'Pinjaman Bank D (JK Pendek)', 'type' => 'liability'],
+            ['code' => '2414', 'name' => 'Pinjaman Bank E (JK Pendek)', 'type' => 'liability'],
 
             // Hutang Jangka Panjang
             ['code' => '2500', 'name' => 'Hutang Jangka Panjang', 'type' => 'liability', 'is_postable' => false],
             ['code' => '2510', 'name' => 'Pinjaman Bank A (JK Panjang)', 'type' => 'liability'],
-            ['code' => '2520', 'name' => 'Pinjaman Bank B (JK Panjang)', 'type' => 'liability'],
+            ['code' => '2511', 'name' => 'Pinjaman Bank B (JK Panjang)', 'type' => 'liability'],
+            ['code' => '2512', 'name' => 'Pinjaman Bank C (JK Panjang)', 'type' => 'liability'],
+            ['code' => '2513', 'name' => 'Pinjaman Bank D (JK Panjang)', 'type' => 'liability'],
+            ['code' => '2514', 'name' => 'Pinjaman Bank E (JK Panjang)', 'type' => 'liability'],
 
             // Akun Sementara / Ayat Silang
             ['code' => '2900', 'name' => 'Akun Sementara (Suspense)', 'type' => 'liability'],

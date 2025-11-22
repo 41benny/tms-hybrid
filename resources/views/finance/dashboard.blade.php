@@ -4,7 +4,7 @@
 <div class="space-y-6">
     {{-- Header --}}
     <div>
-        <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Dashboard Keuangan</h1>
+        <div class="text-2xl font-bold text-slate-900 dark:text-slate-100">Dashboard Keuangan</div>
         <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Overview keuangan dan performa bisnis</p>
     </div>
 

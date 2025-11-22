@@ -10,7 +10,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("ALTER TABLE shipment_legs MODIFY COLUMN cost_category ENUM('trucking', 'vendor', 'pelayaran', 'asuransi', 'pic') NOT NULL");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE shipment_legs MODIFY COLUMN cost_category ENUM('trucking', 'vendor', 'pelayaran', 'asuransi', 'pic') NOT NULL");
+        }
     }
 
     /**
@@ -18,6 +20,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("ALTER TABLE shipment_legs MODIFY COLUMN cost_category ENUM('trucking', 'vendor', 'pelayaran', 'asuransi') NOT NULL");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE shipment_legs MODIFY COLUMN cost_category ENUM('trucking', 'vendor', 'pelayaran', 'asuransi') NOT NULL");
+        }
     }
 };

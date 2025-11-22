@@ -4,8 +4,40 @@
 <div class="space-y-6">
     {{-- Header --}}
     <div>
-        <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Dashboard Hutang</h1>
+        <div class="text-2xl font-bold text-slate-900 dark:text-slate-100">Dashboard Hutang</div>
         <p class="text-sm text-slate-600 dark:text-slate-400">Monitoring semua hutang vendor (Trucking, Vendor, Pelayaran, Asuransi) dan uang jalan driver</p>
+    </div>
+
+    {{-- Payables Metrics Row --}}
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <x-card>
+            <div class="p-5">
+                <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Total Tagihan Vendor</p>
+                <h3 class="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">Rp {{ number_format($totalVendorBills,0,',','.') }}</h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Semua vendor bills (exclude cancelled)</p>
+            </div>
+        </x-card>
+        <x-card>
+            <div class="p-5">
+                <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Sudah Diajukan</p>
+                <h3 class="text-xl md:text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">Rp {{ number_format($totalRequested,0,',','.') }}</h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Payment requests (pending/approved/paid)</p>
+            </div>
+        </x-card>
+        <x-card>
+            <div class="p-5">
+                <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Sisa Belum Diajukan</p>
+                <h3 class="text-xl md:text-2xl font-bold text-rose-600 dark:text-rose-400 mt-1">Rp {{ number_format($totalRemainingToRequest,0,',','.') }}</h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Outstanding (remaining to request)</p>
+            </div>
+        </x-card>
+        <x-card>
+            <div class="p-5">
+                <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Dibayar Bulan Ini</p>
+                <h3 class="text-xl md:text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">Rp {{ number_format($paidThisMonth,0,',','.') }}</h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Payment requests status PAID ({{ now()->format('M Y') }})</p>
+            </div>
+        </x-card>
     </div>
 
     {{-- Summary Cards --}}
@@ -138,8 +170,11 @@
                                 Rp {{ number_format($leg->mainCost ? $leg->mainCost->total : 0, 0, ',', '.') }}
                             </td>
                             <td class="px-4 py-3 whitespace-nowrap text-sm text-center">
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full {{ $leg->unload_date->diffInDays(now()) > 30 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300' }}">
-                                    {{ $leg->unload_date->diffInDays(now()) }} hari
+                                @php
+                                    $daysDiff = $leg->unload_date ? $leg->unload_date->diffInDays(now()) : null;
+                                @endphp
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full {{ $daysDiff !== null && $daysDiff > 30 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300' }}">
+                                    {{ $daysDiff !== null ? $daysDiff . ' hari' : '-' }}
                                 </span>
                             </td>
                             <td class="px-4 py-3 whitespace-nowrap text-sm text-right">
@@ -350,7 +385,7 @@
                                 </div>
                                 <div class="text-right">
                                     <div class="font-bold text-slate-900 dark:text-slate-100">
-                                        Rp {{ number_format($summary->total_cost, 0, ',', '.') }}
+                                        Rp {{ number_format($summary->total_vendor_cost, 0, ',', '.') }}
                                     </div>
                                 </div>
                             </div>
@@ -393,16 +428,16 @@
 function showTab(tabName) {
     // Hide all content
     document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-    
+
     // Remove active state from all buttons
     document.querySelectorAll('.tab-button').forEach(btn => {
         btn.classList.remove('border-indigo-600', 'text-indigo-600');
         btn.classList.add('border-transparent', 'text-slate-600', 'dark:text-slate-400');
     });
-    
+
     // Show selected content
     document.getElementById('content-' + tabName).classList.remove('hidden');
-    
+
     // Add active state to selected button
     const activeBtn = document.getElementById('tab-' + tabName);
     activeBtn.classList.add('border-indigo-600', 'text-indigo-600');

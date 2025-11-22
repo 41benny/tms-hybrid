@@ -7,30 +7,30 @@
         <x-slot:header>
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div class="flex items-center gap-3">
-                    <x-button :href="route('job-orders.index', ['view' => request('view', 'table')])" variant="ghost" size="sm">
+                    <x-button :href="route('job-orders.index')" variant="ghost" size="sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
                         Kembali
                     </x-button>
                     <div>
-                        <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">{{ $job->job_number }}</h1>
+                        <div class="text-2xl font-bold text-slate-900 dark:text-slate-100">{{ $job->job_number }}</div>
                         <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">{{ $job->customer->name }} • {{ strtoupper($job->service_type) }}</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
                     @if(!$job->isLocked())
-                        <x-button :href="route('job-orders.edit', [$job, 'view' => request('view')])" variant="outline" size="sm">
+                        <x-button :href="route('job-orders.edit', $job)" variant="outline" size="sm">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                             Edit
                         </x-button>
                     @endif
-                    
+
                     {{-- Cancel Order - untuk semua user (kecuali yang sudah locked) --}}
                     @if(!$job->isLocked())
-                        <button 
+                        <button
                             type="button"
                             onclick="openCancelModal()"
                             class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
@@ -76,6 +76,59 @@
                         }" class="text-base px-3 py-1">
                             {{ strtoupper(str_replace('_', ' ', $job->status)) }}
                         </x-badge>
+                    </div>
+
+                    {{-- Invoice Status --}}
+                    <div class="pt-4 border-t border-slate-200 dark:border-slate-800">
+                        <div class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">Status Invoice</div>
+                        @php
+                            $invoiceStatus = $job->invoice_status;
+                        @endphp
+                        @if($invoiceStatus === 'not_invoiced')
+                            <x-badge variant="danger" class="text-base px-3 py-1">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                Belum Diinvoice
+                            </x-badge>
+                            <div class="mt-2">
+                                <x-button :href="route('invoices.create', ['job_order_id' => $job->id])" variant="primary" size="sm">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    Buat Invoice
+                                </x-button>
+                            </div>
+                        @elseif($invoiceStatus === 'partially_invoiced')
+                            <x-badge variant="warning" class="text-base px-3 py-1">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Sebagian
+                            </x-badge>
+                            <div class="mt-2 text-xs text-slate-600 dark:text-slate-400">
+                                <div>Sudah Diinvoice: <span class="font-semibold text-slate-900 dark:text-slate-100">Rp {{ number_format($job->total_invoiced, 0, ',', '.') }}</span></div>
+                                <div>Sisa: <span class="font-semibold text-orange-600 dark:text-orange-400">Rp {{ number_format($job->uninvoiced_amount, 0, ',', '.') }}</span></div>
+                            </div>
+                            <div class="mt-2">
+                                <x-button :href="route('invoices.create', ['job_order_id' => $job->id])" variant="primary" size="sm">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    Buat Invoice Lagi
+                                </x-button>
+                            </div>
+                        @else
+                            <x-badge variant="success" class="text-base px-3 py-1">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Sudah Diinvoice Penuh
+                            </x-badge>
+                            <div class="mt-2 text-xs text-slate-600 dark:text-slate-400">
+                                Total: <span class="font-semibold text-green-600 dark:text-green-400">Rp {{ number_format($job->total_invoiced, 0, ',', '.') }}</span>
+                            </div>
+                        @endif
                     </div>
 
                     <div class="pt-4 border-t border-slate-200 dark:border-slate-800">
@@ -134,7 +187,7 @@
                     {{-- Financial Summary --}}
                     <div class="pt-4 border-t border-slate-200 dark:border-slate-800">
                         <div class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">Financial Summary</div>
-                        
+
                         {{-- Nilai Tagihan & Total Biaya (side by side) --}}
                         <div class="grid grid-cols-2 gap-3 mb-3">
                             {{-- Nilai Tagihan --}}
@@ -182,6 +235,48 @@
                             </div>
                         </div>
                     </div>
+
+                    {{-- Invoices --}}
+                    @if($job->invoices->count() > 0)
+                    <div class="pt-4 border-t border-slate-200 dark:border-slate-800">
+                        <div class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">
+                            Invoice History ({{ $job->invoices->count() }})
+                        </div>
+                        <div class="space-y-2">
+                            @foreach($job->invoices->sortByDesc('invoice_date') as $invoice)
+                            <a href="{{ route('invoices.show', $invoice) }}" class="block bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg p-3 transition-colors border border-slate-200 dark:border-slate-700">
+                                <div class="flex items-start justify-between gap-2 mb-2">
+                                    <div class="font-medium text-slate-900 dark:text-slate-100 text-sm">
+                                        {{ $invoice->invoice_number }}
+                                    </div>
+                                    <x-badge :variant="match($invoice->status) {
+                                        'draft' => 'default',
+                                        'sent' => 'warning',
+                                        'paid' => 'success',
+                                        'partial' => 'warning',
+                                        'overdue' => 'danger',
+                                        'cancelled' => 'danger',
+                                        default => 'default'
+                                    }" size="sm">
+                                        {{ strtoupper($invoice->status) }}
+                                    </x-badge>
+                                </div>
+                                <div class="text-xs text-slate-500 dark:text-slate-400 space-y-1">
+                                    <div>Tanggal: {{ \Carbon\Carbon::parse($invoice->invoice_date)->format('d M Y') }}</div>
+                                    <div class="font-semibold text-slate-700 dark:text-slate-300">
+                                        Total: Rp {{ number_format($invoice->total_amount, 0, ',', '.') }}
+                                    </div>
+                                    @if($invoice->paid_amount > 0)
+                                        <div class="text-green-600 dark:text-green-400">
+                                            Dibayar: Rp {{ number_format($invoice->paid_amount, 0, ',', '.') }}
+                                        </div>
+                                    @endif
+                                </div>
+                            </a>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
 
                     {{-- Cancel Information --}}
                     @if($job->status === 'cancelled')
@@ -320,7 +415,9 @@
                                         </div>
                                         <div>
                                             <div class="text-xs text-slate-500 dark:text-slate-400">Unload Date</div>
-                                            <div class="font-medium text-slate-900 dark:text-slate-100 text-sm">{{ $leg->unload_date->format('d/m/Y') }}</div>
+                                            <div class="font-medium text-slate-900 dark:text-slate-100 text-sm">
+                                                {{ optional($leg->unload_date)->format('d/m/Y') ?: '-' }}
+                                            </div>
                                         </div>
                                         @if($leg->serial_numbers)
                                         <div class="md:col-span-2">
@@ -485,7 +582,7 @@
                                                         {{ $vb->vendor_bill_number }}
                                                     </a>
                                                     <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                                                        {{ $vb->bill_date->format('d M Y') }} • 
+                                                        {{ $vb->bill_date->format('d M Y') }} •
                                                         <x-badge :variant="match($vb->status) {
                                                             'draft' => 'default',
                                                             'received' => 'warning',
@@ -508,8 +605,8 @@
                                     <div class="bg-emerald-50 dark:bg-emerald-950/20 rounded-lg p-4 mb-3">
                                         <div class="font-semibold text-emerald-900 dark:text-emerald-100 mb-2 text-sm flex items-center justify-between">
                                             <span>ADDITIONAL COSTS</span>
-                                            <button 
-                                                type="button" 
+                                            <button
+                                                type="button"
                                                 onclick="openAddCostModal({{ $leg->id }}, {{ $leg->leg_number }})"
                                                 class="text-xs px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md transition-colors flex items-center gap-1"
                                             >
@@ -547,7 +644,7 @@
                                                         @endif
                                                     </div>
                                                     <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <button 
+                                                        <button
                                                             type="button"
                                                             onclick="openEditCostModal({{ $cost->id }}, '{{ $cost->cost_type }}', '{{ $cost->description }}', {{ $cost->amount }}, {{ $cost->is_billable ? 'true' : 'false' }}, {{ $cost->billable_amount ?? 0 }}, {{ $leg->id }}, {{ $leg->leg_number }})"
                                                             class="p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 rounded transition-colors"
@@ -560,7 +657,7 @@
                                                         <form method="POST" action="{{ route('additional-costs.destroy', $cost) }}" onsubmit="return confirm('Hapus biaya ini?')" class="inline">
                                                             @csrf
                                                             @method('DELETE')
-                                                            <button 
+                                                            <button
                                                                 type="submit"
                                                                 class="p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded transition-colors"
                                                                 title="Hapus"
@@ -588,11 +685,27 @@
                                                 $legTotalCost = (float) ($leg->mainCost ? $leg->mainCost->total : 0);
                                                 $remaining = $legTotalCost - $totalGenerated;
                                                 $billsCount = $leg->vendorBillItems()->distinct('vendor_bill_id')->count('vendor_bill_id');
+
+                                                // Tracking berdasarkan pengajuan (bukan pembayaran) - cicilan pengajuan
+                                                $vendorBillIds = $leg->vendorBillItems()->distinct('vendor_bill_id')->pluck('vendor_bill_id');
+                                                $allVendorBills = \App\Models\Finance\VendorBill::with(['paymentRequests'])
+                                                    ->whereIn('id', $vendorBillIds)
+                                                    ->whereNotIn('status', ['paid', 'cancelled'])
+                                                    ->get();
+                                                // Filter bills yang masih ada sisa belum diajukan
+                                                $billsWithRemainingToRequest = $allVendorBills->filter(function($bill){
+                                                    $totalRequested = $bill->paymentRequests->sum('amount');
+                                                    $remainingToRequest = $bill->total_amount - $totalRequested;
+                                                    return $remainingToRequest > 0;
+                                                });
+                                                $hasBillsWithRemainingToRequest = $billsWithRemainingToRequest->count() > 0;
+                                                $hasAnyBills = $vendorBillIds->count() > 0;
                                             @endphp
-                                            
+
                                             @if($leg->vendor_id && $remaining > 0 && $leg->status != 'cancelled')
-                                            <button 
-                                                type="button" 
+                                            {{-- Masih ada sisa yang perlu di-bill --}}
+                                            <button
+                                                type="button"
                                                 onclick="openGenerateBillModal({{ $leg->id }}, {{ $leg->additionalCosts->count() }})"
                                                 class="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -611,17 +724,35 @@
                                                 @endif
                                             </div>
                                             @elseif($remaining <= 0 && $billsCount > 0)
-                                            <div class="text-xs">
-                                                <span class="text-green-600 dark:text-green-400 flex items-center gap-1">
+                                            {{-- Fully billed, cek pengajuan berdasarkan remaining_to_request --}}
+                                                @if($hasBillsWithRemainingToRequest)
+                                                <a href="{{ route('payment-requests.create', ['vendor_bill_id' => $billsWithRemainingToRequest->first()->id]) }}"
+                                                   class="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                     </svg>
-                                                    Fully Billed ({{ $billsCount }}x)
-                                                </span>
-                                                <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
-                                                    Total: Rp {{ number_format($legTotalCost, 0, ',', '.') }}
+                                                    Ajukan Pembayaran
+                                                    @if($billsWithRemainingToRequest->count() > 1)
+                                                        <span class="text-[10px] opacity-75">({{ $billsWithRemainingToRequest->count() }}x)</span>
+                                                    @endif
+                                                </a>
+                                                <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                                                    Bill siap diajukan: {{ $billsWithRemainingToRequest->count() }}x
                                                 </div>
-                                            </div>
+                                                @else
+                                                {{-- Semua bill sudah ada payment request --}}
+                                                <div class="text-xs">
+                                                    <span class="text-green-600 dark:text-green-400 flex items-center gap-1">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                        Sudah Diajukan Penuh ({{ $billsCount }}x)
+                                                    </span>
+                                                    <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                                        Total: Rp {{ number_format($legTotalCost, 0, ',', '.') }}
+                                                    </div>
+                                                </div>
+                                                @endif
                                             @endif
                                         </div>
                                         <div class="flex items-center gap-2">
@@ -675,16 +806,16 @@
                     </svg>
                 </button>
             </div>
-            
+
             <div class="text-sm text-slate-500 dark:text-slate-400 mb-4" id="modalLegInfo">
                 For Leg #<span id="modalLegNumber"></span> (Job: {{ $job->job_number }})
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Payee / Person in Charge</label>
-                <input 
-                    type="text" 
-                    name="cost_type" 
+                <input
+                    type="text"
+                    name="cost_type"
                     required
                     placeholder="e.g., Eko (Sopir), Budi (Kawalan)"
                     class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
@@ -693,9 +824,9 @@
 
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Description</label>
-                <input 
-                    type="text" 
-                    name="description" 
+                <input
+                    type="text"
+                    name="description"
                     placeholder="e.g., Uang Inap, Biaya Kawalan, Sewa Crane"
                     class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
                 >
@@ -703,8 +834,8 @@
 
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Amount (IDR)</label>
-                <input 
-                    type="text" 
+                <input
+                    type="text"
                     id="amount_display"
                     placeholder="e.g., 150000"
                     class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
@@ -713,9 +844,9 @@
             </div>
 
             <div class="flex items-center gap-2">
-                <input 
-                    type="checkbox" 
-                    name="is_billable" 
+                <input
+                    type="checkbox"
+                    name="is_billable"
                     id="is_billable"
                     value="1"
                     onchange="toggleBillableAmount()"
@@ -726,25 +857,25 @@
 
             <div id="billable_amount_field" class="hidden">
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Billable Amount (IDR)</label>
-                <input 
-                    type="text" 
+                <input
+                    type="text"
                     id="billable_amount_display"
                     placeholder="e.g., 165000"
                     class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
                 >
                 <input type="hidden" name="billable_amount" id="billable_amount_input">
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">Jumlah yang akan ditagihkan ke customer (default sama dengan amount)</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-tight">Jumlah yang akan ditagihkan ke customer (default sama dengan amount)</p>
             </div>
 
             <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
-                <button 
-                    type="button" 
+                <button
+                    type="button"
                     onclick="closeAddCostModal()"
                     class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
                 >
                     Cancel
                 </button>
-                <button 
+                <button
                     type="submit"
                     class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
                 >
@@ -769,15 +900,15 @@
                     </svg>
                 </button>
             </div>
-            
+
             <div class="text-sm text-slate-500 dark:text-slate-400 mb-4" id="editModalLegInfo">
                 For Leg #<span id="editModalLegNumber"></span> (Job: {{ $job->job_number }})
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Payee / Person in Charge</label>
-                <input 
-                    type="text" 
+                <input
+                    type="text"
                     name="cost_type"
                     id="edit_cost_type"
                     required
@@ -788,8 +919,8 @@
 
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Description</label>
-                <input 
-                    type="text" 
+                <input
+                    type="text"
                     name="description"
                     id="edit_description"
                     placeholder="e.g., Uang Inap, Biaya Kawalan, Sewa Crane"
@@ -799,8 +930,8 @@
 
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Amount (IDR)</label>
-                <input 
-                    type="text" 
+                <input
+                    type="text"
                     id="edit_amount_display"
                     placeholder="e.g., 150000"
                     class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
@@ -809,9 +940,9 @@
             </div>
 
             <div class="flex items-center gap-2">
-                <input 
-                    type="checkbox" 
-                    name="is_billable" 
+                <input
+                    type="checkbox"
+                    name="is_billable"
                     id="edit_is_billable"
                     value="1"
                     onchange="toggleEditBillableAmount()"
@@ -822,8 +953,8 @@
 
             <div id="edit_billable_amount_field" class="hidden">
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Billable Amount (IDR)</label>
-                <input 
-                    type="text" 
+                <input
+                    type="text"
                     id="edit_billable_amount_display"
                     placeholder="e.g., 165000"
                     class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
@@ -833,14 +964,14 @@
             </div>
 
             <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
-                <button 
-                    type="button" 
+                <button
+                    type="button"
                     onclick="closeEditCostModal()"
                     class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
                 >
                     Cancel
                 </button>
-                <button 
+                <button
                     type="submit"
                     class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
                 >
@@ -855,7 +986,7 @@
 function toggleLeg(legId) {
     const detailsDiv = document.getElementById('leg-' + legId);
     const arrow = document.getElementById('arrow-' + legId);
-    
+
     if (detailsDiv.classList.contains('hidden')) {
         // Expand
         detailsDiv.classList.remove('hidden');
@@ -875,10 +1006,10 @@ function openAddCostModal(legId, legNumber) {
     currentLegId = legId;
     const modal = document.getElementById('addCostModal');
     const form = document.getElementById('addCostForm');
-    
+
     document.getElementById('modalLegNumber').textContent = legNumber;
     form.action = `/legs/${legId}/additional-costs`;
-    
+
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
 }
@@ -887,7 +1018,7 @@ function closeAddCostModal() {
     const modal = document.getElementById('addCostModal');
     modal.classList.add('hidden');
     document.body.style.overflow = '';
-    
+
     // Reset form
     document.getElementById('addCostForm').reset();
     document.getElementById('amount_display').value = '';
@@ -901,7 +1032,7 @@ function closeAddCostModal() {
 function toggleBillableAmount() {
     const checkbox = document.getElementById('is_billable');
     const field = document.getElementById('billable_amount_field');
-    
+
     if (checkbox.checked) {
         field.classList.remove('hidden');
         // Auto-fill billable_amount with amount if empty
@@ -934,11 +1065,11 @@ if (amountDisplay && amountInput) {
     amountDisplay.addEventListener('input', function() {
         let value = this.value.replace(/\./g, '');
         value = value.replace(/[^\d]/g, '');
-        
+
         if (value) {
             this.value = formatNumber(value);
             amountInput.value = value;
-            
+
             // Auto-update billable_amount if checkbox is checked and billable_amount is empty
             if (document.getElementById('is_billable').checked && !document.getElementById('billable_amount_input').value) {
                 document.getElementById('billable_amount_display').value = formatNumber(value);
@@ -959,7 +1090,7 @@ if (billableAmountDisplay && billableAmountInput) {
     billableAmountDisplay.addEventListener('input', function() {
         let value = this.value.replace(/\./g, '');
         value = value.replace(/[^\d]/g, '');
-        
+
         if (value) {
             this.value = formatNumber(value);
             billableAmountInput.value = value;
@@ -984,19 +1115,19 @@ function openEditCostModal(costId, costType, description, amount, isBillable, bi
     currentEditCostId = costId;
     const modal = document.getElementById('editCostModal');
     const form = document.getElementById('editCostForm');
-    
+
     document.getElementById('editModalLegNumber').textContent = legNumber;
     form.action = `/additional-costs/${costId}`;
-    
+
     // Fill form with existing values
     document.getElementById('edit_cost_type').value = costType;
     document.getElementById('edit_description').value = description || '';
     document.getElementById('edit_amount_display').value = formatNumber(amount);
     document.getElementById('edit_amount_input').value = amount;
-    
+
     const billableCheckbox = document.getElementById('edit_is_billable');
     billableCheckbox.checked = isBillable;
-    
+
     if (isBillable) {
         document.getElementById('edit_billable_amount_field').classList.remove('hidden');
         document.getElementById('edit_billable_amount_display').value = formatNumber(billableAmount);
@@ -1004,7 +1135,7 @@ function openEditCostModal(costId, costType, description, amount, isBillable, bi
     } else {
         document.getElementById('edit_billable_amount_field').classList.add('hidden');
     }
-    
+
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
 }
@@ -1013,7 +1144,7 @@ function closeEditCostModal() {
     const modal = document.getElementById('editCostModal');
     modal.classList.add('hidden');
     document.body.style.overflow = '';
-    
+
     // Reset form
     document.getElementById('editCostForm').reset();
     document.getElementById('edit_amount_display').value = '';
@@ -1026,7 +1157,7 @@ function closeEditCostModal() {
 function toggleEditBillableAmount() {
     const checkbox = document.getElementById('edit_is_billable');
     const field = document.getElementById('edit_billable_amount_field');
-    
+
     if (checkbox.checked) {
         field.classList.remove('hidden');
         const amount = parseFloat(document.getElementById('edit_amount_input').value) || 0;
@@ -1049,11 +1180,11 @@ if (editAmountDisplay && editAmountInput) {
     editAmountDisplay.addEventListener('input', function() {
         let value = this.value.replace(/\./g, '');
         value = value.replace(/[^\d]/g, '');
-        
+
         if (value) {
             this.value = formatNumber(value);
             editAmountInput.value = value;
-            
+
             if (document.getElementById('edit_is_billable').checked && !document.getElementById('edit_billable_amount_input').value) {
                 document.getElementById('edit_billable_amount_display').value = formatNumber(value);
                 document.getElementById('edit_billable_amount_input').value = value;
@@ -1073,7 +1204,7 @@ if (editBillableAmountDisplay && editBillableAmountInput) {
     editBillableAmountDisplay.addEventListener('input', function() {
         let value = this.value.replace(/\./g, '');
         value = value.replace(/[^\d]/g, '');
-        
+
         if (value) {
             this.value = formatNumber(value);
             editBillableAmountInput.value = value;
@@ -1099,7 +1230,7 @@ function openGenerateBillModal(legId, additionalCostsCount) {
     const modal = document.getElementById('generateBillModal');
     const additionalCostsInfo = document.getElementById('additionalCostsInfo');
     const separateOption = document.getElementById('separateOption');
-    
+
     // Show/hide "separate" option based on additional costs
     if (additionalCostsCount > 0) {
         additionalCostsInfo.classList.remove('hidden');
@@ -1110,7 +1241,7 @@ function openGenerateBillModal(legId, additionalCostsCount) {
         // Default to 'combined' if no additional costs
         document.getElementById('bill_mode_combined').checked = true;
     }
-    
+
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
 }
@@ -1124,31 +1255,31 @@ function closeGenerateBillModal() {
 
 function submitGenerateBill() {
     const billMode = document.querySelector('input[name="bill_mode"]:checked').value;
-    
+
     if (!currentLegIdForGenerate) {
         alert('Error: Leg ID tidak ditemukan');
         return;
     }
-    
+
     // Create and submit form
     const form = document.createElement('form');
     form.method = 'POST';
     form.action = `/legs/${currentLegIdForGenerate}/generate-vendor-bill`;
-    
+
     // Add CSRF token
     const csrfInput = document.createElement('input');
     csrfInput.type = 'hidden';
     csrfInput.name = '_token';
     csrfInput.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     form.appendChild(csrfInput);
-    
+
     // Add bill_mode input
     const billModeInput = document.createElement('input');
     billModeInput.type = 'hidden';
     billModeInput.name = 'bill_mode';
     billModeInput.value = billMode;
     form.appendChild(billModeInput);
-    
+
     document.body.appendChild(form);
     form.submit();
 }
@@ -1170,8 +1301,8 @@ document.getElementById('generateBillModal')?.addEventListener('click', function
                 <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
                     Pilih Mode Generate Vendor Bill
                 </h3>
-                <button 
-                    type="button" 
+                <button
+                    type="button"
                     onclick="closeGenerateBillModal()"
                     class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1185,7 +1316,7 @@ document.getElementById('generateBillModal')?.addEventListener('click', function
                 <div id="additionalCostsInfo" class="hidden bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-sm text-blue-800 dark:text-blue-200">
                     <div class="flex items-start gap-2">
                         <svg class="w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m-1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <div>
                             <strong>Leg ini memiliki Additional Costs.</strong>
@@ -1197,11 +1328,11 @@ document.getElementById('generateBillModal')?.addEventListener('click', function
                 <div class="space-y-3">
                     {{-- Option 1: Gabung --}}
                     <label class="flex items-start gap-3 p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer hover:border-emerald-500 dark:hover:border-emerald-500 transition-colors group">
-                        <input 
-                            type="radio" 
+                        <input
+                            type="radio"
                             id="bill_mode_combined"
-                            name="bill_mode" 
-                            value="combined" 
+                            name="bill_mode"
+                            value="combined"
                             checked
                             class="mt-1 w-4 h-4 text-emerald-600 focus:ring-emerald-500">
                         <div class="flex-1">
@@ -1216,10 +1347,10 @@ document.getElementById('generateBillModal')?.addEventListener('click', function
 
                     {{-- Option 2: Pisah --}}
                     <label id="separateOption" class="flex items-start gap-3 p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer hover:border-emerald-500 dark:hover:border-emerald-500 transition-colors group">
-                        <input 
-                            type="radio" 
+                        <input
+                            type="radio"
                             id="bill_mode_separate"
-                            name="bill_mode" 
+                            name="bill_mode"
                             value="separate"
                             class="mt-1 w-4 h-4 text-emerald-600 focus:ring-emerald-500">
                         <div class="flex-1">
@@ -1236,14 +1367,14 @@ document.getElementById('generateBillModal')?.addEventListener('click', function
 
             {{-- Footer --}}
             <div class="flex items-center justify-end gap-3 p-6 border-t border-slate-200 dark:border-slate-700">
-                <button 
-                    type="button" 
+                <button
+                    type="button"
                     onclick="closeGenerateBillModal()"
                     class="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors">
                     Batal
                 </button>
-                <button 
-                    type="button" 
+                <button
+                    type="button"
                     onclick="submitGenerateBill()"
                     class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors">
                     Generate Vendor Bill
@@ -1256,7 +1387,7 @@ document.getElementById('generateBillModal')?.addEventListener('click', function
 {{-- Modal Cancel Order --}}
 <div id="cancelModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
     <div class="bg-white dark:bg-slate-900 rounded-xl shadow-xl max-w-md w-full">
-        <form method="POST" action="{{ route('job-orders.cancel', [$job, 'view' => request('view')]) }}" class="p-6 space-y-4">
+        <form method="POST" action="{{ route('job-orders.cancel', $job) }}" class="p-6 space-y-4">
             @csrf
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Cancel Job Order</h3>
@@ -1266,7 +1397,7 @@ document.getElementById('generateBillModal')?.addEventListener('click', function
                     </svg>
                 </button>
             </div>
-            
+
             <div class="bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-4">
                 <div class="text-sm text-yellow-800 dark:text-yellow-200">
                     <strong>Perhatian:</strong> Job Order yang di-cancel tidak bisa di-edit lagi. Pastikan semua data sudah benar.
@@ -1277,8 +1408,8 @@ document.getElementById('generateBillModal')?.addEventListener('click', function
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                     Alasan Cancel <span class="text-red-500">*</span>
                 </label>
-                <textarea 
-                    name="cancel_reason" 
+                <textarea
+                    name="cancel_reason"
                     required
                     rows="4"
                     placeholder="Contoh: Customer tidak bisa dihubungi, vendor sudah di lokasi tapi customer tidak ada, dll."
@@ -1288,14 +1419,14 @@ document.getElementById('generateBillModal')?.addEventListener('click', function
             </div>
 
             <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
-                <button 
-                    type="button" 
+                <button
+                    type="button"
                     onclick="closeCancelModal()"
                     class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
                 >
                     Batal
                 </button>
-                <button 
+                <button
                     type="submit"
                     class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
                 >

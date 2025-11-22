@@ -6,7 +6,7 @@
         <x-slot:header>
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h1 class="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100">Tambah Pembelian Part</h1>
+                    <div class="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100">Tambah Pembelian Part</div>
                     <p class="text-xs md:text-sm text-slate-600 dark:text-slate-400 mt-1">Input pembelian sparepart baru</p>
                 </div>
                 <x-button :href="route('part-purchases.index')" variant="ghost" size="sm">Batal</x-button>
@@ -15,7 +15,7 @@
 
         <form method="POST" action="{{ route('part-purchases.store') }}" @submit.prevent="submitForm">
             @csrf
-            
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6">
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tanggal Pembelian <span class="text-red-500">*</span></label>
@@ -112,31 +112,31 @@ function purchaseForm() {
                 { part_id: '', quantity: 0, unit_price: 0, notes: '' }
             ]
         },
-        
+
         get totalAmount() {
             return this.formData.items.reduce((sum, item) => {
                 return sum + ((parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0));
             }, 0);
         },
-        
+
         addItem() {
             this.formData.items.push({ part_id: '', quantity: 0, unit_price: 0, notes: '' });
         },
-        
+
         removeItem(index) {
             if (this.formData.items.length > 1) {
                 this.formData.items.splice(index, 1);
             }
         },
-        
+
         calculateSubtotal(index) {
             // Auto calculate bisa ditambahkan jika perlu
         },
-        
+
         formatNumber(num) {
             return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
         },
-        
+
         submitForm() {
             this.$el.submit();
         }

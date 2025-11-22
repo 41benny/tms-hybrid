@@ -12,6 +12,7 @@ class JobOrderItem extends Model
         'equipment_id',
         'cargo_type',
         'quantity',
+        'price',
         'serial_numbers',
     ];
 
@@ -19,6 +20,7 @@ class JobOrderItem extends Model
     {
         return [
             'quantity' => 'decimal:2',
+            'price' => 'decimal:2',
         ];
     }
 

@@ -3,7 +3,7 @@
 @section('content')
     <div class="mb-4 flex items-center justify-between">
         <div>
-            <h1 class="text-xl font-semibold">Laba Rugi</h1>
+            <div class="text-xl font-semibold">Laba Rugi</div>
             <p class="text-sm text-slate-500 dark:text-slate-400">Periode {{ \Carbon\Carbon::parse($from)->format('d M Y') }} – {{ \Carbon\Carbon::parse($to)->format('d M Y') }}</p>
         </div>
         <form method="get" class="flex items-center gap-2">

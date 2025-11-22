@@ -13,7 +13,9 @@ return new class extends Migration
     public function up(): void
     {
         // Update enum to replace air_freight with self_service
-        DB::statement("ALTER TABLE shipment_legs MODIFY COLUMN cost_category ENUM('trucking', 'vendor', 'pelayaran', 'self_service')");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE shipment_legs MODIFY COLUMN cost_category ENUM('trucking', 'vendor', 'pelayaran', 'self_service')");
+        }
 
         // Add new fields to leg_main_costs for self_service
         Schema::table('leg_main_costs', function (Blueprint $table) {
@@ -29,7 +31,9 @@ return new class extends Migration
     public function down(): void
     {
         // Revert enum back to original with air_freight
-        DB::statement("ALTER TABLE shipment_legs MODIFY COLUMN cost_category ENUM('trucking', 'vendor', 'pelayaran', 'air_freight')");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE shipment_legs MODIFY COLUMN cost_category ENUM('trucking', 'vendor', 'pelayaran', 'air_freight')");
+        }
 
         // Drop the added columns
         Schema::table('leg_main_costs', function (Blueprint $table) {

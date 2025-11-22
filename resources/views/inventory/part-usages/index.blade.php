@@ -6,7 +6,7 @@
         <x-slot:header>
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h1 class="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100">Pemakaian Part</h1>
+                    <div class="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100">Pemakaian Part</div>
                     <p class="text-xs md:text-sm text-slate-600 dark:text-slate-400 mt-1">Daftar pemakaian sparepart</p>
                 </div>
                 <x-button :href="route('part-usages.create')" variant="primary" class="w-full sm:w-auto">
@@ -126,7 +126,7 @@
                 </tbody>
             </table>
         </div>
-        
+
         @if($usages->hasPages())
             <div class="px-4 md:px-6 py-4 border-t border-slate-200 dark:border-[#2d2d2d]">
                 {{ $usages->links() }}

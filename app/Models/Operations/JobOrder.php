@@ -52,6 +52,23 @@ class JobOrder extends Model
         return $this->hasMany(JobOrderItem::class);
     }
 
+    public function invoiceItems(): HasMany
+    {
+        return $this->hasMany(\App\Models\Finance\InvoiceItem::class);
+    }
+
+    public function invoices()
+    {
+        return $this->hasManyThrough(
+            \App\Models\Finance\Invoice::class,
+            \App\Models\Finance\InvoiceItem::class,
+            'job_order_id', // Foreign key on invoice_items
+            'id',           // Foreign key on invoices
+            'id',           // Local key on job_orders
+            'invoice_id'    // Local key on invoice_items
+        )->distinct();
+    }
+
     public function getTotalLegsAttribute(): int
     {
         return $this->shipmentLegs()->count();
@@ -106,5 +123,58 @@ class JobOrder extends Model
     public function isLocked(): bool
     {
         return in_array($this->status, ['completed', 'cancelled']);
+    }
+
+    /**
+     * Check if job order has been invoiced
+     */
+    public function isInvoiced(): bool
+    {
+        return $this->invoiceItems()->exists();
+    }
+
+    /**
+     * Check if job order is fully invoiced (including additional costs)
+     */
+    public function isFullyInvoiced(): bool
+    {
+        // Check main invoice amount
+        $totalInvoiced = $this->invoiceItems()->sum('amount');
+        $expectedAmount = $this->invoice_amount + $this->total_billable;
+
+        return $totalInvoiced >= $expectedAmount;
+    }
+
+    /**
+     * Get invoice status for display
+     */
+    public function getInvoiceStatusAttribute(): string
+    {
+        if (!$this->isInvoiced()) {
+            return 'not_invoiced';
+        }
+
+        if ($this->isFullyInvoiced()) {
+            return 'fully_invoiced';
+        }
+
+        return 'partially_invoiced';
+    }
+
+    /**
+     * Get total invoiced amount
+     */
+    public function getTotalInvoicedAttribute(): float
+    {
+        return $this->invoiceItems()->sum('amount');
+    }
+
+    /**
+     * Get uninvoiced amount
+     */
+    public function getUninvoicedAmountAttribute(): float
+    {
+        $expected = $this->invoice_amount + $this->total_billable;
+        return max(0, $expected - $this->total_invoiced);
     }
 }

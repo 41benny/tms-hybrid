@@ -10,7 +10,7 @@ class DriverAdvanceController extends Controller
 {
     public function index(Request $request)
     {
-        $query = DriverAdvance::query()->with(['driver', 'shipmentLeg.jobOrder']);
+        $query = DriverAdvance::query()->with(['driver', 'shipmentLeg.jobOrder', 'paymentRequests']);
 
         if ($status = $request->get('status')) {
             $query->where('status', $status);
@@ -28,7 +28,7 @@ class DriverAdvanceController extends Controller
 
     public function show(DriverAdvance $driverAdvance)
     {
-        $driverAdvance->load(['driver', 'shipmentLeg.jobOrder', 'shipmentLeg.mainCost']);
+        $driverAdvance->load(['driver', 'shipmentLeg.jobOrder', 'shipmentLeg.mainCost', 'paymentRequests']);
 
         return view('driver-advances.show', ['advance' => $driverAdvance]);
     }

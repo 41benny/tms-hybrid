@@ -53,7 +53,7 @@ class ShipmentLeg extends Model
 
     public function driver(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Master\Driver::class);
+        return $this->belongsTo(\App\Models\Master\Driver::class)->withDefault();
     }
 
     public function mainCost(): HasOne

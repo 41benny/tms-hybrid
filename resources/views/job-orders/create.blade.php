@@ -7,7 +7,7 @@
         <x-slot:header>
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Create New Order</h1>
+                    <div class="text-2xl font-bold text-slate-900 dark:text-slate-100">Create New Order</div>
                     <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Buat job order baru</p>
                 </div>
                 <x-button :href="route('job-orders.index')" variant="ghost" size="sm">
@@ -20,26 +20,45 @@
         </x-slot:header>
     </x-card>
 
+    @php
+        $selectedCustomer = old('customer_id') ? $customers->firstWhere('id', (int) old('customer_id')) : null;
+        $customerOptions = $customers->map(fn($c) => [
+            'id' => $c->id,
+            'name' => $c->name,
+        ])->values();
+    @endphp
+
     <form method="post" action="{{ route('job-orders.store') }}" class="space-y-6">
         @csrf
-        
+
         {{-- Order Details --}}
         <x-card>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <x-select 
-                    name="customer_id" 
-                    label="Customer"
-                    :error="$errors->first('customer_id')"
-                    :required="true"
-                >
-                    <option value="">-- Select a Customer --</option>
-                    @foreach($customers as $c)
-                        <option value="{{ $c->id }}" @selected(old('customer_id')==$c->id)>{{ $c->name }}</option>
-                    @endforeach
-                </x-select>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Customer</label>
+                    <div class="relative">
+                        <input type="hidden" name="customer_id" id="job_customer_id" value="{{ old('customer_id') }}">
+                        <input type="text"
+                               id="job_customer_search"
+                               autocomplete="off"
+                               placeholder="Ketik nama customer..."
+                               value="{{ $selectedCustomer?->name }}"
+                               class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500">
+                        <div id="job_customer_suggestions"
+                             class="absolute z-20 mt-1 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg max-h-60 overflow-y-auto hidden">
+                            {{-- suggestions injected via JS --}}
+                        </div>
+                    </div>
+                    <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                        Ketik minimal 2 huruf, lalu pilih customer dari daftar.
+                    </p>
+                    @error('customer_id')
+                        <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
 
-                <x-select 
-                    name="sales_id" 
+                <x-select
+                    name="sales_id"
                     label="Sales Agent"
                     :error="$errors->first('sales_id')"
                 >
@@ -49,17 +68,17 @@
                     @endforeach
                 </x-select>
 
-                <x-input 
-                    name="origin" 
-                    label="Origin" 
+                <x-input
+                    name="origin"
+                    label="Origin"
                     :value="old('origin')"
                     :error="$errors->first('origin')"
                     placeholder="e.g., Jakarta, Indonesia"
                 />
 
-                <x-input 
-                    name="destination" 
-                    label="Destination" 
+                <x-input
+                    name="destination"
+                    label="Destination"
                     :value="old('destination')"
                     :error="$errors->first('destination')"
                     placeholder="e.g., Surabaya, Indonesia"
@@ -67,7 +86,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Nilai Tagihan (IDR)</label>
-                    <input 
+                    <input
                         type="text"
                         id="invoice_amount_display"
                         placeholder="1.000.000"
@@ -90,8 +109,8 @@
                 <input type="hidden" name="service_type" value="multimoda">
 
                 <div class="md:col-span-2">
-                    <x-textarea 
-                        name="notes" 
+                    <x-textarea
+                        name="notes"
                         label="Additional Notes"
                         :error="$errors->first('notes')"
                         :rows="3"
@@ -118,9 +137,9 @@
             <div id="cargoItems" class="space-y-4">
                 <!-- Items will be added here dynamically -->
             </div>
-            
+
             <div class="mt-4 text-sm text-slate-500 dark:text-slate-400">
-                Cargo type tidak ada? 
+                Cargo type tidak ada?
                 <button type="button" class="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 font-medium" onclick="openAddCargoTypeModal()">
                     + Tambah Cargo Type Baru
                 </button>
@@ -153,11 +172,11 @@
                 Remove
             </button>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="md:col-span-1">
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Cargo Type (Model)</label>
-                <input 
-                    type="text" 
+                <input
+                    type="text"
                     list="equipment_list_INDEX"
                     name="items[INDEX][cargo_type]"
                     placeholder="Ketik untuk cari... (e.g., Excavator)"
@@ -174,7 +193,12 @@
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Quantity</label>
-                <input type="number" step="0.01" name="items[INDEX][quantity]" value="1" class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
+                <input type="number" step="0.01" name="items[INDEX][quantity]" value="1" class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm quantity-input" oninput="calculateTotal()">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Price per Unit</label>
+                <input type="text" class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm price-display-input" placeholder="0" oninput="formatPriceInput(this); calculateTotal()">
+                <input type="hidden" name="items[INDEX][price]" class="price-input" value="0">
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Serial Numbers</label>
@@ -188,31 +212,31 @@
 <x-modal id="addCargoTypeModal" title="Define Cargo Type">
     <form id="addCargoTypeForm" class="space-y-4">
         @csrf
-        <x-input 
-            name="cargo_category" 
-            label="Jenis Muatan (Type)" 
+        <x-input
+            name="cargo_category"
+            label="Jenis Muatan (Type)"
             placeholder="e.g., Excavator, Forklift"
             id="cargo_category"
             :required="true"
         />
-        
-        <x-input 
-            name="cargo_name" 
-            label="Model Muatan (Model)" 
+
+        <x-input
+            name="cargo_name"
+            label="Model Muatan (Model)"
             placeholder="e.g., CAT 320, Zoomlion ZE215"
             id="cargo_name"
             :required="true"
         />
-        
-        <x-input 
-            name="cargo_description" 
-            label="Description (Optional)" 
+
+        <x-input
+            name="cargo_description"
+            label="Description (Optional)"
             placeholder="Additional info..."
             id="cargo_description"
         />
-        
+
         <div id="modalMessage" class="hidden p-3 rounded-lg"></div>
-        
+
         <div class="flex justify-end gap-3 pt-4">
             <x-button type="button" variant="outline" onclick="closeAddCargoTypeModal()">
                 Cancel
@@ -233,16 +257,79 @@ document.addEventListener('DOMContentLoaded', function() {
     const invoiceInput = document.getElementById('invoice_amount');
     const invoicePreview = document.getElementById('invoice_preview');
 
+    // Customer typeahead
+    const customerList = @json($customerOptions);
+    const customerSearchInput = document.getElementById('job_customer_search');
+    const customerHiddenInput = document.getElementById('job_customer_id');
+    const customerSuggestions = document.getElementById('job_customer_suggestions');
+
+    function clearCustomerSuggestions() {
+        if (!customerSuggestions) return;
+        customerSuggestions.innerHTML = '';
+        customerSuggestions.classList.add('hidden');
+    }
+
+    function renderCustomerSuggestions(items) {
+        if (!customerSuggestions) return;
+        if (!items.length) {
+            clearCustomerSuggestions();
+            return;
+        }
+        customerSuggestions.innerHTML = items.map(function (c) {
+            return '<button type="button" data-id=\"' + c.id + '\" class=\"w-full text-left px-3 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800\">' +
+                   c.name.replace(/</g, '&lt;') +
+                   '</button>';
+        }).join('');
+        customerSuggestions.classList.remove('hidden');
+
+        Array.prototype.forEach.call(customerSuggestions.querySelectorAll('button[data-id]'), function (btn) {
+            btn.addEventListener('click', function () {
+                const id = this.getAttribute('data-id');
+                const found = customerList.find(function (c) { return String(c.id) === String(id); });
+                if (!found) {
+                    if (customerHiddenInput) customerHiddenInput.value = '';
+                    return;
+                }
+
+                if (customerHiddenInput) customerHiddenInput.value = found.id;
+                if (customerSearchInput) customerSearchInput.value = found.name;
+
+                clearCustomerSuggestions();
+            });
+        });
+    }
+
+    if (customerSearchInput && customerSuggestions) {
+        customerSearchInput.addEventListener('input', function () {
+            const q = (this.value || '').trim().toLowerCase();
+            if (q.length < 2) {
+                clearCustomerSuggestions();
+                if (customerHiddenInput) customerHiddenInput.value = '';
+                return;
+            }
+            const results = customerList.filter(function (c) {
+                return (c.name || '').toLowerCase().includes(q);
+            }).slice(0, 10);
+            renderCustomerSuggestions(results);
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!customerSuggestions.contains(e.target) && e.target !== customerSearchInput) {
+                clearCustomerSuggestions();
+            }
+        });
+    }
+
     // Function to add cargo item
     function addCargoItem() {
         const clone = template.content.cloneNode(true);
         const html = clone.querySelector('.cargo-item').outerHTML;
         const replaced = html.replace(/INDEX/g, itemIndex);
         cargoItemsContainer.insertAdjacentHTML('beforeend', replaced);
-        
+
         // Update item numbers
         updateItemNumbers();
-        
+
         // Attach remove listener
         const items = cargoItemsContainer.querySelectorAll('.cargo-item');
         const lastItem = items[items.length - 1];
@@ -250,16 +337,16 @@ document.addEventListener('DOMContentLoaded', function() {
             lastItem.remove();
             updateItemNumbers();
         });
-        
+
         // Auto-fill equipment_id when user types
         const cargoInput = lastItem.querySelector('.equipment-input');
         const hiddenIdInput = lastItem.querySelector('.equipment-id-hidden');
-        
+
         cargoInput.addEventListener('input', function() {
             const datalistId = this.getAttribute('list');
             const datalist = document.getElementById(datalistId);
             const options = datalist.querySelectorAll('option');
-            
+
             // Find matching option
             let found = false;
             options.forEach(option => {
@@ -268,12 +355,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     found = true;
                 }
             });
-            
+
             if (!found) {
                 hiddenIdInput.value = '';
             }
         });
-        
+
         itemIndex++;
     }
 
@@ -289,11 +376,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function formatNumber(num) {
         return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     }
-    
+
     function parseNumber(str) {
         return parseFloat(str.replace(/\./g, '')) || 0;
     }
-    
+
     // Format rupiah preview
     function formatRupiah(amount) {
         return 'Rp ' + new Intl.NumberFormat('id-ID').format(amount);
@@ -305,7 +392,7 @@ document.addEventListener('DOMContentLoaded', function() {
         invoiceDisplayInput.addEventListener('input', function() {
             let value = this.value.replace(/\./g, ''); // Remove dots
             value = value.replace(/[^\d]/g, ''); // Only digits
-            
+
             if (value) {
                 this.value = formatNumber(value);
                 invoiceInput.value = value;
@@ -313,18 +400,57 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.value = '';
                 invoiceInput.value = '0';
             }
-            
+
             // Update preview
             const amount = parseFloat(invoiceInput.value) || 0;
             invoicePreview.textContent = formatRupiah(amount);
         });
-        
+
         // Initialize with old value if exists
         if (invoiceInput.value && parseFloat(invoiceInput.value) > 0) {
             invoiceDisplayInput.value = formatNumber(invoiceInput.value);
             invoicePreview.textContent = formatRupiah(invoiceInput.value);
         }
     }
+
+    // Format price input
+    window.formatPriceInput = function(input) {
+        let value = input.value.replace(/\./g, '');
+        value = value.replace(/[^\d]/g, '');
+
+        const hiddenInput = input.nextElementSibling;
+
+        if (value) {
+            input.value = formatNumber(value);
+            hiddenInput.value = value;
+        } else {
+            input.value = '';
+            hiddenInput.value = '0';
+        }
+    };
+
+    // Calculate total from items
+    window.calculateTotal = function() {
+        let total = 0;
+        const items = document.querySelectorAll('.cargo-item');
+
+        items.forEach(item => {
+            const qty = parseFloat(item.querySelector('.quantity-input').value) || 0;
+            const price = parseFloat(item.querySelector('.price-input').value) || 0;
+            total += qty * price;
+        });
+
+        // Update invoice amount display
+        const invoiceDisplay = document.getElementById('invoice_amount_display');
+        const invoiceHidden = document.getElementById('invoice_amount');
+        const invoicePreview = document.getElementById('invoice_preview');
+
+        if (invoiceDisplay && invoiceHidden && invoicePreview) {
+            invoiceDisplay.value = formatNumber(total);
+            invoiceHidden.value = total;
+            invoicePreview.textContent = formatRupiah(total);
+        }
+    };
 
     // Add button listener
     addButton.addEventListener('click', addCargoItem);
@@ -347,14 +473,14 @@ function closeAddCargoTypeModal() {
 // Handle modal form submission
 document.getElementById('addCargoTypeForm').addEventListener('submit', function(e) {
     e.preventDefault();
-    
+
     const formData = new FormData();
     formData.append('category', document.getElementById('cargo_category').value);
     formData.append('name', document.getElementById('cargo_name').value);
     formData.append('description', document.getElementById('cargo_description').value);
-    
+
     const messageDiv = document.getElementById('modalMessage');
-    
+
     fetch('{{ route('equipment.store') }}', {
         method: 'POST',
         headers: {
@@ -376,12 +502,12 @@ document.getElementById('addCargoTypeForm').addEventListener('submit', function(
                 option.textContent = data.equipment.category + ' - ' + data.equipment.name;
                 datalist.appendChild(option);
             });
-            
+
             // Show success message
             messageDiv.className = 'p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-200';
             messageDiv.textContent = '✅ ' + data.message;
             messageDiv.classList.remove('hidden');
-            
+
             // Close modal after 1.5 seconds
             setTimeout(() => {
                 closeAddCargoTypeModal();

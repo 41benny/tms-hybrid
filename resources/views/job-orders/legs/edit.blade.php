@@ -7,7 +7,7 @@
             ← Kembali
         </x-button>
         <div>
-            <h1 class="text-xl font-bold text-slate-900 dark:text-slate-100">Edit Shipment Leg #{{ $leg->leg_number }}</h1>
+            <div class="text-xl font-bold text-slate-900 dark:text-slate-100">Edit Shipment Leg #{{ $leg->leg_number }}</div>
             <p class="text-sm text-slate-500 dark:text-slate-400">Job: {{ $jobOrder->job_number }} • {{ $leg->leg_code }}</p>
         </div>
     </div>
@@ -55,12 +55,12 @@
     <form method="post" action="{{ route('job-orders.legs.update', [$jobOrder, $leg]) }}" class="space-y-6">
         @csrf
         @method('PUT')
-        
+
         {{-- Main Details --}}
         <x-card title="Main Details" subtitle="Detail transportasi">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <x-select 
-                    name="cost_category" 
+                <x-select
+                    name="cost_category"
                     label="Cost Category"
                     :error="$errors->first('cost_category')"
                     :required="true"
@@ -75,24 +75,38 @@
                 </x-select>
 
                 {{-- Vendor Field - Dinamis, tidak muncul untuk trucking --}}
+                @php
+                    $selectedVendorId = old('vendor_id', $leg->vendor_id);
+                    $selectedVendorName = $vendors->firstWhere('id', $selectedVendorId)?->name;
+                @endphp
                 <div id="vendor_field">
-                    <x-select 
-                        name="vendor_id" 
-                        label="Vendor"
-                        :error="$errors->first('vendor_id')"
-                        id="vendor_id"
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Vendor</label>
+                    <input
+                        type="text"
+                        id="vendor_search"
+                        name="vendor_search"
+                        placeholder="Ketik nama vendor dan pilih dari daftar..."
+                        class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                        list="vendor_list_edit"
+                        value="{{ old('vendor_search', $selectedVendorName) }}"
+                        autocomplete="off"
                     >
-                        <option value="">-- Pilih Vendor --</option>
+                    <datalist id="vendor_list_edit">
                         @foreach($vendors as $v)
-                            <option value="{{ $v->id }}" @selected(old('vendor_id', $leg->vendor_id)==$v->id)>{{ $v->name }}</option>
+                            <option value="{{ $v->name }}" data-id="{{ $v->id }}"></option>
                         @endforeach
-                    </x-select>
+                    </datalist>
+                    <input type="hidden" name="vendor_id" id="vendor_id" value="{{ $selectedVendorId }}">
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">Ketik beberapa huruf untuk melihat saran vendor.</p>
+                    @if($errors->first('vendor_id'))
+                        <p class="text-sm text-rose-600 dark:text-rose-400 mt-1.5">{{ $errors->first('vendor_id') }}</p>
+                    @endif
                 </div>
 
                 {{-- Trucking Fields (Own Fleet) --}}
                 <div id="trucking_fields" class="hidden grid-cols-subgrid col-span-2 gap-6">
-                    <x-select 
-                        name="truck_id" 
+                    <x-select
+                        name="truck_id"
                         label="Nopol Truck"
                         :error="$errors->first('truck_id')"
                         id="truck_id"
@@ -103,9 +117,9 @@
                         @endforeach
                     </x-select>
 
-                    <x-input 
-                        name="driver_name" 
-                        label="Nama Supir" 
+                    <x-input
+                        name="driver_name"
+                        label="Nama Supir"
                         :value="old('driver_name', $leg->driver?->name)"
                         placeholder="Supir akan terisi otomatis"
                         id="driver_name"
@@ -118,9 +132,9 @@
 
                 {{-- Pelayaran Fields --}}
                 <div id="vessel_field" class="hidden">
-                    <x-input 
-                        name="vessel_name" 
-                        label="Vessel Name" 
+                    <x-input
+                        name="vessel_name"
+                        label="Vessel Name"
                         :value="old('vessel_name', $leg->vessel_name)"
                         :error="$errors->first('vessel_name')"
                         placeholder="e.g., KM Bahari"
@@ -129,44 +143,43 @@
 
                 {{-- Common Fields --}}
 
-                <x-input 
-                    name="load_date" 
+                <x-input
+                    name="load_date"
                     type="date"
-                    label="Load Date" 
+                    label="Load Date"
                     :value="old('load_date', $leg->load_date->format('Y-m-d'))"
                     :error="$errors->first('load_date')"
                     :required="true"
                 />
 
-                <x-input 
-                    name="unload_date" 
+                <x-input
+                    name="unload_date"
                     type="date"
-                    label="Unload Date" 
-                    :value="old('unload_date', $leg->unload_date->format('Y-m-d'))"
+                    label="Unload Date"
+                    :value="old('unload_date', optional($leg->unload_date)->format('Y-m-d'))"
                     :error="$errors->first('unload_date')"
-                    :required="true"
                 />
 
-                <x-input 
-                    name="quantity" 
+                <x-input
+                    name="quantity"
                     type="number"
                     step="0.01"
-                    label="Quantity" 
+                    label="Quantity"
                     :value="old('quantity', $leg->quantity)"
                     :error="$errors->first('quantity')"
                     :required="true"
                 />
 
-                <x-input 
-                    name="serial_numbers" 
-                    label="Serial Numbers" 
+                <x-input
+                    name="serial_numbers"
+                    label="Serial Numbers"
                     :value="old('serial_numbers', $leg->serial_numbers)"
                     :error="$errors->first('serial_numbers')"
                     placeholder="e.g., SN-001, SN-002"
                 />
 
-                <x-select 
-                    name="status" 
+                <x-select
+                    name="status"
                     label="Status"
                     :error="$errors->first('status')"
                     :required="true"
@@ -186,7 +199,7 @@
             <div id="trucking_costs" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Uang Jalan (IDR)</label>
-                    <input 
+                    <input
                         type="text"
                         id="uang_jalan_display"
                         placeholder="500.000"
@@ -197,7 +210,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">BBM (IDR)</label>
-                    <input 
+                    <input
                         type="text"
                         id="bbm_display"
                         placeholder="300.000"
@@ -208,7 +221,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Tol (IDR)</label>
-                    <input 
+                    <input
                         type="text"
                         id="toll_display"
                         placeholder="150.000"
@@ -219,7 +232,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Other Costs (IDR)</label>
-                    <input 
+                    <input
                         type="text"
                         id="other_costs_display"
                         placeholder="100.000"
@@ -234,7 +247,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Vendor Cost (IDR)</label>
-                        <input 
+                        <input
                             type="text"
                             id="vendor_cost_display"
                             placeholder="3.000.000"
@@ -245,7 +258,7 @@
 
                     <div>
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">PPN 11% (IDR)</label>
-                        <input 
+                        <input
                             type="text"
                             id="ppn_display"
                             placeholder="330.000"
@@ -257,7 +270,7 @@
 
                     <div>
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">PPH 23 (IDR) - Dipotong</label>
-                        <input 
+                        <input
                             type="text"
                             id="pph23_display"
                             placeholder="60.000"
@@ -267,7 +280,7 @@
                         <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">PPH 23 2% dipotong dari vendor cost</p>
                     </div>
                 </div>
-                
+
                 <div class="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 rounded-lg p-5 border border-indigo-200 dark:border-indigo-800">
                     <div class="flex items-center justify-between">
                         <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Jumlah Total:</span>
@@ -282,16 +295,16 @@
             {{-- Pelayaran Costs --}}
             <div id="pelayaran_costs" class="hidden space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <x-input 
-                        name="shipping_line" 
-                        label="Shipping Line" 
+                    <x-input
+                        name="shipping_line"
+                        label="Shipping Line"
                         :value="old('shipping_line', $leg->mainCost?->shipping_line)"
                         placeholder="e.g., Meratus Line"
                     />
-                    
+
                     <div>
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Freight Cost (IDR)</label>
-                        <input 
+                        <input
                             type="text"
                             id="freight_cost_display"
                             placeholder="4.000.000"
@@ -302,7 +315,7 @@
 
                     <div>
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">PPN 11% (IDR)</label>
-                        <input 
+                        <input
                             type="text"
                             id="ppn_pelayaran_display"
                             placeholder="440.000"
@@ -314,7 +327,7 @@
 
                     <div>
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">PPH 23 (IDR) - Dipotong</label>
-                        <input 
+                        <input
                             type="text"
                             id="pph23_pelayaran_display"
                             placeholder="80.000"
@@ -323,16 +336,16 @@
                         <input type="hidden" name="pph23" id="pph23_pelayaran_input" value="{{ old('pph23', $leg->mainCost?->pph23 ?? 0) }}">
                         <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">PPH 23 2% dipotong dari freight cost</p>
                     </div>
-                    
-                    <x-input 
-                        name="container_no" 
-                        label="Container No." 
+
+                    <x-input
+                        name="container_no"
+                        label="Container No."
                         :value="old('container_no', $leg->mainCost?->container_no)"
                         placeholder="e.g., MRKU-123456-7"
                         class="md:col-span-2"
                     />
                 </div>
-                
+
                 <div class="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 rounded-lg p-5 border border-indigo-200 dark:border-indigo-800">
                     <div class="flex items-center justify-between">
                         <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Jumlah Total:</span>
@@ -346,45 +359,45 @@
 
             <div id="asuransi_costs" class="hidden space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <x-input 
-                        name="insurance_provider" 
-                        label="Perusahaan Asuransi" 
+                    <x-input
+                        name="insurance_provider"
+                        label="Perusahaan Asuransi"
                         :value="old('insurance_provider', $leg->mainCost?->insurance_provider)"
                         placeholder="e.g., PT Asuransi Jasa Raharja"
                     />
 
-                    <x-input 
-                        name="policy_number" 
-                        label="Nomor Polis" 
+                    <x-input
+                        name="policy_number"
+                        label="Nomor Polis"
                         :value="old('policy_number', $leg->mainCost?->policy_number)"
                         placeholder="e.g., POL-2024-001234"
                     />
 
-                    <x-input 
-                        name="insured_value" 
+                    <x-input
+                        name="insured_value"
                         type="number"
                         step="0.01"
-                        label="Nilai Pertanggungan (IDR)" 
+                        label="Nilai Pertanggungan (IDR)"
                         :value="old('insured_value', $leg->mainCost?->insured_value ?? 0)"
                         placeholder="e.g., 5000000000"
                         id="insured_value_edit"
                     />
 
-                    <x-input 
-                        name="premium_rate" 
+                    <x-input
+                        name="premium_rate"
                         type="number"
                         step="0.01"
-                        label="Rate Premi (%)" 
+                        label="Rate Premi (%)"
                         :value="old('premium_rate', $leg->mainCost?->premium_rate ?? 0)"
                         placeholder="e.g., 0.10"
                         id="premium_rate_edit"
                     />
 
-                    <x-input 
-                        name="admin_fee" 
+                    <x-input
+                        name="admin_fee"
                         type="number"
                         step="0.01"
-                        label="Biaya Admin (IDR)" 
+                        label="Biaya Admin (IDR)"
                         :value="old('admin_fee', $leg->mainCost?->admin_fee ?? 0)"
                         placeholder="e.g., 50000"
                         id="admin_fee_edit"
@@ -394,7 +407,7 @@
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                             Premi yang Dibayar (IDR) <span class="text-xs text-slate-500">(Auto)</span>
                         </label>
-                        <input 
+                        <input
                             type="text"
                             id="premium_cost_display_edit"
                             readonly
@@ -405,11 +418,11 @@
                         <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">= (Nilai Pertanggungan × Rate%) + Biaya Admin</p>
                     </div>
 
-                    <x-input 
-                        name="billable_rate" 
+                    <x-input
+                        name="billable_rate"
                         type="number"
                         step="0.01"
-                        label="Rate untuk Customer (%)" 
+                        label="Rate untuk Customer (%)"
                         :value="old('billable_rate', $leg->mainCost?->billable_rate ?? 0)"
                         placeholder="e.g., 0.15"
                         id="billable_rate_edit"
@@ -419,7 +432,7 @@
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                             Premi yang Ditagihkan ke Customer (IDR) <span class="text-xs text-slate-500">(Auto)</span>
                         </label>
-                        <input 
+                        <input
                             type="text"
                             id="premium_billable_display_edit"
                             readonly
@@ -448,8 +461,8 @@
             {{-- PIC Costs (Fee/Insentif Perorangan) --}}
             <div id="pic_costs" class="hidden space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <x-select 
-                        name="cost_type" 
+                    <x-select
+                        name="cost_type"
                         label="Tipe Biaya"
                         :error="$errors->first('cost_type')"
                     >
@@ -460,35 +473,35 @@
                         <option value="lainnya" @selected(old('cost_type', $leg->mainCost?->cost_type)=='lainnya')>Lainnya</option>
                     </x-select>
 
-                    <x-input 
-                        name="pic_name" 
-                        label="Nama PIC" 
+                    <x-input
+                        name="pic_name"
+                        label="Nama PIC"
                         :value="old('pic_name', $leg->mainCost?->pic_name)"
                         :error="$errors->first('pic_name')"
                         placeholder="e.g., Budi Santoso"
                     />
 
-                    <x-input 
-                        name="pic_phone" 
-                        label="No HP PIC" 
+                    <x-input
+                        name="pic_phone"
+                        label="No HP PIC"
                         :value="old('pic_phone', $leg->mainCost?->pic_phone)"
                         :error="$errors->first('pic_phone')"
                         placeholder="e.g., 08123456789"
                     />
 
-                    <x-input 
-                        name="pic_amount" 
+                    <x-input
+                        name="pic_amount"
                         type="number"
                         step="0.01"
-                        label="Jumlah Pembayaran (IDR)" 
+                        label="Jumlah Pembayaran (IDR)"
                         :value="old('pic_amount', $leg->mainCost?->pic_amount ?? 0)"
                         :error="$errors->first('pic_amount')"
                         placeholder="e.g., 500000"
                     />
 
                     <div class="md:col-span-2">
-                        <x-textarea 
-                            name="pic_notes" 
+                        <x-textarea
+                            name="pic_notes"
                             label="Catatan"
                             :error="$errors->first('pic_notes')"
                             placeholder="Catatan tambahan (opsional)..."
@@ -517,7 +530,10 @@
 document.addEventListener('DOMContentLoaded', function() {
     const costCategory = document.getElementById('cost_category');
     const vendorField = document.getElementById('vendor_field');
-    const vendorSelect = document.getElementById('vendor_id');
+    const vendorIdInput = document.getElementById('vendor_id');
+    const vendorSearchInput = document.getElementById('vendor_search');
+    const vendorList = document.getElementById('vendor_list_edit');
+    const vendorOptions = vendorList ? Array.from(vendorList.options).map(opt => ({ id: opt.dataset.id, name: opt.value })) : [];
     const vesselField = document.getElementById('vessel_field');
     const vendorCosts = document.getElementById('vendor_costs');
     const truckingCosts = document.getElementById('trucking_costs');
@@ -532,22 +548,22 @@ document.addEventListener('DOMContentLoaded', function() {
     function formatNumber(num) {
         return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     }
-    
+
     function parseNumber(str) {
         return parseFloat(str.replace(/\./g, '')) || 0;
     }
-    
+
     // Setup formatted input
     function setupFormattedInput(displayId, hiddenId, onInputCallback = null) {
         const displayInput = document.getElementById(displayId);
         const hiddenInput = document.getElementById(hiddenId);
-        
+
         if (!displayInput || !hiddenInput) return;
-        
+
         displayInput.addEventListener('input', function() {
             let value = this.value.replace(/\./g, '');
             value = value.replace(/[^\d]/g, '');
-            
+
             if (value) {
                 this.value = formatNumber(value);
                 hiddenInput.value = value;
@@ -555,10 +571,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.value = '';
                 hiddenInput.value = '0';
             }
-            
+
             if (onInputCallback) onInputCallback();
         });
-        
+
         // Initialize with existing value
         if (hiddenInput.value && parseFloat(hiddenInput.value) > 0) {
             displayInput.value = formatNumber(hiddenInput.value);
@@ -566,10 +582,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     const truckingFields = document.getElementById('trucking_fields');
-    
+
     function updateFormFields() {
         const category = costCategory.value;
-        
+
         // Hide all dynamic fields first
         truckingFields.classList.add('hidden');
         truckingFields.classList.remove('grid');
@@ -588,7 +604,8 @@ document.addEventListener('DOMContentLoaded', function() {
             truckingFields.classList.add('grid');
             truckingCosts.classList.remove('hidden');
             // Clear vendor selection when trucking is selected
-            if (vendorSelect) vendorSelect.value = '';
+            if (vendorIdInput) vendorIdInput.value = '';
+            if (vendorSearchInput) vendorSearchInput.value = '';
         } else if (category === 'vendor') {
             // Vendor - show vendor field, vendor cost, PPN, PPH23
             vendorField.classList.remove('hidden');
@@ -611,6 +628,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
     costCategory.addEventListener('change', updateFormFields);
 
+
+    function syncVendorSelection() {
+        if (!vendorIdInput) return;
+        const query = vendorSearchInput ? vendorSearchInput.value.trim().toLowerCase() : '';
+        let matchedId = '';
+        if (query) {
+            const match = vendorOptions.find(opt => opt.name.toLowerCase() === query);
+            if (match) matchedId = match.id;
+        }
+        vendorIdInput.value = matchedId;
+    }
+
+    if (vendorSearchInput) {
+        vendorSearchInput.addEventListener('input', syncVendorSelection);
+        vendorSearchInput.addEventListener('change', syncVendorSelection);
+        syncVendorSelection();
+    }
+
     // Auto-fill driver when truck is selected
     if (truckSelect) {
         truckSelect.addEventListener('change', function() {
@@ -618,7 +653,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (option && option.value) {
                 const driverIdVal = option.getAttribute('data-driver-id');
                 const driverNameVal = option.getAttribute('data-driver-name');
-                
+
                 if (driverName) driverName.value = driverNameVal || '';
                 if (driverId) driverId.value = driverIdVal || '';
             } else {
@@ -633,42 +668,42 @@ document.addEventListener('DOMContentLoaded', function() {
     setupFormattedInput('bbm_display', 'bbm_input');
     setupFormattedInput('toll_display', 'toll_input');
     setupFormattedInput('other_costs_display', 'other_costs_input');
-    
+
     // Vendor costs auto-calculation
     const vendorCostInput = document.getElementById('vendor_cost_input');
     const ppnInput = document.getElementById('ppn_input');
     const pph23Input = document.getElementById('pph23_input');
     const totalDisplay = document.getElementById('vendor_total_display');
-    
+
     function calculateVendorTax() {
         const vendorCost = parseFloat(vendorCostInput.value) || 0;
-        
+
         // Auto-calculate PPN 11% (bisa di-override manual)
         if (!ppnInput.dataset.manuallyEdited) {
             const ppn = Math.round(vendorCost * 0.11);
             ppnInput.value = ppn;
             document.getElementById('ppn_display').value = formatNumber(ppn);
         }
-        
+
         // Auto-calculate PPH 23 2% (bisa di-override manual)
         if (!pph23Input.dataset.manuallyEdited) {
             const pph23 = Math.round(vendorCost * 0.02);
             pph23Input.value = pph23;
             document.getElementById('pph23_display').value = formatNumber(pph23);
         }
-        
+
         updateVendorTotal();
     }
-    
+
     function updateVendorTotal() {
         const vendorCost = parseFloat(vendorCostInput.value) || 0;
         const ppn = parseFloat(ppnInput.value) || 0;
         const pph23 = parseFloat(pph23Input.value) || 0;
         const total = vendorCost + ppn - pph23;
-        
+
         totalDisplay.textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(total);
     }
-    
+
     setupFormattedInput('vendor_cost_display', 'vendor_cost_input', calculateVendorTax);
     setupFormattedInput('ppn_display', 'ppn_input', function() {
         ppnInput.dataset.manuallyEdited = 'true';
@@ -678,40 +713,40 @@ document.addEventListener('DOMContentLoaded', function() {
         pph23Input.dataset.manuallyEdited = 'true';
         updateVendorTotal();
     });
-    
+
     // Pelayaran costs auto-calculation
     const freightCostInput = document.getElementById('freight_cost_input');
     const ppnPelayaranInput = document.getElementById('ppn_pelayaran_input');
     const pph23PelayaranInput = document.getElementById('pph23_pelayaran_input');
     const pelayaranTotalDisplay = document.getElementById('pelayaran_total_display');
-    
+
     function calculatePelayaranTax() {
         const freightCost = parseFloat(freightCostInput.value) || 0;
-        
+
         if (!ppnPelayaranInput.dataset.manuallyEdited) {
             const ppn = Math.round(freightCost * 0.11);
             ppnPelayaranInput.value = ppn;
             document.getElementById('ppn_pelayaran_display').value = formatNumber(ppn);
         }
-        
+
         if (!pph23PelayaranInput.dataset.manuallyEdited) {
             const pph23 = Math.round(freightCost * 0.02);
             pph23PelayaranInput.value = pph23;
             document.getElementById('pph23_pelayaran_display').value = formatNumber(pph23);
         }
-        
+
         updatePelayaranTotal();
     }
-    
+
     function updatePelayaranTotal() {
         const freightCost = parseFloat(freightCostInput.value) || 0;
         const ppn = parseFloat(ppnPelayaranInput.value) || 0;
         const pph23 = parseFloat(pph23PelayaranInput.value) || 0;
         const total = freightCost + ppn - pph23;
-        
+
         pelayaranTotalDisplay.textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(total);
     }
-    
+
     setupFormattedInput('freight_cost_display', 'freight_cost_input', calculatePelayaranTax);
     setupFormattedInput('ppn_pelayaran_display', 'ppn_pelayaran_input', function() {
         ppnPelayaranInput.dataset.manuallyEdited = 'true';
@@ -723,7 +758,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     updateFormFields();
-    
+
     // Trigger calculations on page load
     if (vendorCostInput && parseFloat(vendorCostInput.value) > 0) {
         calculateVendorTax();
@@ -731,7 +766,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (freightCostInput && parseFloat(freightCostInput.value) > 0) {
         calculatePelayaranTax();
     }
-    
+
     // Auto-calculate Insurance Premium (Edit mode)
     const insuredValueEdit = document.getElementById('insured_value_edit');
     const premiumRateEdit = document.getElementById('premium_rate_edit');
@@ -743,27 +778,27 @@ document.addEventListener('DOMContentLoaded', function() {
     const premiumBillableDisplayEdit = document.getElementById('premium_billable_display_edit');
     const marginInfoEdit = document.getElementById('margin_info_edit');
     const marginPercentageEdit = document.getElementById('margin_percentage_edit');
-    
+
     function calculateInsurancePremiumEdit() {
         const insured = parseFloat(insuredValueEdit?.value) || 0;
         const rate = parseFloat(premiumRateEdit?.value) || 0;
         const admin = parseFloat(adminFeeEdit?.value) || 0;
         const billRate = parseFloat(billableRateEdit?.value) || 0;
-        
+
         // Calculate Premium Cost = (Insured Value × Rate%) + Admin Fee
         const cost = (insured * rate / 100) + admin;
         if (premiumCostEdit) premiumCostEdit.value = cost.toFixed(2);
         if (premiumCostDisplayEdit) premiumCostDisplayEdit.value = 'Rp ' + new Intl.NumberFormat('id-ID').format(cost);
-        
+
         // Calculate Premium Billable = Insured Value × Billable Rate% (without admin)
         const billable = insured * billRate / 100;
         if (premiumBillableEdit) premiumBillableEdit.value = billable.toFixed(2);
         if (premiumBillableDisplayEdit) premiumBillableDisplayEdit.value = 'Rp ' + new Intl.NumberFormat('id-ID').format(billable);
-        
+
         // Calculate Margin
         const margin = billable - cost;
         const marginPct = cost > 0 ? (margin / cost * 100) : 0;
-        
+
         if (marginInfoEdit) {
             marginInfoEdit.textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(margin);
         }
@@ -771,13 +806,13 @@ document.addEventListener('DOMContentLoaded', function() {
             marginPercentageEdit.textContent = marginPct.toFixed(2) + '%';
         }
     }
-    
+
     // Add event listeners for insurance fields
     if (insuredValueEdit) insuredValueEdit.addEventListener('input', calculateInsurancePremiumEdit);
     if (premiumRateEdit) premiumRateEdit.addEventListener('input', calculateInsurancePremiumEdit);
     if (adminFeeEdit) adminFeeEdit.addEventListener('input', calculateInsurancePremiumEdit);
     if (billableRateEdit) billableRateEdit.addEventListener('input', calculateInsurancePremiumEdit);
-    
+
     // Calculate on page load if editing insurance leg
     if (insuredValueEdit) {
         calculateInsurancePremiumEdit();
@@ -785,5 +820,3 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endsection
-
-

@@ -6,7 +6,7 @@
         <x-slot:header>
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h1 class="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100">Edit Sparepart</h1>
+                    <div class="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100">Edit Sparepart</div>
                     <p class="text-xs md:text-sm text-slate-600 dark:text-slate-400 mt-1">{{ $part->code }}</p>
                 </div>
                 <x-button :href="route('parts.index')" variant="ghost" size="sm">
@@ -21,16 +21,16 @@
         <form method="POST" action="{{ route('parts.update', $part) }}" class="space-y-4 md:space-y-6">
             @csrf
             @method('PUT')
-            
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                         Kode Part <span class="text-red-500">*</span>
                     </label>
-                    <input 
-                        type="text" 
-                        name="code" 
-                        value="{{ old('code', $part->code) }}" 
+                    <input
+                        type="text"
+                        name="code"
+                        value="{{ old('code', $part->code) }}"
                         required
                         class="w-full rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-4 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
@@ -43,10 +43,10 @@
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                         Nama Part <span class="text-red-500">*</span>
                     </label>
-                    <input 
-                        type="text" 
-                        name="name" 
-                        value="{{ old('name', $part->name) }}" 
+                    <input
+                        type="text"
+                        name="name"
+                        value="{{ old('name', $part->name) }}"
                         required
                         class="w-full rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-4 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
@@ -59,8 +59,8 @@
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                         Satuan <span class="text-red-500">*</span>
                     </label>
-                    <select 
-                        name="unit" 
+                    <select
+                        name="unit"
                         required
                         class="w-full rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-4 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
@@ -79,10 +79,10 @@
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                         Kategori
                     </label>
-                    <input 
-                        type="text" 
-                        name="category" 
-                        value="{{ old('category', $part->category) }}" 
+                    <input
+                        type="text"
+                        name="category"
+                        value="{{ old('category', $part->category) }}"
                         class="w-full rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-4 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                     @error('category')
@@ -94,11 +94,11 @@
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                         Minimum Stok
                     </label>
-                    <input 
-                        type="number" 
+                    <input
+                        type="number"
                         step="0.01"
-                        name="min_stock" 
-                        value="{{ old('min_stock', $part->min_stock) }}" 
+                        name="min_stock"
+                        value="{{ old('min_stock', $part->min_stock) }}"
                         class="w-full rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-4 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                     @error('min_stock')
@@ -111,9 +111,9 @@
                         Status
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input 
-                            type="checkbox" 
-                            name="is_active" 
+                        <input
+                            type="checkbox"
+                            name="is_active"
                             value="1"
                             @checked(old('is_active', $part->is_active))
                             class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
@@ -127,8 +127,8 @@
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                     Deskripsi
                 </label>
-                <textarea 
-                    name="description" 
+                <textarea
+                    name="description"
                     rows="3"
                     class="w-full rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-4 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >{{ old('description', $part->description) }}</textarea>

@@ -1,0 +1,154 @@
+Vendor Name
+Contact Person
+Email
+Phone
+City
+Country
+1	PT. ANGKUTAN BERSAMA ABADI	ANGKUTAN BERSAMA ABADI
+2	PT. ANTERO BAHANA CEMERLANG	ANTERO BAHANA CEMERLANG
+3	PT. BAHTERA MOTOR	BAHTERA MOTOR
+4	PT. BERKAH JAYA KALBAR	BERKAH JAYA KALBAR
+5	PT. DHARMA LAUTAN UTAMA	DHARMA LAUTAN UTAMA
+6	PT. FILADO ESMINDO	FILADO ESMINDO
+7	PT. GLOBAL HUALA LINE	GLOBAL HUALA LINE
+8	PT. HARAPAN BARU LINE	HARAPAN BARU LINE
+9	PT. LINTAS MAJU NUSANTARA	LINTAS MAJU NUSANTARA
+10	PT. MITRA ANGKUTAN SEJATI	MITRA ANGKUTAN SEJATI
+11	PT. NUSANTARA SEJAHTERA PUTHA	NUSANTARA SEJAHTERA PUTHA
+12	PT. PUTRA BAKTI JAYA SEMBADA	PUTRA BAKTI JAYA SEMBADA
+13	PT. PRIMA LANGGENG DIAN AGUNG	PRIMA LANGGENG DIAN AGUNG
+14	PT. ROMMY BAGAS TRANS	ROMMY BAGAS TRANS
+15	PT. RENTINDO CITRA UTAMA	RENTINDO CITRA UTAMA
+16	PT. SAPTA BUANA LOGISTIC	SAPTA BUANA LOGISTIC
+17	PT. SAPTA BUANA TRANSINDO	SAPTA BUANA TRANSINDO
+18	PT. SAPTA CAKRA WIRAUTAMA	SAPTA CAKRA WIRAUTAMA
+19	PT. SEGARA AMINDO SARANA	SEGARA AMINDO SARANA
+20	PT. SIGIT PUTRA AGUNG	SIGIT PUTRA AGUNG
+21	PT. SUMANTRI JAYA NUSANTARA	SUMANTRI JAYA NUSANTARA
+22	PT. VIONA MAJU SEJAHTERA	VIONA MAJU SEJAHTERA
+23	VPN / B 9963 KEH	VINTAMA PERKASA NUSANTARA
+24	PT. ZARA ABADI MANDIRI	ZARA ABADI MANDIRI
+25	CV. 87MANDIRI	87MANDIRI
+26	CV. AISYAH CENTRAL CARGO	AISYAH CENTRAL CARGO
+27	CV. WIRA KARYA	WIRA KARYA
+28	CV. JAWARA MITRA SAKTI	JAWARA MITRA SAKTI
+29	CV. YUSTINA PRIMA MANDIRI	YUSTINA PRIMA MANDIRI
+30	ADEK RANGKUTI	ADEK RANGKUTI
+31	AZBIM DAYA TRANS	AZBIM DAYA TRANS
+32	ANDILO NAJOGI	ANDILO NAJOGI
+33	ARIJAL SGUA	ARIJAL SGUA
+34	BADRANSYAH	BADRANSYAH
+35	BRC TOWING	BRC TOWING
+36	CHAMDI	CHAMDI
+37	DJAKA SATRIYA	DJAKA SATRIYA
+38	GDW LOGISTIK	GDW LOGISTIK
+39	GOENG	GOENG
+40	HADI	HADI
+41	HENDRIYADI	HENDRIYADI
+42	ILYAS AINUL YAQIN	ILYAS AINUL YAQIN
+43	JAYA TRANSPORTASI	JAYA TRANSPORTASI
+44	KASARI	KASARI
+45	LANCAR JAYA TRANSPORT	LANCAR JAYA TRANSPORT
+46	LAUTAN JAYA UTAMA TARAKAN	LAUTAN JAYA UTAMA TARAKAN
+47	NAVITAMA	NAVITAMA
+48	NUSA DHARMA EKSPRESINDO	NUSA DHARMA EKSPRESINDO
+49	NYK SPILL INDORORO	NYK SPILL INDORORO
+50	ODIH	ODIH
+51	RAHMAN	RAHMAN
+52	METRO TOWING	METRO TOWING
+53	SEDULUR KARYA BERSAMA	SEDULUR KARYA BERSAMA
+54	SUMATERA LAUT MELAKA INDAH	SUMATERA LAUT MELAKA INDAH
+55	SHARA SARANA CITRA	SHARA SARANA CITRA
+56	SUNDORO AGUNG	SUNDORO AGUNG
+57	TRANS SAMUDRA RAYA	TRANS SAMUDRA RAYA
+58	UNDANG	UNDANG
+59	WINTONNI	WINTONNI
+60	BPK. SUTOPO	SUTOPO
+61	BPK. ALFIAN FEBRIANTO	ALFIAN FEBRIANTO
+62	KO AHWAT	AHWAT
+63	KO ASANG	ASANG
+64	CV. MH TRANSINDO	MARVIN HASAN
+65	PT. Pelayaran Putra Sejati	Shirley	marketing@sejatilines.com	+62 811-922-441	Jl.Boulevard Raya Blok no. 1 Kirana Boutique Office Blok D3 No.1, Klp. Gading Tim., Kec. Klp. Gading, Jkt Utara, Daerah Khusus Ibukota Jakarta 14240	Jakarta Utara	14240	Indonesia
+66	Zephyrinus	Zephyrinus
+67	PT ANUGRAH PERDANA JAYA	Dede Sutisna
+68	Suwandi
+69	SJN&Co	Sumatri Jaya Nusantara
+70	PT ANUGRAH MAHA TUNGGAL	ABDUL GHOFUR		+62 821-1400-0516	KELAPA GADING	JAKARTA UTARA
+71	VPN / B 9251 FEI	VINTAMA PERKASA NUSANTARA
+72	VPN / B 9429 FEI	VINTAMA PERKASA NUSANTARA
+73	VPN / B 9430 FEI	VINTAMA PERKASA NUSANTARA
+74	Azcha	Azcha
+75	Luminthu Towing	Ika Rosmawati
+76	CV. ZAHRA PM LUMINTHU			0821-7770-3939	Jl. Pinan Jaya, Pamulang Tim., Kec. Pamulang, Kota Tangerang Selatan, Banten 15417
+77	DONI KURNIAWANSYAH	DONI KURNIAWANSYAH
+78	CV. JAYA MANDIRI SENTOSA	IWAN			JL RAYA NAROGONG BANTAR GEBANG	BEKASI	17152	INDONESIA
+79	HENDRA LCT PESONA NUSANTARA 2	HENDRA		+62 811-5199-068	KALIMANTAN TENGAH
+80	PT. LEMA SEJAHTERA ABADI	YOYO	LEMA_SA_BJM@YAHOO.CO.ID	+62 812-5110-8118	Jl. Kenari No.8, RT.08/RW.01, Basirih Selatan, Kec. Banjarmasin Sel., Kota Banjarmasin, Kalimantan Selatan	Kota Banjarmasin	70246	INDONESIA
+81	PT. PUTRA SUMATERA LESTARI	SUWANDI		+62 853-5959-7993	MEDAN	MEDAN
+82	CV. LENNA EXPRES NATIONAL	FITRIASIH			JL. BULAK TURI RT.02/09 NO.74 KEC. TARUMAJAYA, SEGARA MAKMUR	BEKASI
+83	Prayit	Prayit
+84	RR TOWING	OM IWAN
+85	Alifa Tunas Jaya				Banjarmasin
+86	CV. Sarana Utama	Marjito				Merak
+87	BKH	Ahmad Fauzi				Baukauheni
+88	CV. Niagara Pusaka Jaya	Pak Ricki		+62 853-9127-8486	Jl. Bukit Cinta Blok C No.32 RT.063 Damai, Kota Balikpapan, Kalimantan Timur
+89	Cargo Mas Cakrawala	Pak Firman		+62 811-567-573	Jl. DR. Wahidin S, Sungaijawi, Kota Pontianak, Kalimantan Barat, 78112
+90	Sumber Utama Harapan Umat (Suhu Logistik)	Pak Dedi +62 812-8110-0359		+62 812-8110-0359	Jl. Raya Letjen Ibrahim Adjie, 23, Sindang Barang, Bogor Barat, Kota Bogor, Jawa Barat, 16117
+91	Mitra Angkutan Sejati	Pak Nico		+62 811-6171-028	Jl. MR. SM AMIN, 226, Simpang Baru, Binawidya, Kota Pekanbaru, Riau, 28293
+92	PT. Gerak Logistik Lintas	Pak Syahroni		+62 813-1116-6505	Jl. Kali Abang Tengah No.61 RT.003 RW.002, Kaliabang Tengah, Bekasi Utara, Kota Bekasi, Jawa Tengah
+93	PT. Agfiha Bersama Maju	Pak Adit		+62 822-1189-5493	Jalan Pramuka Barat No.4 RT.011 RW.009 Utan Kayu Utara, Matraman, Kota Adm. Jakarta Timur, DKI Jakarta
+94	Adidaya Langgeng Perkasa			+62 822-6188-8700	Ruko Bonavista Residence, Jl. Sukabangun II, 074, Sukajaya, Sukarami, Kota Palembang, Sumatera Selatan
+95	CV. Kayvin Jaya Sentosa	Pak Sulis		+62 821-5532-6008	A. Yani KM. 6 Beruntung Jaya / Arjuna 2 No.36, Pemurus Dalam, Banjarmasin Selatan, Kota Banjarmasin, Kalimantan Selatan
+96	CV. Arrahman Transport Travel	Pak Gono		+62 811-5426-003	Suka Asri Blok. 000 No.050 RT.007 RW.000 Telaga Sari, Balikpapan Kota
+97	Jaya Mandiri Transportasi	Pak Jumanto		+62 812-1283-5787	Jl. Bekasi Raya KM.18, 27, Jatinegara Kaum, Pulogadung, Kota adm. Jakarta Timur, DKI Jakarta, 13250
+98	Boston	Mas Bima		+62 812-3189-9762	Jalan Trikora KM. 7, Guntung Manggis, Landasan Ulin, Kota Banjarbaru, Kalimantan Selatan, 70721
+99	Willys Cahaya Karunia	Pak Yusuf		+62 815-5797-109	Perum. DMR Griya Kariangau Baru B No.013 RT.010 RW.000, Kariangau, Balikpapan Barat, Kota Balikpapan, Kalimantan Timur
+100	Irma Jaya Transport	Pak Anif		+62 852-5276-4000	Jl. Walter Higo GG. Kencana 16, 60, Baamang Barat, Baamang, Kab. Kotawaringin Timur, Kalimantan Tengah, 74312
+101	GHL
+102	PT. Samudera Prima Sentosa
+103	Akhwat	Johanes
+104	PT. Harapan Mandiri Sejahtera (HMS)
+105	Rusli Luthfi	Almi
+106	CV. Arrahman Transport Travel	Almi
+107	CV. Kayvin Jaya Sentosa	Almi
+108	CV. Kayla Trans Cargo	Melakeyla		+62 878-8005-1918
+109	Iwan Abdurachman					Banjarmasin
+110	PT. Era Global Persada	Almi
+111	PT. Ashta Mega Gemilang	Ashary Tandu		+62 811-943-506	JL. BUGIS NO. 53 RT.001/RW. 011 KEL. KEBON BAWANG KEC. TANJUNG PRIUK - JAKARTA UTARA
+112	PT. Toyo Fuji Serasi Indonesia	Lean	lean.s@sera.astra.co.id	+62 812-1973-8656
+113	Paryanto	Almi
+114	PT. BILBA LINTAS SAMUDRA	Almi
+115	CV. Armada Papua Tractor	Almi
+116	Harianto	Almi
+117	PT. Transporindo Agung Sejahtera				Jl. Gorontalo III No.10, Tanjung Priok, Jakarta Utara. 14330
+118	PT. Hesthi Daksa Logistik	Luthfi P Yudha		0896-5200-0059	Jl. Pluit Indah Raya Nomor 168 B- G, Penjaringan Kota Jakarta Utara. 14450
+119	PT. Via Indocargo Abadi	Bpk. Jufri		0813-6401-1144	Komp. Batam Motor Center (BMC) Jl. Yos Sudarso Blok D No.21, Bengkong, Batam
+120	PT. Sejahtera Antar Laut	Ayyi
+121	Rudi Fajar Bahari	Rudi
+122	PT. Kaman Jaya Trans	Zenal aripin md		0812-2277-2070
+123	PT. DAFA JAYA PERKASA	Abin		+62 852-7693-1110	Jl. Bunga Raya II No.88, Asam Kumbang, Kec. Medan Selayang, Kota Medan, Sumatera Utara 20128	Medan	20128	Indonesia
+124	Abadi Towing	Mezza
+125	PT. Sedadoe Gati Logistik	Almi
+126	CV, Adera Trans	Almi
+127	Mezza	Mezza Francisco Vintama		81350101877
+128	CV Aris Abadi Motor
+129	CV. Aris
+130	Endang Triana	Almi
+131	PT. Paus Biru Logistik	Ayyi			JL KYAI HAJI ZAINUL ARIFIN NOMOR 27 A1-2, JAKARTA PUSAT.
+132	M IMRON	+62 813-6200-7655
+133	Sunarya	Sunarya
+134	DEBI FEVAL
+135	Hernah	KPW
+136	Marulang	KPW
+137	Ruliansyah
+138	Ronny	Ayyi
+139	Hasrul
+140	PT. Sukma Mitra SInergi
+141	PT AIR MAS	Ayyi
+142	PT. Salam Pacific Indonesia Lines	Rosid
+143	Ricki Kusma Wijaya	+62 853-9127-8486
+144	PT. Salam Pacific Indonesia Lines	Rosid
+145	CV. Multi Jasa	fadlinoor
+146	PT. Jaya Lestari Transindo	Raffi
+147	PT. Wings Sejati Trans	Fariz	ptwingssejatitrans@gmail.com	+62 813-2688-1555	JL H Mistar Cokrokusumo Bentok Kampung RT.001/001 Kec. Bati-Bati Kab. Tanah Laut	Banjarmasin	70852	Indonesia
+148	Pelindo	TAUFAN ISKANDAR MUDA

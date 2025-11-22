@@ -5,27 +5,31 @@
         <x-slot:header>
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Vendor Bills</h1>
+                    <div class="text-2xl font-bold text-slate-900 dark:text-slate-100">Vendor Bills</div>
                     <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Vendor bills dibuat otomatis dari <a href="{{ route('hutang.dashboard') }}" class="text-indigo-600 dark:text-indigo-400 hover:underline font-medium">Dashboard Hutang</a></p>
+                    <div class="mt-3 inline-flex rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
+                        <a href="{{ request()->fullUrlWithQuery(['scope'=>null]) }}" class="px-3 py-1.5 text-xs font-medium {{ ($scope ?? 'outstanding')==='outstanding' ? 'bg-indigo-600 text-white' : 'text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400' }}">Outstanding</a>
+                        <a href="{{ request()->fullUrlWithQuery(['scope'=>'all']) }}" class="px-3 py-1.5 text-xs font-medium {{ ($scope ?? 'outstanding')==='all' ? 'bg-indigo-600 text-white' : 'text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400' }}">Semua</a>
+                    </div>
                 </div>
             </div>
         </x-slot:header>
 
         <form method="get" class="grid grid-cols-1 md:grid-cols-6 gap-3">
-            <select name="status" class="rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <select name="status" class="rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <option value="">Status</option>
                 @foreach(['draft','received','partially_paid','paid','cancelled'] as $st)
                     <option value="{{ $st }}" @selected(request('status')===$st)>{{ ucfirst(str_replace('_',' ', $st)) }}</option>
                 @endforeach
             </select>
-            <select name="vendor_id" class="rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <select name="vendor_id" class="rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <option value="">Vendor</option>
                 @foreach($vendors as $v)
                     <option value="{{ $v->id }}" @selected(request('vendor_id')==$v->id)>{{ $v->name }}</option>
                 @endforeach
             </select>
-            <input type="date" name="from" value="{{ request('from') }}" class="rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-            <input type="date" name="to" value="{{ request('to') }}" class="rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <input type="date" name="from" value="{{ request('from') }}" class="rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <input type="date" name="to" value="{{ request('to') }}" class="rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             <div></div>
             <x-button type="submit" variant="outline">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -96,6 +100,11 @@
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap">
                             <div class="flex items-center gap-1">
+                                <button type="button" onclick="showInfoPopup({{ $b->id }})" class="inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-950/30 rounded transition-colors" title="Info Muatan & Leg">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </button>
                                 <x-button :href="route('vendor-bills.show',$b)" variant="ghost" size="sm" title="Lihat Detail">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -103,11 +112,23 @@
                                     </svg>
                                 </x-button>
                                 @if($b->status !== 'paid' && $b->status !== 'cancelled')
-                                <x-button :href="route('payment-requests.create', ['vendor_bill_id'=>$b->id])" variant="ghost" size="sm" title="Ajukan Pembayaran">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                </x-button>
+                                    @php
+                                        $remainingToRequest = $b->remaining_to_request ?? (max($b->total_amount - ($b->paymentRequests->sum('amount')),0));
+                                    @endphp
+                                    @if($remainingToRequest > 0)
+                                        <x-button :href="route('payment-requests.create', ['vendor_bill_id'=>$b->id])" variant="ghost" size="sm" title="Ajukan Pembayaran (Sisa belum diajukan: Rp {{ number_format($remainingToRequest,0,',','.') }})">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                        </x-button>
+                                    @else
+                                        <button disabled class="inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded cursor-not-allowed" title="Semua nominal sudah diajukan">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            Diajukan Penuh
+                                        </button>
+                                    @endif
                                 @endif
                             </div>
                         </td>
@@ -130,4 +151,35 @@
     </x-card>
 
     <div class="mt-4">{{ $bills->links() }}</div>
+
+    @include('components.payables.info-popup', ['id'=>'infoPopup','title'=>'Info Job Order & Muatan'])
+    @include('components.payables.popup-scripts')
+    <script>
+        function renderJobOrders(data){
+            if(!data.job_orders || !data.job_orders.length){
+                return '<div class="text-center py-12 text-slate-500 dark:text-slate-400 text-sm">Tidak ada job order terkait</div>';
+            }
+            return data.job_orders.map(j => `
+                <div class="border border-slate-200 dark:border-slate-700 rounded-lg p-4 bg-slate-50 dark:bg-slate-800/40">
+                    <div class="flex items-start justify-between mb-2">
+                        <div>
+                            <div class="font-semibold text-sm text-indigo-600 dark:text-indigo-400">${j.job_number}</div>
+                            <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Ordered ${j.order_date || '-'}</div>
+                        </div>
+                        <span class="text-[10px] px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">${(j.status||'').toUpperCase()}</span>
+                    </div>
+                    <div class="text-xs text-slate-700 dark:text-slate-200 font-medium mb-1">${j.customer || '-'}</div>
+                    <div class="grid grid-cols-1 gap-1 text-[11px] text-slate-600 dark:text-slate-400 mb-2">
+                        <div>👤 Sales: ${j.sales || '-'}</div>
+                        <div>📦 Cargo: ${j.cargo_summary || '-'}</div>
+                        <div>🚩 From: <span class="font-medium text-slate-700 dark:text-slate-300">${j.origin || '-'}</span> → <span class="font-medium text-slate-700 dark:text-slate-300">${j.destination || '-'}</span></div>
+                        <div>🧩 Legs: ${j.leg_count}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        function showInfoPopup(billId){
+            showPayablesPopup('infoPopup', `/vendor-bills/${billId}/job-info`, renderJobOrders);
+        }
+    </script>
 @endsection

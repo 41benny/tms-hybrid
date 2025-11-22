@@ -3,7 +3,7 @@
 @section('content')
     <div class="mb-4 flex items-center justify-between">
         <div>
-            <h1 class="text-xl font-semibold">Transaksi #{{ $trx->id }}</h1>
+            <div class="text-xl font-semibold">Transaksi #{{ $trx->id }}</div>
             <p class="text-sm text-slate-500 dark:text-slate-400">{{ $trx->tanggal->format('d M Y') }} • {{ $trx->account->name ?? '-' }}</p>
         </div>
     </div>

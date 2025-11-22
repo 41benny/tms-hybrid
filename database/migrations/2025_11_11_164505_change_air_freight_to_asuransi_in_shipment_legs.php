@@ -12,8 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Add 'asuransi' to cost_category enum
-        DB::statement("ALTER TABLE shipment_legs MODIFY COLUMN cost_category ENUM('trucking', 'vendor', 'pelayaran', 'asuransi')");
+        // Add 'asuransi' to cost_category enum (skip for sqlite which lacks MODIFY/ENUM)
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE shipment_legs MODIFY COLUMN cost_category ENUM('trucking', 'vendor', 'pelayaran', 'asuransi')");
+        }
 
         // Add insurance fields to leg_main_costs
         Schema::table('leg_main_costs', function (Blueprint $table) {
@@ -30,8 +32,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Remove 'asuransi' from enum
-        DB::statement("ALTER TABLE shipment_legs MODIFY COLUMN cost_category ENUM('trucking', 'vendor', 'pelayaran')");
+        // Remove 'asuransi' from enum (skip for sqlite)
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE shipment_legs MODIFY COLUMN cost_category ENUM('trucking', 'vendor', 'pelayaran')");
+        }
 
         // Drop insurance fields
         Schema::table('leg_main_costs', function (Blueprint $table) {

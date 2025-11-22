@@ -7,7 +7,7 @@
         <x-slot:header>
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Detail Jurnal</h1>
+                    <div class="text-2xl font-bold text-slate-900 dark:text-slate-100">Detail Jurnal</div>
                     <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">{{ $journal->journal_no }}</p>
                 </div>
                 <div class="flex gap-2">

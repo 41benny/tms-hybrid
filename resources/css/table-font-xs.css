@@ -1,0 +1,10 @@
+/* Table font size utility for all tables in app, matching sidebar text-xs (12px) and normal weight */
+table, th, td {
+    font-size: 0.75rem !important; /* text-xs = 12px = 0.75rem */
+    font-weight: 400 !important;
+    text-transform: none !important;
+}
+thead th, th {
+    font-weight: 400 !important;
+    text-transform: none !important;
+}

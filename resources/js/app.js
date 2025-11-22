@@ -3,6 +3,19 @@ import "./bootstrap";
 // Theme toggle handler
 const themeKey = "tms-theme";
 
+// Debounce function for performance optimization
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
 // Wait for DOM to be ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
@@ -181,6 +194,13 @@ function initNotifications() {
   // Initial load
   updateNotificationCount();
 
-  // Auto-refresh count every 30 seconds
-  setInterval(updateNotificationCount, 30000);
+  // Auto-refresh count every 60 seconds (optimized from 30s)
+  setInterval(updateNotificationCount, 60000);
+  
+  // Use Page Visibility API to pause when tab is hidden
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      updateNotificationCount();
+    }
+  });
 }

@@ -1,30 +1,38 @@
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
     @forelse($orders as $order)
         @php
-            $mainItem = $order->items->first();
+            $items = $order->items;
+            $mainItem = $items->first();
             $cargoTitle = $mainItem?->cargo_type ?: $mainItem?->equipment?->name;
-            $cargoDetail = null;
-            if ($mainItem) {
-                $qty = $mainItem->quantity;
-                $cargoDetail = trim(
-                    ($qty ? ($qty + 0) . ' units' : '') .
-                    ($mainItem->serial_numbers ? ' (S/N: ' . $mainItem->serial_numbers . ')' : '')
-                );
+            $itemCount = $items->count();
+            $additionalItems = max($itemCount - 1, 0);
+            $totalQuantity = $items->sum('quantity');
+            $totalQuantityFormatted = null;
+            if ($totalQuantity > 0) {
+                $totalQuantityFormatted = ($totalQuantity == floor($totalQuantity))
+                    ? number_format($totalQuantity, 0)
+                    : number_format($totalQuantity, 2);
+                $totalQuantityFormatted = rtrim(rtrim($totalQuantityFormatted, '0'), '.');
             }
         @endphp
-        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
+        <div 
+            class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-lg transition-shadow cursor-pointer flex flex-col"
+            onclick="window.location.href='{{ route('job-orders.show', $order) }}'"
+            role="link"
+            tabindex="0"
+        >
             <!-- Header -->
             <div class="px-4 pt-4 pb-3 flex items-start justify-between gap-2">
                 <div class="min-w-0">
-                    <a href="{{ route('job-orders.show', [$order, 'view' => 'board']) }}" class="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+                    <a href="{{ route('job-orders.show', $order) }}" class="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline">
                         {{ $order->job_number }}
                     </a>
-                    <p class="mt-1 text-base font-semibold text-slate-900 dark:text-slate-100 truncate">
+                    <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
                         {{ $order->customer->name }}
                     </p>
                 </div>
                 <div class="flex flex-col items-end gap-1">
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold
+                    <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide
                         {{ match($order->status) {
                             'draft' => 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300',
                             'confirmed' => 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
@@ -35,7 +43,7 @@
                         } }}">
                         {{ strtoupper(str_replace('_', ' ', $order->status)) }}
                     </span>
-                    <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                    <p class="text-sm text-slate-500 dark:text-slate-400">
                         {{ $order->order_date->format('d/m/Y') }}
                     </p>
                 </div>
@@ -44,7 +52,7 @@
             <div class="border-t border-slate-200 dark:border-slate-700"></div>
 
             <!-- Body -->
-            <div class="px-4 py-3 space-y-2.5">
+            <div class="px-4 py-4 space-y-3 flex-1">
                 <!-- Sales (label kanan-kiri) -->
                 <div class="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
                     <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -66,9 +74,14 @@
                         <span class="shrink-0 text-slate-500 dark:text-slate-400">Cargo:</span>
                         <span class="font-semibold text-slate-900 dark:text-slate-100 truncate">
                             {{ $cargoTitle }}
-                            @if($cargoDetail)
+                            @if($additionalItems > 0)
                                 <span class="font-normal text-xs text-slate-500 dark:text-slate-400">
-                                    &mdash; {{ $cargoDetail }}
+                                    (+{{ $additionalItems }} item{{ $additionalItems > 1 ? 's' : '' }})
+                                </span>
+                            @endif
+                            @if($totalQuantityFormatted)
+                                <span class="font-normal text-xs text-slate-500 dark:text-slate-400">
+                                    &mdash; {{ $totalQuantityFormatted }} units total
                                 </span>
                             @endif
                         </span>
@@ -103,20 +116,6 @@
                 </div>
             </div>
 
-            <!-- Footer Actions -->
-            <div class="px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700 flex items-center justify-end gap-2">
-                <a href="{{ route('job-orders.show', [$order, 'view' => 'board']) }}" class="p-1.5 text-slate-600 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                </a>
-                <a href="{{ route('job-orders.edit', [$order, 'view' => 'board']) }}" class="p-1.5 text-slate-600 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                </a>
-            </div>
         </div>
     @empty
         <div class="col-span-full">

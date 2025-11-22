@@ -1,0 +1,43 @@
+    /**
+     * Get leg info for popup (AJAX)
+     */
+    public function getLegInfo(VendorBill $vendor_bill)
+    {
+        $vendor_bill->load(['items.shipmentLeg.truck', 'items.shipmentLeg.driver', 'items.shipmentLeg.vendor']);
+        
+        $legs = collect();
+        foreach ($vendor_bill->items as $item) {
+            if ($item->shipmentLeg) {
+                $legs->push($item->shipmentLeg);
+            }
+        }
+        $legs = $legs->unique('id');
+        
+        $formattedLegs = $legs->map(function ($leg) {
+            $statusClass = match($leg->status) {
+                'pending' => 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300',
+                'in_transit' => 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
+                'delivered' => 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400',
+                'cancelled' => 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400',
+                default => 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+            };
+            
+            return [
+                'leg_code' => $leg->leg_code,
+                'status' => $leg->status,
+                'status_label' => strtoupper(str_replace('_', ' ', $leg->status)),
+                'status_class' => $statusClass,
+                'load_date' => $leg->load_date->format('d M Y'),
+                'unload_date' => $leg->unload_date->format('d M Y'),
+                'quantity' => number_format($leg->quantity, 2, ',', '.'),
+                'cost_category' => ucfirst($leg->cost_category),
+                'truck' => $leg->truck ? $leg->truck->plate_number : null,
+                'driver' => $leg->driver ? $leg->driver->name : null,
+                'vendor' => $leg->vendor ? $leg->vendor->name : null,
+            ];
+        });
+        
+        return response()->json([
+            'legs' => $formattedLegs,
+        ]);
+    }

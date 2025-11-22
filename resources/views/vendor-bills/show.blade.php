@@ -3,7 +3,7 @@
 @section('content')
     <div class="mb-4 flex items-center justify-between">
         <div>
-            <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">{{ $bill->vendor_bill_number }}</h1>
+            <div class="text-2xl font-bold text-slate-900 dark:text-slate-100">{{ $bill->vendor_bill_number }}</div>
             <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">{{ $bill->vendor->name ?? '-' }}</p>
         </div>
         <div class="flex items-center gap-2">
@@ -13,13 +13,21 @@
                 </svg>
                 Kembali ke Dashboard Hutang
             </a>
-            @if($bill->status !== 'paid' && $bill->status !== 'cancelled' && $bill->remaining > 0)
-            <a href="{{ route('payment-requests.create', ['vendor_bill_id'=>$bill->id]) }}" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Ajukan Pembayaran
-            </a>
+            @php($fullyRequested = $bill->remaining_to_request <= 0)
+            @if($bill->status !== 'paid' && $bill->status !== 'cancelled' && !$fullyRequested)
+                <a href="{{ route('payment-requests.create', ['vendor_bill_id'=>$bill->id]) }}" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Ajukan Pembayaran
+                </a>
+            @elseif($fullyRequested)
+                <button disabled class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-sm font-medium flex items-center gap-2 cursor-not-allowed" title="Sudah diajukan penuh">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Sudah Diajukan Penuh
+                </button>
             @endif
             @if($bill->status === 'draft')
             <form method="post" action="{{ route('vendor-bills.mark-received', $bill) }}" class="inline">
@@ -58,7 +66,7 @@
             </div>
             <div>
                 <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Catatan</div>
-                <div class="text-sm text-slate-900 dark:text-slate-100">{{ $bill->notes ?: '-' }}</div>
+                <div class="text-sm text-slate-900 dark:text-slate-100">{{ $bill->notes ?: $bill->auto_description }}</div>
             </div>
         </div>
 
@@ -87,9 +95,15 @@
 
         <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
             <div class="flex items-center justify-between">
-                <div class="text-sm text-slate-600 dark:text-slate-400">Sisa Hutang</div>
-                <div class="text-2xl font-bold {{ $bill->remaining > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400' }}">
-                    Rp {{ number_format($bill->remaining ?? $bill->total_amount, 0, ',', '.') }}
+                <div class="space-y-1">
+                    <div class="text-sm text-slate-600 dark:text-slate-400">Total Pengajuan (Requested)</div>
+                    <div class="text-lg font-bold text-emerald-600 dark:text-emerald-400">Rp {{ number_format($bill->total_requested, 0, ',', '.') }}</div>
+                </div>
+                <div class="text-right">
+                    <div class="text-sm text-slate-600 dark:text-slate-400">Sisa Belum Diajukan</div>
+                    <div class="text-2xl font-bold {{ $bill->remaining_to_request > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400' }}">
+                        Rp {{ number_format($bill->remaining_to_request, 0, ',', '.') }}
+                    </div>
                 </div>
             </div>
         </div>
@@ -142,15 +156,6 @@
                         </tr>
                     @endforeach
                 </tbody>
-                <tfoot>
-                    <tr class="border-t-2 border-slate-300 dark:border-slate-700">
-                        <td colspan="3" class="px-3 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">Total Pengajuan</td>
-                        <td class="px-3 py-3 text-right font-bold text-lg text-emerald-600 dark:text-emerald-400">
-                            Rp {{ number_format($bill->paymentRequests->sum('amount'), 0, ',', '.') }}
-                        </td>
-                        <td colspan="2"></td>
-                    </tr>
-                </tfoot>
             </table>
         </div>
     </x-card>

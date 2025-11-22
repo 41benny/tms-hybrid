@@ -3,7 +3,7 @@
 @section('content')
     <div class="mb-4 flex items-center justify-between">
         <div>
-            <h1 class="text-xl font-semibold">Jurnal</h1>
+            <div class="text-xl font-semibold">Jurnal</div>
             <p class="text-sm text-slate-500 dark:text-slate-400">Daftar semua jurnal akuntansi</p>
         </div>
         <a href="{{ route('journals.create') }}" class="px-3 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-500">+ Jurnal Adjustment</a>

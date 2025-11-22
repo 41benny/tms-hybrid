@@ -7,16 +7,16 @@
         <x-slot:header>
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Drivers</h1>
+                    <div class="text-2xl font-bold text-slate-900 dark:text-slate-100">Drivers</div>
                     <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Kelola data pengemudi</p>
                 </div>
                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                     <form method="get" class="flex items-center gap-2">
-                        <input 
-                            type="text" 
-                            name="q" 
-                            value="{{ request('q') }}" 
-                            placeholder="Cari nama..." 
+                        <input
+                            type="text"
+                            name="q"
+                            value="{{ request('q') }}"
+                            placeholder="Cari nama..."
                             class="rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-4 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                         >
                         <x-button variant="outline" type="submit">
@@ -93,7 +93,7 @@
                 </tbody>
             </table>
         </div>
-        
+
         @if($items->hasPages())
             <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-800">
                 {{ $items->links() }}

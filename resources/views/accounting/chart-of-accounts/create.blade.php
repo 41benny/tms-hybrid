@@ -6,7 +6,7 @@
         <x-slot:header>
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Tambah Akun COA</h1>
+                    <div class="text-2xl font-bold text-slate-900 dark:text-slate-100">Tambah Akun COA</div>
                     <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Definisikan akun baru untuk dipakai di seluruh modul</p>
                 </div>
                 <x-button :href="route('chart-of-accounts.index')" variant="ghost">

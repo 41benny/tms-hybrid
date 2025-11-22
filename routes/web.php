@@ -12,6 +12,7 @@ use App\Http\Controllers\Finance\FinanceDashboardController;
 use App\Http\Controllers\Finance\HutangController;
 use App\Http\Controllers\Finance\InvoiceController;
 use App\Http\Controllers\Finance\PaymentRequestController;
+use App\Http\Controllers\PaymentReceiptController;
 use App\Http\Controllers\Finance\VendorBillController;
 use App\Http\Controllers\Inventory\PartController;
 use App\Http\Controllers\Inventory\PartDashboardController;
@@ -58,16 +59,25 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('finance/dashboard', [FinanceDashboardController::class, 'index'])->name('finance.dashboard');
 
     Route::resource('invoices', InvoiceController::class);
-    Route::post('invoices/{invoice}/mark-sent', [InvoiceController::class, 'markAsSent'])->name('invoices.mark-sent');
-    Route::post('invoices/{invoice}/mark-paid', [InvoiceController::class, 'markAsPaid'])->name('invoices.mark-paid');
+    Route::patch('invoices/{invoice}/mark-as-sent', [InvoiceController::class, 'markAsSent'])->name('invoices.mark-as-sent');
+    Route::patch('invoices/{invoice}/revert-to-draft', [InvoiceController::class, 'revertToDraft'])->name('invoices.revert-to-draft');
+    Route::patch('invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('invoices.cancel');
+    Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf');
 
     Route::resource('vendor-bills', VendorBillController::class)->only(['index', 'show']);
     Route::post('vendor-bills/{vendor_bill}/mark-received', [VendorBillController::class, 'markAsReceived'])->name('vendor-bills.mark-received');
     Route::post('vendor-bills/{vendor_bill}/mark-paid', [VendorBillController::class, 'markAsPaid'])->name('vendor-bills.mark-paid');
+    Route::get('vendor-bills/{vendor_bill}/leg-info', [VendorBillController::class, 'getLegInfo'])->name('vendor-bills.leg-info');
+    Route::get('vendor-bills/{vendor_bill}/job-info', [VendorBillController::class, 'getJobInfo'])->name('vendor-bills.job-info');
 
     Route::resource('payment-requests', PaymentRequestController::class)->except(['edit', 'update']);
     Route::post('payment-requests/{payment_request}/approve', [PaymentRequestController::class, 'approve'])->name('payment-requests.approve');
     Route::post('payment-requests/{payment_request}/reject', [PaymentRequestController::class, 'reject'])->name('payment-requests.reject');
+    Route::get('payment-requests/{payment_request}/job-info', [PaymentRequestController::class, 'getJobInfo'])->name('payment-requests.job-info');
+
+    Route::resource('payment-receipts', PaymentReceiptController::class)->except(['edit', 'update']);
+    Route::post('payment-receipts/{payment_receipt}/allocate', [PaymentReceiptController::class, 'allocate'])->name('payment-receipts.allocate');
+    Route::delete('payment-receipts/{payment_receipt}/deallocate', [PaymentReceiptController::class, 'deallocate'])->name('payment-receipts.deallocate');
 
     Route::prefix('notifications')->name('notifications.')->group(function () {
         Route::get('/', [NotificationController::class, 'index'])->name('index');
@@ -76,7 +86,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('read-all', [NotificationController::class, 'markAllAsRead'])->name('read-all');
     });
 
-    Route::get('hutang', [HutangController::class, 'dashboard'])->name('hutang.dashboard');
+    Route::get('hutang', [HutangController::class, 'dashboard'])->name('hutang.dashboard')->middleware('menu:hutang');
     Route::resource('driver-advances', DriverAdvanceController::class)->only(['index', 'show']);
     Route::post('driver-advances/{driverAdvance}/pay-dp', [DriverAdvanceController::class, 'payDP'])->name('driver-advances.pay-dp');
     Route::post('driver-advances/{driverAdvance}/settlement', [DriverAdvanceController::class, 'processSettlement'])->name('driver-advances.settlement');
@@ -85,6 +95,12 @@ Route::middleware(['auth', 'active'])->group(function () {
 
     Route::resource('journals', JournalController::class)->except(['destroy']);
     Route::resource('chart-of-accounts', ChartOfAccountController::class)->except(['show', 'destroy']);
+
+    // Fixed Assets
+    Route::resource('fixed-assets', \App\Http\Controllers\Accounting\FixedAssetController::class);
+    Route::post('fixed-assets/{fixedAsset}/depreciate', [\App\Http\Controllers\Accounting\FixedAssetController::class, 'depreciate'])->name('fixed-assets.depreciate');
+    Route::get('fixed-assets/{fixedAsset}/dispose', [\App\Http\Controllers\Accounting\FixedAssetController::class, 'disposeForm'])->name('fixed-assets.dispose.form');
+    Route::post('fixed-assets/{fixedAsset}/dispose', [\App\Http\Controllers\Accounting\FixedAssetController::class, 'dispose'])->name('fixed-assets.dispose');
 
     Route::get('inventory/dashboard', [PartDashboardController::class, 'index'])->name('inventory.dashboard');
     Route::resource('parts', PartController::class);
@@ -106,6 +122,40 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('general-ledger', [ReportAccountingController::class, 'generalLedger'])->name('general-ledger');
         Route::get('profit-loss', [ReportAccountingController::class, 'profitLoss'])->name('profit-loss');
         Route::get('balance-sheet', [ReportAccountingController::class, 'balanceSheet'])->name('balance-sheet');
+
+        // Tax Reports
+        Route::prefix('tax')->name('tax.')->group(function () {
+            Route::get('ppn-keluaran', [\App\Http\Controllers\Accounting\TaxReportController::class, 'ppnKeluaran'])->name('ppn-keluaran');
+            Route::get('ppn-masukan', [\App\Http\Controllers\Accounting\TaxReportController::class, 'ppnMasukan'])->name('ppn-masukan');
+            Route::get('ppn-summary', [\App\Http\Controllers\Accounting\TaxReportController::class, 'ppnSummary'])->name('ppn-summary');
+            Route::get('pph23-dipotong', [\App\Http\Controllers\Accounting\TaxReportController::class, 'pph23Dipotong'])->name('pph23-dipotong');
+            Route::get('pph23-dipungut', [\App\Http\Controllers\Accounting\TaxReportController::class, 'pph23Dipungut'])->name('pph23-dipungut');
+            Route::get('pph23-summary', [\App\Http\Controllers\Accounting\TaxReportController::class, 'pph23Summary'])->name('pph23-summary');
+        });
+    });
+
+    // Tax Invoice Requests
+    Route::prefix('tax-invoices')->name('tax-invoices.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Accounting\TaxInvoiceRequestController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Accounting\TaxInvoiceRequestController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Accounting\TaxInvoiceRequestController::class, 'store'])->name('store');
+        Route::post('/extract', [\App\Http\Controllers\Accounting\TaxInvoiceRequestController::class, 'extractFile'])->name('extract');
+        Route::get('/export', [\App\Http\Controllers\Accounting\TaxInvoiceRequestController::class, 'export'])->name('export');
+        Route::get('/{taxInvoiceRequest}', [\App\Http\Controllers\Accounting\TaxInvoiceRequestController::class, 'show'])->name('show');
+        Route::get('/{taxInvoiceRequest}/complete', [\App\Http\Controllers\Accounting\TaxInvoiceRequestController::class, 'complete'])->name('complete');
+        Route::put('/{taxInvoiceRequest}/complete', [\App\Http\Controllers\Accounting\TaxInvoiceRequestController::class, 'updateComplete'])->name('update-complete');
+        Route::get('/{taxInvoiceRequest}/preview', [\App\Http\Controllers\Accounting\TaxInvoiceRequestController::class, 'preview'])->name('preview');
+        Route::get('/{taxInvoiceRequest}/download', [\App\Http\Controllers\Accounting\TaxInvoiceRequestController::class, 'downloadFile'])->name('download');
+    });
+
+    // Accounting Periods
+    Route::prefix('accounting/periods')->name('accounting.periods.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Accounting\FiscalPeriodController::class, 'index'])->name('index');
+        Route::post('create', [\App\Http\Controllers\Accounting\FiscalPeriodController::class, 'createPeriod'])->name('create');
+        Route::post('create-current', [\App\Http\Controllers\Accounting\FiscalPeriodController::class, 'createCurrentMonth'])->name('create-current');
+        Route::post('{period}/close', [\App\Http\Controllers\Accounting\FiscalPeriodController::class, 'close'])->name('close');
+        Route::post('{period}/reopen', [\App\Http\Controllers\Accounting\FiscalPeriodController::class, 'reopen'])->name('reopen');
+        Route::post('{period}/lock', [\App\Http\Controllers\Accounting\FiscalPeriodController::class, 'lock'])->name('lock');
     });
 });
 

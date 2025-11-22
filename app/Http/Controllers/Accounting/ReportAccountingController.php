@@ -65,7 +65,25 @@ class ReportAccountingController extends Controller
         $from = $request->get('from') ?: now()->startOfMonth()->toDateString();
         $to = $request->get('to') ?: now()->endOfMonth()->toDateString();
         $accountId = (int) $request->get('account_id');
-        $account = ChartOfAccount::findOrFail($accountId);
+        $accounts = ChartOfAccount::where('status', 'active')->where('is_postable', true)->orderBy('code')->get();
+
+        // Jika belum memilih akun, tampilkan halaman kosong dengan dropdown akun
+        if (! $accountId) {
+            return view('reports.general-ledger', [
+                'accounts' => $accounts,
+                'from' => $from,
+                'to' => $to,
+            ]);
+        }
+
+        $account = ChartOfAccount::find($accountId);
+        if (! $account) {
+            return view('reports.general-ledger', [
+                'accounts' => $accounts,
+                'from' => $from,
+                'to' => $to,
+            ])->with('error', 'Akun tidak ditemukan');
+        }
 
         $year = (int) date('Y', strtotime($from));
         $openOb = DB::table('opening_balances')->where('year', $year)->where('account_id', $accountId)
@@ -83,10 +101,27 @@ class ReportAccountingController extends Controller
             ->whereBetween('j.journal_date', [$from, $to])
             ->orderBy('j.journal_date')
             ->orderBy('jl.id')
-            ->select('j.journal_date', 'j.journal_no', 'j.memo', 'jl.description', 'jl.debit', 'jl.credit')
+            ->select(
+                'j.id as journal_id',
+                'j.journal_date',
+                'j.journal_no',
+                'j.memo',
+                'j.source_type',
+                'j.source_id',
+                'jl.description',
+                'jl.debit',
+                'jl.credit'
+            )
             ->get();
 
-        return view('reports.general-ledger', compact('account', 'from', 'to', 'opening', 'entries'));
+        return view('reports.general-ledger', [
+            'accounts' => $accounts,
+            'account' => $account,
+            'from' => $from,
+            'to' => $to,
+            'opening' => $opening,
+            'entries' => $entries,
+        ]);
     }
 
     public function profitLoss(Request $request)

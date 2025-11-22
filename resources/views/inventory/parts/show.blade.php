@@ -6,7 +6,7 @@
         <x-slot:header>
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h1 class="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100">{{ $part->code }}</h1>
+                    <div class="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100">{{ $part->code }}</div>
                     <p class="text-xs md:text-sm text-slate-600 dark:text-slate-400 mt-1">{{ $part->name }}</p>
                 </div>
                 <div class="flex gap-2">

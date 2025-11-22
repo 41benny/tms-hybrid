@@ -9,22 +9,25 @@ class FiscalPeriodsSeeder extends Seeder
 {
     public function run(): void
     {
-        $now = now();
-        $year = (int) $now->format('Y');
-        $month = (int) $now->format('m');
+        $startPoint = now()->startOfMonth();
+        // Seed 12 months forward (including current)
+        for ($i = 0; $i < 12; $i++) {
+            $current = $startPoint->copy()->addMonths($i);
+            $year = (int) $current->format('Y');
+            $month = (int) $current->format('m');
+            $start = $current->copy()->startOfMonth()->toDateString();
+            $end = $current->copy()->endOfMonth()->toDateString();
 
-        $start = $now->copy()->startOfMonth()->toDateString();
-        $end = $now->copy()->endOfMonth()->toDateString();
-
-        DB::table('fiscal_periods')->updateOrInsert(
-            ['year' => $year, 'month' => $month],
-            [
-                'start_date' => $start,
-                'end_date' => $end,
-                'status' => 'open',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]
-        );
+            DB::table('fiscal_periods')->updateOrInsert(
+                ['year' => $year, 'month' => $month],
+                [
+                    'start_date' => $start,
+                    'end_date' => $end,
+                    'status' => DB::table('fiscal_periods')->where('year',$year)->where('month',$month)->value('status') ?? 'open',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
+        }
     }
 }

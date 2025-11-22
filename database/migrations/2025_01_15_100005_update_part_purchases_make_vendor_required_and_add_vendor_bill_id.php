@@ -9,8 +9,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('part_purchases', function (Blueprint $table) {
+            // Drop existing foreign key first
+            $table->dropForeign(['vendor_id']);
+            
             // Ubah vendor_id menjadi required (NOT NULL)
-            $table->foreignId('vendor_id')->nullable(false)->change();
+            $table->unsignedBigInteger('vendor_id')->nullable(false)->change();
+            
+            // Re-add foreign key constraint
+            $table->foreign('vendor_id')->references('id')->on('vendors')->onDelete('restrict');
 
             // Tambah vendor_bill_id untuk relasi ke VendorBill
             $table->foreignId('vendor_bill_id')->nullable()->after('vendor_id')->constrained('vendor_bills')->nullOnDelete();

@@ -7,13 +7,21 @@ use App\Models\Master\Customer;
 use App\Models\Master\Sales;
 use App\Models\Operations\JobOrder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 class JobOrderController extends Controller
 {
     public function index(Request $request)
     {
-        $query = JobOrder::query()->with(['customer', 'sales', 'shipmentLegs', 'items.equipment']);
+        $query = JobOrder::query()->with([
+            'customer',
+            'sales',
+            'shipmentLegs.mainCost',
+            'shipmentLegs.additionalCosts',
+            'items.equipment',
+            'invoiceItems',
+        ]);
 
         if ($status = $request->get('status')) {
             $query->where('status', $status);
@@ -32,6 +40,15 @@ class JobOrderController extends Controller
         }
         if ($to = $request->get('to')) {
             $query->whereDate('order_date', '<=', $to);
+        }
+        
+        // Filter by invoice status
+        if ($invoiceStatus = $request->get('invoice_status')) {
+            if ($invoiceStatus === 'not_invoiced') {
+                $query->doesntHave('invoiceItems');
+            } elseif ($invoiceStatus === 'invoiced') {
+                $query->has('invoiceItems');
+            }
         }
 
         $viewMode = $request->get('view', 'table'); // default: table
@@ -66,8 +83,12 @@ class JobOrderController extends Controller
             'items.*.equipment_id' => ['nullable', 'exists:equipments,id'],
             'items.*.cargo_type' => ['nullable', 'string', 'max:255'],
             'items.*.quantity' => ['nullable', 'numeric', 'min:0.01'],
+            'items.*.price' => ['nullable', 'numeric', 'min:0'],
             'items.*.serial_numbers' => ['nullable', 'string'],
         ]);
+
+        $itemDataList = $request->input('items', null);
+        unset($data['items']);
 
         $job = new JobOrder;
         $job->fill($data);
@@ -76,7 +97,7 @@ class JobOrderController extends Controller
         $job->save();
 
         // Save cargo items
-        foreach ($data['items'] ?? [] as $itemData) {
+        foreach ($itemDataList as $itemData) {
             if (! empty($itemData['equipment_id']) || ! empty($itemData['cargo_type'])) {
                 $item = new \App\Models\Operations\JobOrderItem($itemData);
                 $item->job_order_id = $job->id;
@@ -100,6 +121,7 @@ class JobOrderController extends Controller
             'shipmentLegs.driver',
             'shipmentLegs.mainCost',
             'shipmentLegs.additionalCosts',
+            'shipmentLegs.vendorBillItems.vendorBill.paymentRequests',
         ]);
 
         return view('job-orders.show', ['job' => $job_order]);
@@ -114,7 +136,7 @@ class JobOrderController extends Controller
         $customers = Customer::orderBy('name')->get();
         $salesList = Sales::where('is_active', true)->orderBy('name')->get();
         $equipments = \App\Models\Master\Equipment::orderBy('name')->get();
-        $job_order->load(['shipmentLegs', 'items']);
+        $job_order->load(['shipmentLegs', 'items.equipment']);
 
         return view('job-orders.edit', [
             'job' => $job_order,
@@ -144,6 +166,7 @@ class JobOrderController extends Controller
             'items.*.equipment_id' => ['nullable', 'exists:equipments,id'],
             'items.*.cargo_type' => ['nullable', 'string', 'max:255'],
             'items.*.quantity' => ['nullable', 'numeric', 'min:0.01'],
+            'items.*.price' => ['nullable', 'numeric', 'min:0'],
             'items.*.serial_numbers' => ['nullable', 'string'],
         ]);
 
@@ -152,15 +175,20 @@ class JobOrderController extends Controller
             $data['status'] = $job_order->status; // Lock status
         }
 
+        $itemDataList = $data['items'] ?? [];
+        unset($data['items']);
+
         $job_order->update($data);
 
-        // Update cargo items - delete old and recreate
-        $job_order->items()->delete();
-        foreach ($data['items'] ?? [] as $itemData) {
-            if (! empty($itemData['equipment_id']) || ! empty($itemData['cargo_type'])) {
-                $item = new \App\Models\Operations\JobOrderItem($itemData);
-                $item->job_order_id = $job_order->id;
-                $item->save();
+        // Update cargo items - only if input dikirim
+        if (is_array($itemDataList)) {
+            $job_order->items()->delete();
+            foreach ($itemDataList as $itemData) {
+                if (! empty($itemData['equipment_id']) || ! empty($itemData['cargo_type'])) {
+                    $item = new \App\Models\Operations\JobOrderItem($itemData);
+                    $item->job_order_id = $job_order->id;
+                    $item->save();
+                }
             }
         }
 
@@ -169,10 +197,12 @@ class JobOrderController extends Controller
             ->with('success', 'Job Order berhasil diupdate');
     }
 
-    public function destroy(JobOrder $job_order)
+    public function destroy(Request $request, JobOrder $job_order)
     {
         // Hanya superadmin yang bisa delete
-        if (! auth()->user()->isSuperAdmin()) {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+        if (! $user?->isSuperAdmin()) {
             abort(403, 'Hanya superadmin yang bisa menghapus Job Order');
         }
 
