@@ -32,6 +32,8 @@ class UserController extends Controller
         return view('admin.users.create', [
             'roles' => User::availableRoles(),
             'menus' => $this->groupedMenus(),
+            'permissions' => config('permissions.available_permissions', []),
+            'selectedPermissions' => collect(old('permissions', []))->all(),
         ]);
     }
 
@@ -47,6 +49,9 @@ class UserController extends Controller
             'is_active' => $data['is_active'],
             'deactivated_at' => $data['is_active'] ? null : now(),
         ]);
+
+        $user->permissions = $data['permissions'];
+        $user->save();
 
         $this->syncMenus($user, $data['menu_ids']);
 
@@ -66,19 +71,34 @@ class UserController extends Controller
             'selectedMenus' => $user->isSuperAdmin()
                 ? Menu::query()->pluck('id')->all()
                 : $user->menus->pluck('id')->all(),
+            'permissions' => config('permissions.available_permissions', []),
+            'selectedPermissions' => collect(old(
+                'permissions',
+                $user->permissions ?? (config('permissions.role_permissions')[$user->role] ?? [])
+            ))->all(),
         ]);
     }
 
     public function update(UpdateUserRequest $request, User $user): RedirectResponse
     {
+        // Protect the primary Super Admin (usually ID 1)
+        $isPrimarySuperAdmin = $user->id === 1 && $user->isSuperAdmin();
+        
         $data = $request->validatedData();
 
         $updates = [
             'name' => $data['name'],
-            'email' => $data['email'],
-            'role' => $user->isSuperAdmin() ? User::ROLE_SUPER_ADMIN : $data['role'],
-            'is_active' => $data['is_active'],
+            'email' => $isPrimarySuperAdmin ? $user->email : $data['email'], // Cannot change primary admin email
+            'role' => $user->isSuperAdmin() ? User::ROLE_SUPER_ADMIN : $data['role'], // Cannot demote any super admin
+            'is_active' => $isPrimarySuperAdmin ? true : $data['is_active'], // Cannot deactivate primary admin
         ];
+
+        // Prevent deactivation of primary Super Admin
+        if ($isPrimarySuperAdmin && $data['is_active'] === false) {
+            return back()->withErrors([
+                'is_active' => __('Akun Super Admin utama tidak dapat dinonaktifkan untuk keamanan sistem.'),
+            ])->withInput();
+        }
 
         if ($data['is_active'] === false && $user->deactivated_at === null) {
             $updates['deactivated_at'] = now();
@@ -91,6 +111,12 @@ class UserController extends Controller
         }
 
         $user->update($updates);
+        
+        // Primary Super Admin always has all permissions
+        if (!$isPrimarySuperAdmin) {
+            $user->permissions = $data['permissions'];
+            $user->save();
+        }
 
         $this->syncMenus($user, $data['menu_ids']);
 

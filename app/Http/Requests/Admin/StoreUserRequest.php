@@ -31,6 +31,8 @@ class StoreUserRequest extends FormRequest
             'is_active' => ['required', 'boolean'],
             'menu_ids' => ['nullable', 'array'],
             'menu_ids.*' => ['integer', 'exists:menus,id'],
+            'permissions' => ['nullable', 'array'],
+            'permissions.*' => ['string', Rule::in($this->availablePermissions())],
         ];
     }
 
@@ -43,7 +45,22 @@ class StoreUserRequest extends FormRequest
 
         $data['menu_ids'] = array_map('intval', $data['menu_ids'] ?? []);
         $data['is_active'] = filter_var($data['is_active'], FILTER_VALIDATE_BOOLEAN);
+        $data['permissions'] = $this->has('permissions')
+            ? array_values(array_unique($data['permissions'] ?? []))
+            : null;
 
         return $data;
+    }
+
+    /**
+        * @return list<string>
+        */
+    private function availablePermissions(): array
+    {
+        return collect(config('permissions.available_permissions', []))
+            ->flatMap(fn (array $group) => $group['items'] ?? [])
+            ->keys()
+            ->values()
+            ->all();
     }
 }
