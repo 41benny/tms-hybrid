@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class CashBankTransaction extends Model
 {
     protected $fillable = [
+        'voucher_number',
         'cash_bank_account_id',
         'tanggal',
         'jenis',
@@ -18,16 +19,28 @@ class CashBankTransaction extends Model
         'customer_id',
         'vendor_id',
         'amount',
+        'admin_fee',
         'withholding_pph23',
         'reference_number',
+        'recipient_name',
         'description',
+        'voided_at',
+        'voided_by',
+        'void_reason',
     ];
 
     protected $casts = [
         'tanggal' => 'date',
         'amount' => 'decimal:2',
+        'admin_fee' => 'decimal:2',
         'withholding_pph23' => 'decimal:2',
+        'voided_at' => 'datetime',
     ];
+    
+    public function isVoided(): bool
+    {
+        return !is_null($this->voided_at);
+    }
 
     public function account(): BelongsTo
     {
@@ -57,5 +70,10 @@ class CashBankTransaction extends Model
     public function accountCoa(): BelongsTo
     {
         return $this->belongsTo(\App\Models\Accounting\ChartOfAccount::class, 'coa_id');
+    }
+
+    public function invoicePayments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(InvoiceTransactionPayment::class);
     }
 }

@@ -47,6 +47,13 @@ window.recalcPpn = function () {
     const taxInput = document.getElementById('tax_amount_input');
     const taxCodeSelect = document.getElementById('transaction_type_select') || document.querySelector('[name="transaction_type"]');
     const subtotalHidden = document.getElementById('invoice_subtotal_value');
+
+    // Early return if essential elements don't exist
+    if (!taxCodeSelect) {
+        console.warn('Tax code select not found, skipping PPN calculation');
+        return;
+    }
+
     const code = taxCodeSelect.value;
     console.log('Tax Code Selected:', code);
 
@@ -66,8 +73,8 @@ window.recalcPpn = function () {
         console.log('Found item containers:', itemContainers.length);
 
         itemContainers.forEach(function (itemElement, index) {
-            // Skip separator elements
-            if (itemElement.querySelector('.border-dashed')) return;
+            // Skip separator elements and empty state
+            if (itemElement.querySelector('.border-dashed') || itemElement.querySelector('.text-center')) return;
 
             const qtyInput = itemElement.querySelector('input[name*="[quantity]"]');
             const priceInput = itemElement.querySelector('input[name*="[unit_price]"]');
@@ -111,7 +118,11 @@ window.recalcPpn = function () {
         }
 
         const tax = taxBase * rate;
-        taxInput.value = tax.toFixed(2);
+
+        // Only update tax input if it exists
+        if (taxInput) {
+            taxInput.value = tax.toFixed(2);
+        }
         console.log('Calculated Tax:', tax);
 
         // Update all subtotal displays
@@ -250,14 +261,54 @@ function removeInvoiceItemRow(button) {
 }
 
 function openJobOrderModal() {
+    const customerId = document.getElementById('customer_id_input')?.value;
+
+    if (!customerId) {
+        alert('Silakan pilih customer terlebih dahulu');
+        return;
+    }
+
     const modal = document.getElementById('jobOrderModal');
-    if (!modal) return;
+
+    // If modal doesn't exist, load it dynamically
+    if (!modal) {
+        console.log('📦 Loading job order modal dynamically...');
+        const modalContainer = document.getElementById('jobOrderModalContainer');
+
+        if (!modalContainer) {
+            console.error('Modal container not found');
+            return;
+        }
+
+        // Show loading state
+        modalContainer.innerHTML = '<div class="text-center p-4">Memuat...</div>';
+
+        // Fetch modal content
+        fetch(`${window.INVOICE_CREATE_ROUTE}?customer_id=${customerId}&load_modal=1`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(response => response.text())
+            .then(html => {
+                modalContainer.innerHTML = html;
+                // Try opening modal again after loading
+                setTimeout(() => openJobOrderModal(), 100);
+            })
+            .catch(error => {
+                console.error('Error loading modal:', error);
+                alert('Gagal memuat modal. Silakan refresh halaman.');
+                modalContainer.innerHTML = '';
+            });
+
+        return;
+    }
 
     const invDate = document.querySelector('input[name="invoice_date"]');
     const dueDate = document.querySelector('input[name="due_date"]');
     const terms = document.querySelector('input[name="payment_terms"]');
     const notes = document.querySelector('textarea[name="notes"]');
-    const taxCode = document.getElementById('tax_code_select_header');
+    const taxCode = document.getElementById('transaction_type_select');
     const ref = document.getElementById('reference_header');
 
     const modalInv = document.getElementById('modal_invoice_date');
@@ -278,11 +329,301 @@ function openJobOrderModal() {
     document.body.classList.add('overflow-hidden');
 }
 
+
 function closeJobOrderModal() {
     const modal = document.getElementById('jobOrderModal');
     if (!modal) return;
     modal.classList.add('hidden');
     document.body.classList.remove('overflow-hidden');
+}
+
+// ========================================
+// JOB ORDER MODAL FUNCTIONS
+// ========================================
+
+window.toggleDpInput = function () {
+    const isDp = document.getElementById('is_dp')?.checked;
+    const container = document.getElementById('dp_input_container');
+    if (!container) return;
+
+    if (isDp) {
+        container.classList.remove('hidden');
+    } else {
+        container.classList.add('hidden');
+        const dpAmountInput = document.getElementById('dp_amount');
+        if (dpAmountInput) dpAmountInput.value = '';
+    }
+};
+
+window.updateJobOrderList = function () {
+    const statusFilter = document.getElementById('status_filter');
+    const customerId = document.getElementById('modal_customer_id');
+    const container = document.getElementById('job-order-list-container');
+
+    if (!statusFilter || !customerId || !container) {
+        console.error('Required elements not found for updateJobOrderList');
+        return;
+    }
+
+    const status = statusFilter.value;
+    const customerIdValue = customerId.value;
+
+    // Show loading state
+    container.innerHTML = '<div class="p-4 text-center text-sm text-slate-500">Memuat...</div>';
+
+    // Fetch updated list via AJAX
+    fetch(`${window.INVOICE_CREATE_ROUTE}?load_job_orders=1&customer_id=${customerIdValue}&status_filter=${status}`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+        .then(response => response.text())
+        .then(html => {
+            container.innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            container.innerHTML = '<div class="p-4 text-center text-sm text-red-500">Gagal memuat data.</div>';
+        });
+};
+
+window.addSelectedJobOrders = function () {
+    console.log('🎯 addSelectedJobOrders called');
+
+    const checkboxes = document.querySelectorAll('#job-order-list-container input[type="checkbox"]:checked');
+    const selectedIds = Array.from(checkboxes).map(cb => cb.value);
+
+    console.log('Selected IDs:', selectedIds);
+
+    if (selectedIds.length === 0) {
+        alert('Pilih minimal satu Job Order');
+        return;
+    }
+
+    // Skip job order yang sudah ada di invoice agar tidak double
+    const existingJobOrderIds = new Set(
+        Array.from(document.querySelectorAll('#invoice-items-container input[name*="[job_order_id]"]'))
+            .map(input => input.value)
+            .filter(Boolean)
+    );
+    const newJobOrderIds = selectedIds.filter(id => !existingJobOrderIds.has(id));
+
+    if (newJobOrderIds.length === 0) {
+        alert('Job Order yang dipilih sudah ada di invoice');
+        return;
+    }
+
+    if (newJobOrderIds.length !== selectedIds.length) {
+        alert('Sebagian Job Order sudah ada, hanya menambahkan yang belum ada.');
+    }
+
+    const customerId = document.getElementById('modal_customer_id')?.value;
+    const isDp = document.getElementById('is_dp')?.checked || false;
+    const dpAmount = document.getElementById('dp_amount')?.value || '';
+
+    console.log('Customer ID:', customerId, 'Is DP:', isDp, 'DP Amount:', dpAmount);
+
+    // Show loading state
+    const container = document.getElementById('invoice-items-container');
+    if (!container) {
+        console.error('Invoice items container not found');
+        alert('Error: Container tidak ditemukan');
+        return;
+    }
+
+    // Fetch job order details and add to invoice
+    const params = new URLSearchParams({
+        customer_id: customerId,
+        job_order_ids: newJobOrderIds.join(','),
+        is_dp: isDp ? '1' : '0',
+        dp_amount: dpAmount || '',
+        fetch_items: '1'
+    });
+
+    console.log('Fetching items with params:', params.toString());
+
+    fetch(`${window.INVOICE_CREATE_ROUTE}?${params}`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+        .then(response => {
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+
+            if (data.items && data.items.length > 0) {
+                // Add items to the invoice
+                data.items.forEach(item => {
+                    addJobOrderItemToInvoice(item);
+                });
+
+                // Recalculate totals
+                if (typeof window.recalcPpn === 'function') {
+                    window.recalcPpn();
+                }
+
+                // Close modal
+                closeJobOrderModal();
+
+                // Show success message
+                console.log(`✅ Added ${data.items.length} job order(s) to invoice`);
+            } else {
+                alert('Tidak ada item yang bisa ditambahkan');
+            }
+        })
+        .catch(error => {
+            console.error('Error adding job orders:', error);
+            console.error('Error details:', error.message);
+            alert(`Gagal menambahkan Job Order: ${error.message}`);
+        });
+};
+
+function addJobOrderItemToInvoice(item) {
+    console.log('Adding item to invoice:', item);
+
+    const container = document.getElementById('invoice-items-container');
+    if (!container) {
+        console.error('Container not found');
+        return;
+    }
+
+    // Remove empty state if present
+    const emptyState = container.querySelector('.text-center.py-12');
+    if (emptyState) {
+        emptyState.remove();
+    }
+
+    // Show summary section
+    const summarySection = document.getElementById('invoice-summary-section');
+    if (summarySection) {
+        summarySection.classList.remove('hidden');
+    }
+
+    let nextIndex = parseInt(container.getAttribute('data-next-index') || '0', 10);
+    if (isNaN(nextIndex) || nextIndex < 0) {
+        nextIndex = 0;
+    }
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'border border-slate-200 dark:border-slate-700 rounded-lg p-4 bg-slate-50 dark:bg-slate-800/30 relative group';
+
+    const amount = (parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0);
+    const itemType = item.item_type || 'job_order';
+
+    wrapper.innerHTML =
+        '<button type="button" onclick="removeInvoiceItemRow(this)" class="absolute top-2 right-2 p-1.5 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded opacity-0 group-hover:opacity-100 transition-opacity" title="Hapus item ini">' +
+        '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>' +
+        '</svg>' +
+        '</button>' +
+        '<input type="hidden" name="items[' + nextIndex + '][job_order_id]" value="' + (item.job_order_id || '') + '">' +
+        '<input type="hidden" name="items[' + nextIndex + '][shipment_leg_id]" value="' + (item.shipment_leg_id || '') + '">' +
+        '<input type="hidden" name="items[' + nextIndex + '][item_type]" value="' + itemType + '">' +
+        '<div class="grid grid-cols-1 md:grid-cols-5 gap-3">' +
+        '<div class="md:col-span-2">' +
+        '<label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Deskripsi</label>' +
+        '<input type="text" name="items[' + nextIndex + '][description]" value="' + (item.description || '').replace(/"/g, '&quot;') + '" class="w-full rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2 py-2 text-sm" required>' +
+        '</div>' +
+        '<div>' +
+        '<label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Qty</label>' +
+        '<input type="number" step="0.01" min="0.01" name="items[' + nextIndex + '][quantity]" value="' + (item.quantity || 1) + '" class="w-full rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2 py-2 text-sm" required>' +
+        '</div>' +
+        '<div>' +
+        '<label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Unit Price</label>' +
+        '<input type="number" step="0.01" min="0" name="items[' + nextIndex + '][unit_price]" value="' + (item.unit_price || 0) + '" class="w-full rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2 py-2 text-sm" required>' +
+        '</div>' +
+        '<div>' +
+        '<label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Subtotal</label>' +
+        '<div class="w-full rounded bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-2 py-2 text-sm font-semibold text-slate-900 dark:text-slate-100 item-subtotal">Rp ' + amount.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + '</div>' +
+        '</div>' +
+        '</div>' +
+        '<div class="mt-3 flex items-center gap-2">' +
+        '<input type="checkbox" name="items[' + nextIndex + '][exclude_tax]" id="exclude_tax_' + nextIndex + '" value="1" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">' +
+        '<label for="exclude_tax_' + nextIndex + '" class="text-xs text-slate-600 dark:text-slate-400 cursor-pointer">' +
+        '<span class="font-medium">Exclude dari PPN</span>' +
+        '<span class="text-slate-500 dark:text-slate-500"> (Item ini tidak dikenakan pajak)</span>' +
+        '</label>' +
+        '</div>';
+
+    const isBillableType = ['insurance_billable', 'additional_cost_billable'].includes(itemType);
+    let billableSeparator = Array.from(container.children).find(child =>
+        child.dataset?.billableSeparator === '1' ||
+        child.textContent.includes('Biaya Tambahan') ||
+        child.textContent.includes('BILLABLE')
+    );
+
+    if (isBillableType) {
+        if (!billableSeparator) {
+            billableSeparator = document.createElement('div');
+            billableSeparator.dataset.billableSeparator = '1';
+            billableSeparator.className = 'flex items-center gap-3 py-3';
+            billableSeparator.innerHTML =
+                '<div class="flex-1 border-t-2 border-dashed border-amber-300 dark:border-amber-700"></div>' +
+                '<span class="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider px-3 py-1 bg-amber-50 dark:bg-amber-900/20 rounded-full">Biaya Tambahan (Billable)</span>' +
+                '<div class="flex-1 border-t-2 border-dashed border-amber-300 dark:border-amber-700"></div>';
+            container.appendChild(billableSeparator);
+        }
+
+        if (billableSeparator.nextSibling) {
+            container.insertBefore(wrapper, billableSeparator.nextSibling);
+        } else {
+            container.appendChild(wrapper);
+        }
+    } else {
+        if (billableSeparator) {
+            container.insertBefore(wrapper, billableSeparator);
+        } else {
+            container.appendChild(wrapper);
+        }
+    }
+
+    container.setAttribute('data-next-index', String(nextIndex + 1));
+
+    // Hook subtotal auto-update for new row
+    const qtyInput = wrapper.querySelector('input[name*="[quantity]"]');
+    const priceInput = wrapper.querySelector('input[name*="[unit_price]"]');
+    const subtotalDisplay = wrapper.querySelector('.item-subtotal');
+    const excludeTaxCheckbox = wrapper.querySelector('input[name*="[exclude_tax]"]');
+
+    if (excludeTaxCheckbox && item.exclude_tax) {
+        excludeTaxCheckbox.checked = true;
+    }
+
+    if (qtyInput && priceInput && subtotalDisplay) {
+        function updateSubtotal() {
+            const qty = parseFloat(qtyInput.value) || 0;
+            const price = parseFloat(priceInput.value) || 0;
+            const subtotal = qty * price;
+            subtotalDisplay.textContent = 'Rp ' + subtotal.toLocaleString('id-ID', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            });
+
+            if (typeof window.recalcPpn === 'function') {
+                window.recalcPpn();
+            }
+        }
+
+        qtyInput.addEventListener('input', updateSubtotal);
+        priceInput.addEventListener('input', updateSubtotal);
+    }
+
+    if (excludeTaxCheckbox) {
+        excludeTaxCheckbox.addEventListener('change', function () {
+            if (typeof window.recalcPpn === 'function') {
+                window.recalcPpn();
+            }
+        });
+    }
 }
 
 // Print preview function (global scope for onclick access)
@@ -338,7 +679,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Restore tax code select
             if (data.tax_code_select) {
-                const taxCodeSelect = document.getElementById('tax_code_select_header');
+                const taxCodeSelect = document.getElementById('transaction_type_select');
                 if (taxCodeSelect && !taxCodeSelect.value) {
                     taxCodeSelect.value = data.tax_code_select;
                     taxCodeRestored = true;
@@ -375,7 +716,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             // Save tax code select
-            const taxCodeSelect = document.getElementById('tax_code_select_header');
+            const taxCodeSelect = document.getElementById('transaction_type_select');
             if (taxCodeSelect) {
                 data.tax_code_select = taxCodeSelect.value;
             }
@@ -412,7 +753,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Tax code select
-    const taxCodeSelect = document.getElementById('tax_code_select_header');
+    const taxCodeSelect = document.getElementById('transaction_type_select');
     if (taxCodeSelect) {
         taxCodeSelect.addEventListener('change', debouncedSave);
     }
@@ -474,6 +815,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }).join('');
         suggestionsBox.classList.remove('hidden');
 
+
         Array.prototype.forEach.call(suggestionsBox.querySelectorAll('button[data-id]'), function (btn) {
             btn.addEventListener('click', function () {
                 const id = this.getAttribute('data-id');
@@ -492,11 +834,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 clearCustomerSuggestions();
 
-                if (searchInput && searchInput.form) {
-                    submitInvoiceFormWithScroll(searchInput.form);
+                // Enable the "Pilih Job Order" button
+                const btnPilihJobOrder = document.getElementById('btn_pilih_job_order');
+                if (btnPilihJobOrder) {
+                    btnPilihJobOrder.disabled = false;
+                    btnPilihJobOrder.classList.remove('bg-slate-200', 'text-slate-500', 'cursor-not-allowed');
+                    btnPilihJobOrder.classList.add('text-white', 'bg-indigo-600', 'hover:bg-indigo-700', 'focus:outline-none', 'focus:ring-2', 'focus:ring-offset-2', 'focus:ring-indigo-500');
                 }
+
+                // Don't auto-submit form - let user add items first
+                console.log('✅ Customer selected:', found.name);
             });
         });
+
     }
 
     if (searchInput && suggestionsBox) {
@@ -680,14 +1030,21 @@ document.addEventListener('DOMContentLoaded', function () {
         const mm = String(base.getMonth() + 1).padStart(2, '0');
         const dd = String(base.getDate()).padStart(2, '0');
         dueDateInput.value = `${yyyy}-${mm}-${dd}`;
+
+        console.log('📅 Due date updated:', dueDateInput.value);
     }
 
     if (termInput) {
+        // Listen to both input and change events for real-time updates
         termInput.addEventListener('input', recalcDueDateFromTerm);
+        termInput.addEventListener('change', recalcDueDateFromTerm);
     }
     if (invoiceDateInput) {
         invoiceDateInput.addEventListener('change', recalcDueDateFromTerm);
     }
+
+    // Initial calculation on page load
+    setTimeout(recalcDueDateFromTerm, 100);
     // AJAX Job Order Filter
     const statusFilterSelect = document.querySelector('select[name="status_filter"]');
     const joContainer = document.getElementById('job-order-list-container');

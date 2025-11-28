@@ -30,6 +30,10 @@ class Invoice extends Model
         'tax_requested_at' => 'datetime',
         'tax_completed_at' => 'datetime',
         'tax_invoice_date' => 'date',
+        'approved_at' => 'datetime',
+        'rejected_at' => 'datetime',
+        'revision_number' => 'integer',
+        'revised_at' => 'datetime',
     ];
     
     // Relationships
@@ -53,6 +57,11 @@ class Invoice extends Model
         return $this->belongsToMany(PaymentReceipt::class, 'invoice_payments')
                     ->withPivot('allocated_amount', 'created_by')
                     ->withTimestamps();
+    }
+
+    public function transactionPayments(): HasMany
+    {
+        return $this->hasMany(InvoiceTransactionPayment::class);
     }
     
     public function createdBy(): BelongsTo
@@ -80,6 +89,36 @@ class Invoice extends Model
         return $this->belongsTo(User::class, 'tax_completed_by');
     }
     
+    public function relatedInvoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class, 'related_invoice_id');
+    }
+    
+    public function approvedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+    
+    public function rejectedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'rejected_by');
+    }
+
+    public function originalInvoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class, 'original_invoice_id');
+    }
+
+    public function revisedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'revised_by');
+    }
+
+    public function revisions(): HasMany
+    {
+        return $this->hasMany(Invoice::class, 'original_invoice_id');
+    }
+
     // Scopes
     public function scopeOverdue($query)
     {
@@ -127,7 +166,8 @@ class Invoice extends Model
     
     public function canBeEdited(): bool
     {
-        return $this->status === 'draft';
+        // Can only edit if status is draft AND approval status is draft or rejected
+        return $this->status === 'draft' && in_array($this->approval_status, ['draft', 'rejected']);
     }
     
     public function canBeCancelled(): bool
@@ -165,6 +205,109 @@ class Invoice extends Model
         $this->subtotal = $this->items()->sum('amount');
         $this->total_amount = $this->subtotal + $this->tax_amount - $this->discount_amount;
         $this->saveQuietly(); // Use saveQuietly to avoid triggering boot events again
+    }
+    
+    public function isDownPayment(): bool
+    {
+        return $this->invoice_type === 'down_payment';
+    }
+    
+    public function isFinal(): bool
+    {
+        return $this->invoice_type === 'final';
+    }
+    
+    public function isNormal(): bool
+    {
+        return $this->invoice_type === 'normal';
+    }
+    
+    public function canBeSubmittedForApproval(): bool
+    {
+        return $this->approval_status === 'draft' 
+            && $this->items()->count() > 0 
+            && $this->total_amount > 0;
+    }
+    
+    public function canBeApproved(): bool
+    {
+        return $this->approval_status === 'pending_approval';
+    }
+    
+    public function canBePrinted(): bool
+    {
+        return $this->approval_status === 'approved';
+    }
+    
+    public function isPendingApproval(): bool
+    {
+        return $this->approval_status === 'pending_approval';
+    }
+    
+    public function isApproved(): bool
+    {
+        return $this->approval_status === 'approved';
+    }
+    
+    public function isRejected(): bool
+    {
+        return $this->approval_status === 'rejected';
+    }
+    
+    // Revision methods
+    public function canBeRevised(): bool
+    {
+        // Cannot revise if paid
+        if ($this->status === 'paid') {
+            return false;
+        }
+        
+        // Cannot revise draft (use normal edit)
+        if ($this->approval_status === 'draft') {
+            return false;
+        }
+        
+        // Cannot revise pending (reject first)
+        if ($this->approval_status === 'pending_approval') {
+            return false;
+        }
+        
+        return true; // approved or rejected can be revised
+    }
+    
+    public function isAccountingPeriodClosed(): bool
+    {
+        // Check if accounting period for this invoice date is closed
+        $period = \App\Models\Accounting\AccountingPeriod::where('year', $this->invoice_date->year)
+            ->where('month', $this->invoice_date->month)
+            ->first();
+        
+        return $period && $period->is_closed;
+    }
+    
+    public function getBaseInvoiceNumber(): string
+    {
+        // Remove revision suffix if exists
+        // INV-202511-0001-001 -> INV-202511-0001
+        $parts = explode('-', $this->invoice_number);
+        if (count($parts) === 4) {
+            // Has revision, remove last part
+            array_pop($parts);
+            return implode('-', $parts);
+        }
+        return $this->invoice_number;
+    }
+    
+    public function getNextRevisionNumber(): string
+    {
+        $base = $this->getBaseInvoiceNumber();
+        $nextRevision = $this->revision_number + 1;
+        return $base . '-' . str_pad($nextRevision, 3, '0', STR_PAD_LEFT);
+    }
+    
+    public function isRevision(): bool
+    {
+        return $this->revision_number > 0;
     }
     
     public static function generateNumber(): string

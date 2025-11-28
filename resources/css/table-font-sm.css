@@ -1,4 +1,37 @@
-/* Table font size utility for all tables in app, matching sidebar text-sm */
-table, th, td {
-    font-size: 0.875rem !important; /* text-sm = 14px = 0.875rem */
+/* Table font size utility - compact and clean */
+table {
+    font-size: 0.75rem !important;
+    /* 12px - smaller for better data density */
+}
+
+table th {
+    font-size: 0.625rem !important;
+    /* 10px - even smaller for headers */
+    font-weight: 500 !important;
+    /* medium instead of bold */
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+table td {
+    font-size: 0.75rem !important;
+    /* 12px */
+    font-weight: 400 !important;
+    /* normal weight, no bold */
+}
+
+/* Remove bold from table content */
+table td div,
+table td span,
+table td a {
+    font-weight: 400 !important;
+}
+
+/* Badge in tables should be consistent */
+table .badge,
+table [class*="badge"] {
+    font-size: 0.625rem !important;
+    /* 10px */
+    padding: 0.25rem 0.5rem !important;
+    font-weight: 500 !important;
 }

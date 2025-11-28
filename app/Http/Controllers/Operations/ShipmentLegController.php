@@ -43,6 +43,8 @@ class ShipmentLegController extends Controller
             'pph23' => ['nullable', 'numeric', 'min:0'],
             // Main costs - Trucking (Own Fleet)
             'uang_jalan' => ['nullable', 'numeric', 'min:0'],
+            'driver_savings_deduction' => ['nullable', 'numeric', 'min:0'],
+            'driver_guarantee_deduction' => ['nullable', 'numeric', 'min:0'],
             'bbm' => ['nullable', 'numeric', 'min:0'],
             'toll' => ['nullable', 'numeric', 'min:0'],
             'other_costs' => ['nullable', 'numeric', 'min:0'],
@@ -105,6 +107,8 @@ class ShipmentLegController extends Controller
 
         if ($validated['cost_category'] == 'trucking') {
             $costData['uang_jalan'] = $validated['uang_jalan'] ?? 0;
+            $costData['driver_savings_deduction'] = $validated['driver_savings_deduction'] ?? 0;
+            $costData['driver_guarantee_deduction'] = $validated['driver_guarantee_deduction'] ?? 0;
             $costData['bbm'] = $validated['bbm'] ?? 0;
             $costData['toll'] = $validated['toll'] ?? 0;
             $costData['other_costs'] = $validated['other_costs'] ?? 0;
@@ -176,6 +180,8 @@ class ShipmentLegController extends Controller
             'pph23' => ['nullable', 'numeric', 'min:0'],
             // Main costs - Trucking (Own Fleet)
             'uang_jalan' => ['nullable', 'numeric', 'min:0'],
+            'driver_savings_deduction' => ['nullable', 'numeric', 'min:0'],
+            'driver_guarantee_deduction' => ['nullable', 'numeric', 'min:0'],
             'bbm' => ['nullable', 'numeric', 'min:0'],
             'toll' => ['nullable', 'numeric', 'min:0'],
             'other_costs' => ['nullable', 'numeric', 'min:0'],
@@ -233,6 +239,8 @@ class ShipmentLegController extends Controller
                 'ppn' => $validated['ppn'] ?? 0,
                 'pph23' => $validated['pph23'] ?? 0,
                 'uang_jalan' => $validated['uang_jalan'] ?? 0,
+                'driver_savings_deduction' => $validated['driver_savings_deduction'] ?? 0,
+                'driver_guarantee_deduction' => $validated['driver_guarantee_deduction'] ?? 0,
                 'bbm' => $validated['bbm'] ?? 0,
                 'toll' => $validated['toll'] ?? 0,
                 'other_costs' => $validated['other_costs'] ?? 0,
@@ -659,6 +667,8 @@ class ShipmentLegController extends Controller
             'advance_number' => $advanceNumber,
             'advance_date' => now()->toDateString(),
             'amount' => $totalAdvance,
+            'deduction_savings' => $mainCost->driver_savings_deduction ?? 0,
+            'deduction_guarantee' => $mainCost->driver_guarantee_deduction ?? 0,
             'status' => 'pending',
             'notes' => "Auto-generated from Leg {$leg->leg_code} - Job Order {$leg->jobOrder->job_number}",
         ]);

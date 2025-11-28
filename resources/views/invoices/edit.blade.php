@@ -1,9 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-    <div class="flex justify-between items-center mb-6">
-        <div class="text-2xl font-bold text-slate-800 dark:text-slate-100">
+<div class="space-y-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100">
             Edit Invoice {{ $invoice->invoice_number }}
         </h1>
         <a href="{{ route('invoices.index') }}" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium">
@@ -21,14 +21,14 @@
                 {{-- Kiri: Customer Info --}}
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        <label class="block text-sm text-slate-700 dark:text-slate-300 mb-1">
                             Customer <span class="text-red-500">*</span>
                         </label>
                         {{-- Customer Selection --}}
                         <div class="relative">
                             <input type="text"
                                    id="customer_search"
-                                   class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500"
+                                   class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                                    placeholder="Ketik nama customer..."
                                    autocomplete="off"
                                    value="{{ $invoice->customer->name ?? '' }}">
@@ -45,29 +45,29 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        <label class="block text-sm text-slate-700 dark:text-slate-300 mb-1">
                             Alamat
                         </label>
                         <textarea name="customer_address" rows="3" readonly
-                                  class="w-full rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm text-slate-500"
+                                  class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm text-slate-500 dark:text-slate-400"
                         >{{ $invoice->customer->address ?? '' }}</textarea>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                            <label class="block text-sm text-slate-700 dark:text-slate-300 mb-1">
                                 No. Telp
                             </label>
                             <input type="text" name="customer_phone" readonly
-                                   class="w-full rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm text-slate-500"
+                                   class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm text-slate-500 dark:text-slate-400"
                                    value="{{ $invoice->customer->phone ?? '' }}">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                            <label class="block text-sm text-slate-700 dark:text-slate-300 mb-1">
                                 NPWP
                             </label>
                             <input type="text" name="customer_npwp" readonly
-                                   class="w-full rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm text-slate-500"
+                                   class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm text-slate-500 dark:text-slate-400"
                                    value="{{ $invoice->customer->npwp ?? '' }}">
                         </div>
                     </div>
@@ -77,54 +77,54 @@
                 <div class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                            <label class="block text-sm text-slate-700 dark:text-slate-300 mb-1">
                                 No. Invoice
                             </label>
                             <input type="text" name="invoice_number"
-                                   class="w-full rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm"
+                                   class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm text-slate-700 dark:text-slate-300"
                                    value="{{ old('invoice_number', $invoice->invoice_number) }}"
                                    placeholder="Auto-generated if empty">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                            <label class="block text-sm text-slate-700 dark:text-slate-300 mb-1">
                                 Tanggal Invoice <span class="text-red-500">*</span>
                             </label>
                             <input type="date" name="invoice_date"
-                                   class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm"
+                                   class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                                    value="{{ old('invoice_date', $invoice->invoice_date->format('Y-m-d')) }}" required>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                            <label class="block text-sm text-slate-700 dark:text-slate-300 mb-1">
                                 Payment Terms (Hari)
                             </label>
                             <input type="number" id="payment_terms" name="payment_terms"
-                                   class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm"
+                                   class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                                    value="{{ old('payment_terms', $invoice->payment_terms) }}" placeholder="e.g. 30">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                            <label class="block text-sm text-slate-700 dark:text-slate-300 mb-1">
                                 Jatuh Tempo <span class="text-red-500">*</span>
                             </label>
                             <input type="date" name="due_date"
-                                   class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm"
+                                   class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                                    value="{{ old('due_date', $invoice->due_date->format('Y-m-d')) }}" required>
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        <label class="block text-sm text-slate-700 dark:text-slate-300 mb-1">
                             Referensi / PO Number
                         </label>
                         <input type="text" id="reference_header" name="reference"
-                               class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm"
+                               class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                                value="{{ old('reference', $invoice->reference) }}">
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        <label class="block text-sm text-slate-700 dark:text-slate-300 mb-1">
                             Tipe Transaksi (PPN)
                         </label>
                         @php
@@ -138,7 +138,7 @@
                                 $currentTaxCode = '08';
                             }
                         @endphp
-                        <select id="tax_code_select_header" name="tax_code" class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm">
+                        <select id="tax_code_select_header" name="tax_code" class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
                             <option value="">-- Pilih Tipe PPN --</option>
                             <option value="04" @selected($currentTaxCode == '04')>04 - DPP Nilai Lain (11%)</option>
                             <option value="05" @selected($currentTaxCode == '05')>05 - Besaran Tertentu (1.1%)</option>
@@ -152,19 +152,19 @@
             {{-- Notes --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    <label class="block text-sm text-slate-700 dark:text-slate-300 mb-1">
                         Catatan (Tampil di Invoice)
                     </label>
                     <textarea name="notes" rows="2"
-                              class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm"
+                              class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                     >{{ old('notes', $invoice->notes) }}</textarea>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    <label class="block text-sm text-slate-700 dark:text-slate-300 mb-1">
                         Catatan Internal (Tidak Tampil)
                     </label>
                     <textarea name="internal_notes" rows="2"
-                              class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm"
+                              class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                     >{{ old('internal_notes', $invoice->internal_notes) }}</textarea>
                 </div>
             </div>
@@ -256,7 +256,7 @@
                     {{-- Tax & Discount --}}
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            <label class="block text-sm text-slate-700 dark:text-slate-300 mb-2">
                                 Tax Amount (PPN)
                             </label>
                             <input type="number"
@@ -265,11 +265,11 @@
                                    name="tax_amount"
                                    id="tax_amount_input"
                                    value="{{ old('tax_amount', $invoice->tax_amount) }}"
-                                   class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm">
+                                   class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
                             <p class="text-xs text-slate-500 mt-1">Otomatis terisi jika Tipe Transaksi dipilih.</p>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            <label class="block text-sm text-slate-700 dark:text-slate-300 mb-2">
                                 PPh 23 Amount
                             </label>
                             <div class="flex gap-2">
@@ -279,7 +279,7 @@
                                        name="pph23_amount"
                                        id="pph23_amount_input"
                                        value="{{ old('pph23_amount', $invoice->pph23_amount) }}"
-                                       class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm">
+                                       class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
                                 <button type="button" id="btn_calc_pph23" class="px-3 py-2 bg-slate-200 dark:bg-slate-700 rounded text-xs font-medium hover:bg-slate-300 dark:hover:bg-slate-600">
                                     Hitung 2%
                                 </button>
@@ -298,7 +298,7 @@
                             <p class="text-xs text-slate-500 mt-1">Potongan PPh 23 (jika ada).</p>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            <label class="block text-sm text-slate-700 dark:text-slate-300 mb-2">
                                 Discount Amount
                             </label>
                             <input type="number"
@@ -307,7 +307,7 @@
                                    name="discount_amount"
                                    id="discount_amount_input"
                                    value="{{ old('discount_amount', $invoice->discount_amount) }}"
-                                   class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm">
+                                   class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
                         </div>
                     </div>
 
@@ -318,6 +318,29 @@
                             <span class="text-slate-600 dark:text-slate-400">Subtotal</span>
                             <span class="font-medium text-slate-900 dark:text-slate-100" id="display_subtotal">
                                 Rp {{ number_format($subtotalPreview, 0, ',', '.') }}
+                            </span>
+                        </div>
+
+                        {{-- DPP Nilai Lain Option --}}
+                        <div class="flex justify-between items-center text-sm py-1">
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox"
+                                       id="use_dpp_nilai_lain"
+                                       name="use_dpp_nilai_lain"
+                                       value="1"
+                                       @checked($invoice->transaction_type == '04')
+                                       class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                                <label for="use_dpp_nilai_lain" class="text-slate-600 dark:text-slate-400 cursor-pointer select-none">
+                                    Gunakan DPP Nilai Lain (11/12)
+                                </label>
+                            </div>
+                        </div>
+
+                        {{-- DPP Nilai Lain Display --}}
+                        <div id="dpp_nilai_lain_row" class="flex justify-between items-center text-sm hidden">
+                            <span class="text-slate-600 dark:text-slate-400 pl-6">DPP Nilai Lain</span>
+                            <span class="text-slate-900 dark:text-slate-100 font-mono" id="display_dpp_nilai_lain">
+                                Rp 0
                             </span>
                         </div>
                         <div class="flex justify-between items-center text-sm">
@@ -377,29 +400,26 @@
 
     {{-- Modal: Pilih Job Order --}}
     <x-modal id="jobOrderModal" title="Pilih Job Order">
-        <form method="get" action="{{ route('invoices.edit', $invoice) }}" class="space-y-4">
-            <input type="hidden" name="customer_id" value="{{ $invoice->customer_id }}">
-            {{-- Simpan state header invoice agar tidak hilang saat reload --}}
-            <input type="hidden" name="invoice_date" id="modal_invoice_date">
-            <input type="hidden" name="due_date" id="modal_due_date">
-            <input type="hidden" name="payment_terms" id="modal_payment_terms">
-            <input type="hidden" name="notes" id="modal_notes">
-
+        <div class="space-y-4" id="jobOrderFormContainer">
+            <input type="hidden" id="modal_customer_id" value="{{ $invoice->customer_id }}">
+            <input type="hidden" id="modal_invoice_id" value="{{ $invoice->id }}">
+            
             <div class="flex items-center justify-between gap-3">
                 <div class="text-sm font-medium text-slate-700 dark:text-slate-200">
                     Job Order untuk {{ $invoice->customer->name }}
                 </div>
                 <div class="flex items-center gap-2 text-xs">
                     <span class="text-slate-500 dark:text-slate-400">Filter Status:</span>
-                    <select name="status_filter"
-                            class="rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2 py-1 text-xs">
+                    <select name="status_filter" id="status_filter_edit"
+                            class="rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2 py-1 text-xs"
+                            onchange="updateJobOrderListEdit()">
                         <option value="completed" @selected(request('status_filter') === 'completed')>Hanya Completed</option>
                         <option value="all" @selected(request('status_filter') === 'all')>Semua Status</option>
                     </select>
                 </div>
             </div>
 
-            <div class="border border-slate-200 dark:border-slate-700 rounded-lg max-h-80 overflow-y-auto divide-y divide-slate-200 dark:divide-slate-700">
+            <div id="job-order-list-container-edit" class="border border-slate-200 dark:border-slate-700 rounded-lg max-h-80 overflow-y-auto divide-y divide-slate-200 dark:divide-slate-700">
                 @forelse($jobOrders as $jo)
                     @php
                         $mainItem  = $jo->items->first();
@@ -469,11 +489,183 @@
                         class="text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
                     Batal
                 </button>
-                <x-button type="submit" variant="primary">
+                <x-button type="button" variant="primary" onclick="addSelectedJobOrdersEdit()">
                     Update Item List
                 </x-button>
             </div>
-        </form>
+        </div>
+
+        <script>
+            function updateJobOrderListEdit() {
+                const status = document.getElementById('status_filter_edit').value;
+                const customerId = document.getElementById('modal_customer_id').value;
+                const invoiceId = document.getElementById('modal_invoice_id').value;
+                const container = document.getElementById('job-order-list-container-edit');
+                
+                // Show loading state
+                container.innerHTML = '<div class="p-4 text-center text-sm text-slate-500">Memuat...</div>';
+                
+                // Fetch updated list via AJAX
+                fetch(`/invoices/${invoiceId}/edit?load_job_orders=1&customer_id=${customerId}&status_filter=${status}`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.text())
+                .then(html => {
+                    container.innerHTML = html;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    container.innerHTML = '<div class="p-4 text-center text-sm text-red-500">Gagal memuat data.</div>';
+                });
+            }
+
+            function addSelectedJobOrdersEdit() {
+                const checkboxes = document.querySelectorAll('#job-order-list-container-edit input[type="checkbox"]:checked');
+                const selectedIds = Array.from(checkboxes).map(cb => cb.value);
+                
+                if (selectedIds.length === 0) {
+                    alert('Pilih minimal satu Job Order');
+                    return;
+                }
+
+                const customerId = document.getElementById('modal_customer_id').value;
+                
+                // Show loading state
+                const container = document.getElementById('invoice-items-container');
+                if (!container) {
+                    console.error('Invoice items container not found');
+                    return;
+                }
+
+                // Fetch job order details and add to invoice
+                const params = new URLSearchParams({
+                    customer_id: customerId,
+                    job_order_ids: selectedIds.join(','),
+                    is_dp: '0',
+                    fetch_items: '1'
+                });
+
+                fetch(`{{ route('invoices.create') }}?${params}`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.items && data.items.length > 0) {
+                        // Add items to the invoice
+                        data.items.forEach(item => {
+                            addJobOrderItemToInvoiceEdit(item);
+                        });
+                        
+                        // Recalculate totals
+                        if (typeof window.recalcPpn === 'function') {
+                            window.recalcPpn();
+                        }
+                        
+                        // Close modal
+                        closeJobOrderModal();
+                        
+                        // Show success message
+                        console.log(`✅ Added ${data.items.length} job order(s) to invoice`);
+                    } else {
+                        alert('Tidak ada item yang bisa ditambahkan');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error adding job orders:', error);
+                    alert('Gagal menambahkan Job Order. Silakan coba lagi.');
+                });
+            }
+
+            function addJobOrderItemToInvoiceEdit(item) {
+                const container = document.getElementById('invoice-items-container');
+                if (!container) return;
+
+                let nextIndex = parseInt(container.getAttribute('data-next-index') || '0', 10);
+                if (isNaN(nextIndex) || nextIndex < 0) {
+                    nextIndex = 0;
+                }
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'border border-slate-200 dark:border-slate-700 rounded-lg p-4 bg-slate-50 dark:bg-slate-800/30 relative group';
+
+                const amount = (parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0);
+
+                wrapper.innerHTML =
+                    '<button type="button" onclick="removeInvoiceItemRow(this)" class="absolute top-2 right-2 p-1.5 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded opacity-0 group-hover:opacity-100 transition-opacity" title="Hapus item ini">' +
+                    '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>' +
+                    '</svg>' +
+                    '</button>' +
+                    '<input type="hidden" name="items[' + nextIndex + '][job_order_id]" value="' + (item.job_order_id || '') + '">' +
+                    '<input type="hidden" name="items[' + nextIndex + '][shipment_leg_id]" value="' + (item.shipment_leg_id || '') + '">' +
+                    '<input type="hidden" name="items[' + nextIndex + '][item_type]" value="' + (item.item_type || 'job_order') + '">' +
+                    '<div class="grid grid-cols-1 md:grid-cols-5 gap-3">' +
+                    '<div class="md:col-span-2">' +
+                    '<label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Deskripsi</label>' +
+                    '<input type="text" name="items[' + nextIndex + '][description]" value="' + (item.description || '') + '" class="w-full rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2 py-2 text-sm" required>' +
+                    '</div>' +
+                    '<div>' +
+                    '<label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Qty</label>' +
+                    '<input type="number" step="0.01" min="0.01" name="items[' + nextIndex + '][quantity]" value="' + (item.quantity || 1) + '" class="w-full rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2 py-2 text-sm" required>' +
+                    '</div>' +
+                    '<div>' +
+                    '<label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Unit Price</label>' +
+                    '<input type="number" step="0.01" min="0" name="items[' + nextIndex + '][unit_price]" value="' + (item.unit_price || 0) + '" class="w-full rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2 py-2 text-sm" required>' +
+                    '</div>' +
+                    '<div>' +
+                    '<label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Subtotal</label>' +
+                    '<div class="w-full rounded bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-2 py-2 text-sm font-semibold text-slate-900 dark:text-slate-100 item-subtotal">Rp ' + amount.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + '</div>' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="mt-3 flex items-center gap-2">' +
+                    '<input type="checkbox" name="items[' + nextIndex + '][exclude_tax]" id="exclude_tax_' + nextIndex + '" value="1" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">' +
+                    '<label for="exclude_tax_' + nextIndex + '" class="text-xs text-slate-600 dark:text-slate-400 cursor-pointer">' +
+                    '<span class="font-medium">Exclude dari PPN</span>' +
+                    '<span class="text-slate-500 dark:text-slate-500"> (Item ini tidak dikenakan pajak)</span>' +
+                    '</label>' +
+                    '</div>';
+
+                container.appendChild(wrapper);
+                container.setAttribute('data-next-index', String(nextIndex + 1));
+
+                // Hook subtotal auto-update for new row
+                const qtyInput = wrapper.querySelector('input[name*="[quantity]"]');
+                const priceInput = wrapper.querySelector('input[name*="[unit_price]"]');
+                const subtotalDisplay = wrapper.querySelector('.item-subtotal');
+                const excludeTaxCheckbox = wrapper.querySelector('input[name*="[exclude_tax]"]');
+
+                if (qtyInput && priceInput && subtotalDisplay) {
+                    function updateSubtotal() {
+                        const qty = parseFloat(qtyInput.value) || 0;
+                        const price = parseFloat(priceInput.value) || 0;
+                        const subtotal = qty * price;
+                        subtotalDisplay.textContent = 'Rp ' + subtotal.toLocaleString('id-ID', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                        });
+
+                        if (typeof window.recalcPpn === 'function') {
+                            window.recalcPpn();
+                        }
+                    }
+
+                    qtyInput.addEventListener('input', updateSubtotal);
+                    priceInput.addEventListener('input', updateSubtotal);
+                }
+
+                if (excludeTaxCheckbox) {
+                    excludeTaxCheckbox.addEventListener('change', function () {
+                        if (typeof window.recalcPpn === 'function') {
+                            window.recalcPpn();
+                        }
+                    });
+                }
+            }
+        </script>
     </x-modal>
 
     @php
@@ -735,16 +927,40 @@
                 const subtotal = parseFloat(subtotalHidden.value || '0') || 0;
                 const code = taxCodeSelect.value;
 
-                let rate = null;
-                if (code === '04') rate = 0.11;
-                else if (code === '05') rate = 0.011;
-                else if (code === '08') rate = 0.0;
+                let rate = 0.11; // Default
+                if (code === '05') rate = 0.011;
+                else if (code === '08' || code === '07') rate = 0.0;
+
+                // DPP Nilai Lain Logic
+                const dppNilaiLainCheckbox = document.getElementById('use_dpp_nilai_lain');
+                const dppNilaiLainRow = document.getElementById('dpp_nilai_lain_row');
+                const displayDppNilaiLain = document.getElementById('display_dpp_nilai_lain');
+
+                let taxBase = subtotal;
+                if (dppNilaiLainCheckbox && dppNilaiLainCheckbox.checked) {
+                    // Formula: Total Main Item * 11/12
+                    const dppNilaiLain = subtotal * (11 / 12);
+                    taxBase = dppNilaiLain;
+
+                    // Override rate to 12% as per regulation (effectively 11% of original)
+                    rate = 0.12;
+
+                    if (dppNilaiLainRow) dppNilaiLainRow.classList.remove('hidden');
+                    if (displayDppNilaiLain) displayDppNilaiLain.textContent = formatRupiah(dppNilaiLain);
+                } else {
+                    if (dppNilaiLainRow) dppNilaiLainRow.classList.add('hidden');
+                }
 
                 if (rate !== null) {
-                    const tax = subtotal * rate;
+                    const tax = taxBase * rate;
                     taxInput.value = tax.toFixed(2);
                 }
                 recalcTotals();
+            }
+
+            const dppCheckbox = document.getElementById('use_dpp_nilai_lain');
+            if (dppCheckbox) {
+                dppCheckbox.addEventListener('change', recalcPpn);
             }
 
             if (taxCodeSelect) {

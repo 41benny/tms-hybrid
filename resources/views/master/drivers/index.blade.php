@@ -67,6 +67,9 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center gap-2">
+                                    <x-button :href="route('cash-banks.create', ['sumber' => 'driver_withdrawal', 'recipient_name' => $item->name])" variant="ghost" size="sm" title="Cairkan Tabungan">
+                                        💰
+                                    </x-button>
                                     <x-button :href="route('drivers.edit', $item)" variant="ghost" size="sm">
                                         ✏️
                                     </x-button>

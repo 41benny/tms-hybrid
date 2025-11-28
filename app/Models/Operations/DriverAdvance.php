@@ -16,6 +16,8 @@ class DriverAdvance extends Model
         'dp_amount',
         'dp_paid_date',
         'status',
+        'journal_status',
+        'journal_id',
         'paid_date',
         'deduction_savings',
         'deduction_guarantee',
@@ -35,6 +37,7 @@ class DriverAdvance extends Model
             'dp_amount' => 'decimal:2',
             'deduction_savings' => 'decimal:2',
             'deduction_guarantee' => 'decimal:2',
+            'journal_status' => 'string',
         ];
     }
 
@@ -95,6 +98,11 @@ class DriverAdvance extends Model
     public function driver(): BelongsTo
     {
         return $this->belongsTo(\App\Models\Master\Driver::class);
+    }
+
+    public function journal(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Accounting\Journal::class);
     }
 
     public function paymentRequests()

@@ -64,109 +64,117 @@
         @method('PUT')
 
         <fieldset @disabled($job->isLocked())>
-            <x-card title="Job Order Information" subtitle="Update data job order">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <x-select
-                        name="customer_id"
-                        label="Customer"
-                        :error="$errors->first('customer_id')"
-                        :required="true"
-                    >
-                        <option value="">Pilih customer</option>
-                        @foreach($customers as $c)
-                            <option value="{{ $c->id }}" @selected(old('customer_id', $job->customer_id) == $c->id)>{{ $c->name }}</option>
-                        @endforeach
-                    </x-select>
-
-                    <x-select
-                        name="sales_id"
-                        label="Sales"
-                        :error="$errors->first('sales_id')"
-                    >
-                        <option value="">Pilih sales</option>
-                        @foreach($salesList as $s)
-                            <option value="{{ $s->id }}" @selected(old('sales_id', $job->sales_id) == $s->id)>{{ $s->name }}</option>
-                        @endforeach
-                    </x-select>
-
-                    <x-input
-                        name="origin"
-                        label="Origin"
-                        :value="old('origin', $job->origin)"
-                        :error="$errors->first('origin')"
-                        placeholder="e.g., Jakarta, Indonesia"
-                    />
-
-                    <x-input
-                        name="destination"
-                        label="Destination"
-                        :value="old('destination', $job->destination)"
-                        :error="$errors->first('destination')"
-                        placeholder="e.g., Surabaya, Indonesia"
-                    />
-
+            <x-card>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Nilai Tagihan (IDR)</label>
-                        <input
-                            type="text"
-                            id="invoice_amount_display"
-                            placeholder="1.000.000"
-                            class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
-                        >
-                        <input type="hidden" name="invoice_amount" id="invoice_amount" value="{{ old('invoice_amount', $job->invoice_amount ?? 0) }}">
-                        @error('invoice_amount')
-                            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Customer</label>
+                        <select name="customer_id" class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2 py-1.5 text-xs text-slate-900 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
+                            <option value="">-- Select Customer --</option>
+                            @foreach($customers as $c)
+                                <option value="{{ $c->id }}" @selected(old('customer_id', $job->customer_id) == $c->id)>{{ $c->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('customer_id')
+                            <p class="mt-1 text-[10px] text-red-600 dark:text-red-400">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Preview</label>
-                        <div class="px-4 py-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium" id="invoice_preview">
-                            Rp 0
-                        </div>
+                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Sales Agent</label>
+                        <select name="sales_id" class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2 py-1.5 text-xs text-slate-900 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
+                            <option value="">-- Select Sales --</option>
+                            @foreach($salesList as $s)
+                                <option value="{{ $s->id }}" @selected(old('sales_id', $job->sales_id) == $s->id)>{{ $s->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('sales_id')
+                            <p class="mt-1 text-[10px] text-red-600 dark:text-red-400">{{ $message }}</p>
+                        @enderror
                     </div>
 
-                    <x-input
-                        name="order_date"
-                        type="date"
-                        label="Tanggal Order"
-                        :value="old('order_date', $job->order_date->format('Y-m-d'))"
-                        :error="$errors->first('order_date')"
-                        :required="true"
-                    />
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Origin</label>
+                        <input
+                            type="text"
+                            name="origin"
+                            value="{{ old('origin', $job->origin) }}"
+                            placeholder="e.g., Jakarta, Indonesia"
+                            class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2 py-1.5 text-xs text-slate-900 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                        >
+                        @error('origin')
+                            <p class="mt-1 text-[10px] text-red-600 dark:text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
 
-                    <x-select
-                        name="service_type"
-                        label="Jenis Layanan"
-                        :error="$errors->first('service_type')"
-                        :required="true"
-                    >
-                        <option value="">Pilih jenis layanan</option>
-                        <option value="multimoda" @selected(old('service_type', $job->service_type) == 'multimoda')>Multimoda</option>
-                        <option value="inland" @selected(old('service_type', $job->service_type) == 'inland')>Inland</option>
-                    </x-select>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Destination</label>
+                        <input
+                            type="text"
+                            name="destination"
+                            value="{{ old('destination', $job->destination) }}"
+                            placeholder="e.g., Surabaya, Indonesia"
+                            class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2 py-1.5 text-xs text-slate-900 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                        >
+                        @error('destination')
+                            <p class="mt-1 text-[10px] text-red-600 dark:text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
 
-                    <x-select
-                        name="status"
-                        label="Status"
-                        :error="$errors->first('status')"
-                        :required="true"
-                    >
-                        <option value="draft" @selected(old('status', $job->status) == 'draft')>Draft</option>
-                        <option value="confirmed" @selected(old('status', $job->status) == 'confirmed')>Confirmed</option>
-                        <option value="in_progress" @selected(old('status', $job->status) == 'in_progress')>In Progress</option>
-                        <option value="completed" @selected(old('status', $job->status) == 'completed')>Completed</option>
-                        <option value="cancelled" @selected(old('status', $job->status) == 'cancelled')>Cancelled</option>
-                    </x-select>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Nilai Tagihan (IDR)</label>
+                        <input
+                            type="text"
+                            id="invoice_amount_display"
+                            placeholder="0"
+                            readonly
+                            class="w-full rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-2 py-1.5 text-xs text-slate-500 dark:text-slate-400 focus:outline-none cursor-not-allowed"
+                        >
+                        <input type="hidden" name="invoice_amount" id="invoice_amount" value="{{ old('invoice_amount', $job->invoice_amount ?? 0) }}">
+                        @error('invoice_amount')
+                            <p class="mt-1 text-[10px] text-red-600 dark:text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Tanggal Order</label>
+                        <input
+                            type="date"
+                            name="order_date"
+                            value="{{ old('order_date', $job->order_date->format('Y-m-d')) }}"
+                            class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2 py-1.5 text-xs text-slate-900 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                        >
+                        @error('order_date')
+                            <p class="mt-1 text-[10px] text-red-600 dark:text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <input type="hidden" name="service_type" value="multimoda">
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Status</label>
+                        <select name="status" class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2 py-1.5 text-xs text-slate-900 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
+                            <option value="draft" @selected(old('status', $job->status) == 'draft')>Draft</option>
+                            <option value="confirmed" @selected(old('status', $job->status) == 'confirmed')>Confirmed</option>
+                            <option value="in_progress" @selected(old('status', $job->status) == 'in_progress')>In Progress</option>
+                            <option value="completed" @selected(old('status', $job->status) == 'completed')>Completed</option>
+                            <option value="cancelled" @selected(old('status', $job->status) == 'cancelled')>Cancelled</option>
+                        </select>
+                        @error('status')
+                            <p class="mt-1 text-[10px] text-red-600 dark:text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
 
                     <div class="md:col-span-2">
-                        <x-textarea
+                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Additional Notes</label>
+                        <textarea
                             name="notes"
-                            label="Catatan"
-                            :error="$errors->first('notes')"
-                            :rows="3"
-                            placeholder="Catatan tambahan (opsional)"
-                        >{{ old('notes', $job->notes) }}</x-textarea>
+                            rows="3"
+                            placeholder="Additional notes or special instructions..."
+                            class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2 py-1.5 text-xs text-slate-900 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                        >{{ old('notes', $job->notes) }}</textarea>
+                        @error('notes')
+                            <p class="mt-1 text-[10px] text-red-600 dark:text-red-400">{{ $message }}</p>
+                        @enderror
                     </div>
                 </div>
             </x-card>
@@ -175,9 +183,9 @@
             <x-card>
                 <x-slot:header>
                     <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Cargo Items</h3>
+                        <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-300">Cargo Items</h3>
                         <x-button type="button" variant="outline" size="sm" id="addCargoItem">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                             </svg>
                             Add Item
@@ -186,56 +194,7 @@
                 </x-slot:header>
 
                 <div id="cargoItems" class="space-y-4">
-                    @forelse($preparedItems as $idx => $item)
-                        <div class="cargo-item border border-slate-200 dark:border-slate-800 rounded-lg p-4 bg-slate-50 dark:bg-slate-800/30">
-                            <div class="flex items-start justify-between mb-3">
-                                <h4 class="font-semibold text-slate-900 dark:text-slate-100">Item #<span class="item-number">{{ $loop->iteration }}</span></h4>
-                                <button type="button" class="remove-item flex items-center gap-1 text-rose-600 hover:text-rose-700 dark:text-rose-400 text-sm">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                    Remove
-                                </button>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                <div class="md:col-span-1">
-                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Cargo Type (Model)</label>
-                                    <input
-                                        type="text"
-                                        list="equipment_list_{{ $idx }}"
-                                        name="items[{{ $idx }}][cargo_type]"
-                                        value="{{ $item['cargo_type'] ?? ($item['equipment_name'] ?? '') }}"
-                                        placeholder="Ketik untuk cari... (e.g., Excavator)"
-                                        class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm equipment-input"
-                                        data-index="{{ $idx }}"
-                                    >
-                                    <datalist id="equipment_list_{{ $idx }}">
-                                        @foreach($equipments as $eq)
-                                            <option value="{{ $eq->name }}" data-id="{{ $eq->id }}" data-type="{{ $eq->category }}">{{ $eq->category }} - {{ $eq->name }}</option>
-                                        @endforeach
-                                    </datalist>
-                                    <input type="hidden" name="items[{{ $idx }}][equipment_id]" class="equipment-id-hidden" value="{{ $item['equipment_id'] }}">
-                                    <input type="hidden" name="items[{{ $idx }}][equipment_name]" class="equipment-name-hidden" value="{{ $item['equipment_name'] }}">
-                                    <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ $equipments->count() }} model tersedia</div>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Quantity</label>
-                                    <input type="number" step="0.01" name="items[{{ $idx }}][quantity]" value="{{ $item['quantity'] ?? 1 }}" class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm quantity-input" oninput="calculateTotal()">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Price per Unit</label>
-                                    <input type="text" class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm price-display-input" placeholder="0" value="{{ number_format($item['price'] ?? 0, 0, ',', '.') }}" oninput="formatPriceInput(this); calculateTotal()">
-                                    <input type="hidden" name="items[{{ $idx }}][price]" class="price-input" value="{{ $item['price'] ?? 0 }}">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Serial Numbers</label>
-                                    <input type="text" name="items[{{ $idx }}][serial_numbers]" value="{{ $item['serial_numbers'] ?? '' }}" placeholder="SN-001, SN-002" class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
-                                </div>
-                            </div>
-                        </div>
-                    @empty
-                        {{-- Biarkan JS menambahkan item kosong jika tidak ada data --}}
-                    @endforelse
+                    <!-- Items will be loaded via JS -->
                 </div>
             </x-card>
 
@@ -253,48 +212,49 @@
     </form>
     {{-- Template for Cargo Item --}}
     <template id="cargoItemTemplate">
-        <div class="cargo-item border border-slate-200 dark:border-slate-800 rounded-lg p-4 bg-slate-50 dark:bg-slate-800/30">
-            <div class="flex items-start justify-between mb-3">
-                <h4 class="font-semibold text-slate-900 dark:text-slate-100">Item #<span class="item-number">1</span></h4>
-                <button type="button" class="remove-item flex items-center gap-1 text-rose-600 hover:text-rose-700 dark:text-rose-400 text-sm">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="cargo-item border border-slate-200 dark:border-slate-800 rounded-lg p-3 bg-slate-50 dark:bg-slate-800/30">
+            <div class="flex items-start justify-between mb-2">
+                <h4 class="font-semibold text-sm text-slate-900 dark:text-slate-300">Item #<span class="item-number">1</span></h4>
+                <button type="button" class="remove-item flex items-center gap-1 text-rose-600 hover:text-rose-700 dark:text-rose-400 text-xs">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                     Remove
                 </button>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div class="md:col-span-1">
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Cargo Type (Model)</label>
-                    <input
-                        type="text"
-                        list="equipment_list_INDEX"
-                        name="items[INDEX][cargo_type]"
-                        placeholder="Ketik untuk cari... (e.g., Excavator)"
-                        class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm equipment-input"
-                        data-index="INDEX"
-                    >
-                    <datalist id="equipment_list_INDEX">
-                        @foreach($equipments as $eq)
-                            <option value="{{ $eq->name }}" data-id="{{ $eq->id }}" data-type="{{ $eq->category }}">{{ $eq->category }} - {{ $eq->name }}</option>
-                        @endforeach
-                    </datalist>
+                    <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Cargo Type (Model)</label>
+                    <div class="relative">
+                        <input
+                            type="text"
+                            name="items[INDEX][cargo_type]"
+                            placeholder="Ketik untuk cari... (e.g., Excavator)"
+                            autocomplete="off"
+                            class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2 py-1.5 text-xs text-slate-900 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm equipment-input"
+                            data-index="INDEX"
+                        >
+                        <div
+                            class="equipment-suggestions absolute z-20 mt-1 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg max-h-60 overflow-y-auto hidden"
+                            data-index="INDEX"
+                        ></div>
+                    </div>
                     <input type="hidden" name="items[INDEX][equipment_id]" class="equipment-id-hidden">
                     <input type="hidden" name="items[INDEX][equipment_name]" class="equipment-name-hidden">
-                    <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ $equipments->count() }} model tersedia</div>
+                    <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{{ $equipments->count() }} model tersedia</div>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Quantity</label>
-                    <input type="number" step="0.01" name="items[INDEX][quantity]" value="1" class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm quantity-input" oninput="calculateTotal()">
+                    <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Quantity</label>
+                    <input type="number" step="0.01" name="items[INDEX][quantity]" value="1" class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2 py-1.5 text-xs text-slate-900 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm quantity-input" oninput="calculateTotal()">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Price per Unit</label>
-                    <input type="text" class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm price-display-input" placeholder="0" oninput="formatPriceInput(this); calculateTotal()">
+                    <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Price per Unit</label>
+                    <input type="text" class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2 py-1.5 text-xs text-slate-900 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm price-display-input" placeholder="0" oninput="formatPriceInput(this); calculateTotal()">
                     <input type="hidden" name="items[INDEX][price]" class="price-input" value="0">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Serial Numbers</label>
-                    <input type="text" name="items[INDEX][serial_numbers]" placeholder="SN-001, SN-002" class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
+                    <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Serial Numbers</label>
+                    <input type="text" name="items[INDEX][serial_numbers]" placeholder="SN-001, SN-002" class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2 py-1.5 text-xs text-slate-900 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
                 </div>
             </div>
         </div>
@@ -308,7 +268,12 @@
 document.addEventListener('DOMContentLoaded', function () {
     const invoiceInput = document.getElementById('invoice_amount');
     const invoiceDisplayInput = document.getElementById('invoice_amount_display');
-    const invoicePreview = document.getElementById('invoice_preview');
+
+    const equipmentList = @json($equipments->map(fn($e) => [
+        'id' => $e->id,
+        'name' => $e->name,
+        'category' => $e->category,
+    ])->values());
 
     // Cargo Items Logic
     const cargoItemsContainer = document.getElementById('cargoItems');
@@ -357,38 +322,77 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         // Update invoice amount display
-        if (invoiceDisplayInput && invoiceInput && invoicePreview) {
+        if (invoiceDisplayInput && invoiceInput) {
             invoiceDisplayInput.value = formatNumber(total);
             invoiceInput.value = total;
-            invoicePreview.textContent = formatRupiah(total);
         }
     };
 
-    if (invoiceDisplayInput) {
-        invoiceDisplayInput.addEventListener('input', function () {
-            let value = this.value.replace(/\./g, '');
-            value = value.replace(/[^\d]/g, '');
-
-            if (value) {
-                this.value = formatNumber(value);
-                invoiceInput.value = value;
-            } else {
-                this.value = '';
-                invoiceInput.value = '0';
-            }
-
-            const amount = parseFloat(invoiceInput.value) || 0;
-            invoicePreview.textContent = formatRupiah(amount);
-        });
-
+    if (invoiceDisplayInput && invoiceInput) {
         // Initialize from existing value
         const initial = parseFloat(invoiceInput.value) || 0;
         if (initial > 0) {
             invoiceDisplayInput.value = formatNumber(initial);
-            invoicePreview.textContent = formatRupiah(initial);
-        } else {
-            invoicePreview.textContent = formatRupiah(0);
         }
+    }
+
+    function attachEquipmentTypeahead(inputEl, hiddenIdEl, suggestionsEl) {
+        if (!inputEl || !suggestionsEl) return;
+
+        function clearEquipment() {
+            suggestionsEl.innerHTML = '';
+            suggestionsEl.classList.add('hidden');
+        }
+
+        function renderEquipment(items) {
+            if (!items.length) {
+                clearEquipment();
+                return;
+            }
+
+            suggestionsEl.innerHTML = items.map(function (e) {
+                const label = (e.category ? e.category + ' - ' : '') + (e.name || '');
+                return '<button type="button" data-id=\"' + e.id + '\" data-name=\"' + (e.name || '').replace(/"/g, '&quot;') + '\" class=\"w-full text-left px-3 py-2 text-xs hover:bg-slate-100 dark:hover:bg-slate-800\">' +
+                       label.replace(/</g, '&lt;') +
+                       '</button>';
+            }).join('');
+
+            suggestionsEl.classList.remove('hidden');
+
+            Array.prototype.forEach.call(suggestionsEl.querySelectorAll('button[data-id]'), function (btn) {
+                btn.addEventListener('click', function () {
+                    const id = this.getAttribute('data-id');
+                    const name = this.getAttribute('data-name') || '';
+                    if (hiddenIdEl) hiddenIdEl.value = id;
+                    inputEl.value = name;
+                    clearEquipment();
+                });
+            });
+        }
+
+        inputEl.addEventListener('input', function () {
+            const q = (this.value || '').trim().toLowerCase();
+            if (hiddenIdEl) hiddenIdEl.value = '';
+
+            if (q.length < 2) {
+                clearEquipment();
+                return;
+            }
+
+            const results = (equipmentList || []).filter(function (e) {
+                const name = (e.name || '').toLowerCase();
+                const cat = (e.category || '').toLowerCase();
+                return name.includes(q) || cat.includes(q);
+            }).slice(0, 20);
+
+            renderEquipment(results);
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!suggestionsEl.contains(e.target) && e.target !== inputEl) {
+                clearEquipment();
+            }
+        });
     }
 
     // Function to add cargo item
@@ -426,27 +430,11 @@ document.addEventListener('DOMContentLoaded', function () {
             calculateTotal();
         });
 
-        // Auto-fill equipment_id when user types
+        // Equipment typeahead for this item
         const cargoInput = newItem.querySelector('.equipment-input');
         const hiddenIdInput = newItem.querySelector('.equipment-id-hidden');
-
-        cargoInput.addEventListener('input', function() {
-            const datalistId = this.getAttribute('list');
-            const datalist = document.getElementById(datalistId);
-            const options = datalist.querySelectorAll('option');
-
-            let found = false;
-            options.forEach(option => {
-                if (option.value === this.value) {
-                    hiddenIdInput.value = option.getAttribute('data-id');
-                    found = true;
-                }
-            });
-
-            if (!found) {
-                hiddenIdInput.value = '';
-            }
-        });
+        const suggestionBox = newItem.querySelector('.equipment-suggestions');
+        attachEquipmentTypeahead(cargoInput, hiddenIdInput, suggestionBox);
 
         itemIndex++;
     }
@@ -471,6 +459,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const existingItems = @json($preparedItems ?? []);
     if (existingItems.length > 0 && cargoItemsContainer.querySelectorAll('.cargo-item').length === 0) {
         existingItems.forEach(item => addCargoItem(item));
+        calculateTotal();
     } else {
         if (cargoItemsContainer.querySelectorAll('.cargo-item').length === 0) {
             addCargoItem();

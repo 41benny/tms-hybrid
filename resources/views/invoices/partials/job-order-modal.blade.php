@@ -1,15 +1,8 @@
 {{-- Modal: Pilih Job Order --}}
 <x-modal id="jobOrderModal" title="Pilih Job Order">
-    <form method="get" action="{{ route('invoices.create') }}" class="space-y-4" id="jobOrderForm">
-        <input type="hidden" name="customer_id" value="{{ $selectedCustomer->id }}">
-        {{-- Simpan state header invoice agar tidak hilang saat reload --}}
-        <input type="hidden" name="invoice_date" id="modal_invoice_date">
-        <input type="hidden" name="due_date" id="modal_due_date">
-        <input type="hidden" name="payment_terms" id="modal_payment_terms">
-        <input type="hidden" name="notes" id="modal_notes">
-        <input type="hidden" name="tax_code" id="modal_tax_code">
-        <input type="hidden" name="reference" id="modal_reference">
-
+    <div class="space-y-4" id="jobOrderFormContainer">
+        <input type="hidden" id="modal_customer_id" value="{{ $selectedCustomer->id }}">
+        
         <div class="flex items-center justify-between gap-3">
             <div class="text-sm font-medium text-slate-700 dark:text-slate-200">
                 Job Order untuk {{ $selectedCustomer->name }}
@@ -49,46 +42,10 @@
                     class="text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
                 Batal
             </button>
-            <x-button type="submit" variant="primary">
+            <x-button type="button" variant="primary" onclick="addSelectedJobOrders()">
                 Gunakan Job Order Terpilih
             </x-button>
         </div>
-    </form>
-
-    <script>
-        function toggleDpInput() {
-            const isDp = document.getElementById('is_dp').checked;
-            const container = document.getElementById('dp_input_container');
-            if (isDp) {
-                container.classList.remove('hidden');
-            } else {
-                container.classList.add('hidden');
-                document.getElementById('dp_amount').value = '';
-            }
-        }
-
-        function updateJobOrderList() {
-            const status = document.getElementById('status_filter').value;
-            const customerId = document.querySelector('input[name="customer_id"]').value;
-            const container = document.getElementById('job-order-list-container');
-            
-            // Show loading state
-            container.innerHTML = '<div class="p-4 text-center text-sm text-slate-500">Memuat...</div>';
-            
-            // Fetch updated list via AJAX
-            fetch(`{{ route('invoices.create') }}?load_job_orders=1&customer_id=${customerId}&status_filter=${status}`, {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => response.text())
-            .then(html => {
-                container.innerHTML = html;
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                container.innerHTML = '<div class="p-4 text-center text-sm text-red-500">Gagal memuat data.</div>';
-            });
-        }
-    </script>
+    </div>
+    {{-- All JavaScript functions have been moved to invoice-create.js for global availability --}}
 </x-modal>

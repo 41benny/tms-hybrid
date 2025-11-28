@@ -19,6 +19,10 @@ return [
     'pph23' => env('ACC_PPH23_CODE', '2240'),      // PPh 23
     'accrued_salary' => env('ACC_ACCRUED_SALARY_CODE', '2310'), // BYMH - Gaji
     'accrued_provision' => env('ACC_ACCRUED_PROVISION_CODE', '2320'), // BYMH - Provisi Bank
+    'customer_deposit' => env('ACC_CUSTOMER_DEPOSIT_CODE', '2150'), // Hutang Uang Muka Customer (DP)
+    'driver_payable' => env('ACC_DRIVER_PAYABLE_CODE', '2155'), // Hutang Uang Jalan Supir
+    'driver_savings' => env('ACC_DRIVER_SAVINGS_CODE', '2160'), // Hutang Tabungan Supir
+    'driver_guarantee' => env('ACC_DRIVER_GUARANTEE_CODE', '2170'), // Hutang Jaminan Supir
     'suspense' => env('ACC_SUSPENSE_CODE', '2900'), // Akun Sementara (Ayat Silang)
 
     // === EKUITAS ===

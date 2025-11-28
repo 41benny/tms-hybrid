@@ -60,6 +60,12 @@ class MenuSeeder extends Seeder
                 'section' => 'operations',
             ],
             [
+                'slug' => 'shipment-legs',
+                'label' => 'Shipment Legs',
+                'route_name' => 'shipment-legs.index',
+                'section' => 'operations',
+            ],
+            [
                 'slug' => 'hutang',
                 'label' => 'Dashboard Hutang',
                 'route_name' => 'hutang.dashboard',

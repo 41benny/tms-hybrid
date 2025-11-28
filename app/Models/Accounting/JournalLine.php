@@ -28,4 +28,14 @@ class JournalLine extends Model
     {
         return $this->belongsTo(ChartOfAccount::class, 'account_id');
     }
+
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Master\Customer::class);
+    }
+
+    public function vendor(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Master\Vendor::class);
+    }
 }

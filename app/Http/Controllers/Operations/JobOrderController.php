@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Master\Customer;
 use App\Models\Master\Sales;
 use App\Models\Operations\JobOrder;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -22,6 +23,20 @@ class JobOrderController extends Controller
             'items.equipment',
             'invoiceItems',
         ]);
+
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+
+        // Sales user: restrict to their own job orders (by linked Sales record)
+        if ($user && $user->role === User::ROLE_SALES) {
+            $salesProfile = $user->salesProfile;
+            if ($salesProfile) {
+                $query->where('sales_id', $salesProfile->id);
+            } else {
+                // No linked sales profile => hide all JO for safety
+                $query->whereRaw('1 = 0');
+            }
+        }
 
         if ($status = $request->get('status')) {
             $query->where('status', $status);
@@ -112,6 +127,8 @@ class JobOrderController extends Controller
 
     public function show(JobOrder $job_order)
     {
+        $this->ensureSalesCanAccess($job_order);
+
         $job_order->load([
             'customer',
             'sales',
@@ -129,6 +146,8 @@ class JobOrderController extends Controller
 
     public function edit(JobOrder $job_order)
     {
+        $this->ensureSalesCanAccess($job_order);
+
         if ($job_order->isLocked()) {
             return back()->with('error', 'Job Order yang sudah completed atau cancelled tidak bisa di-edit');
         }
@@ -148,6 +167,8 @@ class JobOrderController extends Controller
 
     public function update(Request $request, JobOrder $job_order)
     {
+        $this->ensureSalesCanAccess($job_order);
+
         if ($job_order->isLocked()) {
             return back()->with('error', 'Job Order yang sudah completed atau cancelled tidak bisa di-edit');
         }
@@ -199,6 +220,8 @@ class JobOrderController extends Controller
 
     public function destroy(Request $request, JobOrder $job_order)
     {
+        $this->ensureSalesCanAccess($job_order);
+
         // Hanya superadmin yang bisa delete
         /** @var \App\Models\User|null $user */
         $user = Auth::user();
@@ -253,6 +276,8 @@ class JobOrderController extends Controller
 
     public function cancel(Request $request, JobOrder $job_order)
     {
+        $this->ensureSalesCanAccess($job_order);
+
         // Prevent cancel jika sudah completed atau cancelled
         if ($job_order->isLocked()) {
             return back()->with('error', 'Job Order sudah tidak bisa di-cancel');
@@ -312,5 +337,23 @@ class JobOrderController extends Controller
         }
 
         return $prefix.str_pad((string) $seq, 3, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * For sales role, ensure the given job order belongs to their Sales profile.
+     */
+    protected function ensureSalesCanAccess(JobOrder $jobOrder): void
+    {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+
+        if (! $user || $user->role !== User::ROLE_SALES) {
+            return;
+        }
+
+        $salesProfile = $user->salesProfile;
+        if (! $salesProfile || $jobOrder->sales_id !== $salesProfile->id) {
+            abort(403, 'Anda tidak berhak mengakses Job Order ini.');
+        }
     }
 }

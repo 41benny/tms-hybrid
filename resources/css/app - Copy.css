@@ -1,0 +1,41 @@
+@import 'tailwindcss';
+
+@config '../../tailwind.config.js';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+@layer base {
+    /* Styling untuk dropdown select di dark mode */
+    select {
+        color-scheme: light dark;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+        select option {
+            background-color: #252525;
+            color: #f1f5f9;
+        }
+        
+        select option:checked {
+            background-color: #3d3d3d;
+        }
+    }
+    
+    .dark select option {
+        background-color: #252525;
+        color: #f1f5f9;
+    }
+    
+    .dark select option:checked {
+        background-color: #3d3d3d;
+    }
+
+}

@@ -1,41 +1,526 @@
 @import 'tailwindcss';
-
+@import './table-font-sm.css';
 @config '../../tailwind.config.js';
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
+@layer base {
 
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    /* --- 1. DEFINISI TEMA (CSS VARIABLES) --- */
+    :root {
+        /* Default: Midnight Cyan (Theme 2) */
+        --bg-app: #020617;
+        --bg-panel: rgba(15, 23, 42, 0.6);
+        --bg-sidebar: rgba(2, 6, 23, 0.85);
+        --color-primary: #22D3EE;
+        /* cyan-400 */
+        --color-secondary: #0E7490;
+        /* cyan-700 */
+        --color-text-main: #CBD5E1;
+        /* Slate 300 - Softer white */
+        --color-text-muted: #94A3B8;
+        --border-color: rgba(34, 211, 238, 0.2);
+        --glow-color: rgba(34, 211, 238, 0.5);
+        --gradient-bg: radial-gradient(ellipse at top right, rgba(8, 145, 178, 0.15), transparent 70%);
+    }
+
+    /* TEMA 2: Royal Gold */
+    [data-theme="gold"] {
+        --bg-app: #020617;
+        /* Slate 950 - Darker base */
+        --bg-panel: rgba(15, 23, 42, 0.7);
+        /* Slate 900 - Matches sidebar tone */
+        --bg-sidebar: rgba(2, 6, 23, 0.9);
+        /* Slate 950 - Consistent dark sidebar */
+        --color-primary: #FBBF24;
+        /* amber-400 */
+        --color-secondary: #B45309;
+        --color-text-main: #CBD5E1;
+        /* Slate 300 - Softer white */
+        /* Slate 50 */
+        --color-text-muted: #94A3B8;
+        /* Slate 400 */
+        --border-color: rgba(251, 191, 36, 0.15);
+        --glow-color: rgba(251, 191, 36, 0.3);
+        --gradient-bg: radial-gradient(ellipse at top right, rgba(180, 83, 9, 0.1), transparent 70%);
+    }
+
+    /* TEMA 3: Emerald Glass */
+    [data-theme="emerald"] {
+        --bg-app: #022C22;
+        --bg-panel: rgba(6, 78, 59, 0.4);
+        --bg-sidebar: rgba(2, 44, 34, 0.9);
+        --color-primary: #34D399;
+        --color-secondary: #047857;
+        --color-text-main: #A7F3D0;
+        /* Emerald 200 - Softer */
+        --color-text-muted: #6EE7B7;
+        --border-color: rgba(52, 211, 153, 0.2);
+        --glow-color: rgba(52, 211, 153, 0.4);
+        --gradient-bg: radial-gradient(ellipse at top right, rgba(16, 185, 129, 0.15), transparent 70%);
+    }
+
+    body {
+        background-color: var(--bg-app);
+        color: var(--color-text-main);
+        transition: background-color 0.5s ease, color 0.3s ease;
+        font-family: 'Inter', sans-serif;
+    }
+
+    /* --- 2. SCROLLBAR FIX (Agar muncul Neon) --- */
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-primary) rgba(0, 0, 0, 0.3);
+    }
+
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--color-primary);
+        border-radius: 10px;
+        box-shadow: 0 0 10px var(--glow-color);
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--color-primary);
+        box-shadow: 0 0 15px var(--glow-color);
+        cursor: pointer;
+    }
+
+    /* Force scrollbar to always show */
+    html {
+        overflow-y: scroll;
+    }
+
 }
 
-@layer base {
-    /* Styling untuk dropdown select di dark mode */
-    select {
-        color-scheme: light dark;
-    }
-    
-    @media (prefers-color-scheme: dark) {
-        select option {
-            background-color: #252525;
-            color: #f1f5f9;
-        }
-        
-        select option:checked {
-            background-color: #3d3d3d;
-        }
-    }
-    
-    .dark select option {
-        background-color: #252525;
-        color: #f1f5f9;
-    }
-    
-    .dark select option:checked {
-        background-color: #3d3d3d;
+@layer components {
+    .theme-bg-gradient {
+        background: var(--gradient-bg);
     }
 
+    .theme-panel {
+        background: var(--bg-panel);
+        border: 1px solid var(--border-color);
+        backdrop-filter: blur(12px);
+    }
+
+    .theme-sidebar {
+        background: var(--bg-sidebar);
+        border-right: 1px solid var(--border-color);
+    }
+
+    .theme-text-primary {
+        color: var(--color-primary);
+    }
+
+    .theme-text-muted {
+        color: var(--color-text-muted);
+    }
+
+    .theme-border {
+        border-color: var(--border-color);
+    }
+
+    .theme-glow-text {
+        text-shadow: 0 0 15px var(--glow-color);
+    }
+
+    /* Button Style */
+    .btn-primary {
+        @apply px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-300 flex items-center gap-2;
+        background: var(--color-primary);
+        color: #000;
+        box-shadow: 0 0 15px var(--glow-color);
+    }
+
+    .btn-primary:hover {
+        filter: brightness(1.2);
+        box-shadow: 0 0 25px var(--glow-color);
+        transform: translateY(-1px);
+    }
+
+    /* Nav Item Logic */
+    .nav-item {
+        @apply flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent text-sm font-medium;
+        color: var(--color-text-muted);
+    }
+
+    .nav-item:hover {
+        @apply text-white bg-white/5;
+    }
+
+    .nav-item.active {
+        @apply shadow-lg;
+        border-color: var(--border-color);
+        background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, transparent 100%);
+        color: white;
+    }
+
+    .nav-item.active svg {
+        @apply drop-shadow-md;
+        color: var(--color-primary);
+    }
+
+    /* Utility scroll */
+    .custom-scrollbar {
+        overflow-y: auto;
+        scrollbar-width: thin !important;
+        scrollbar-color: var(--color-primary) rgba(0, 0, 0, 0.3) !important;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 8px !important;
+        height: 8px !important;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.3) !important;
+        border-radius: 10px !important;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: var(--color-primary) !important;
+        border-radius: 10px !important;
+        box-shadow: 0 0 10px var(--glow-color) !important;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: var(--color-primary) !important;
+        box-shadow: 0 0 15px var(--glow-color) !important;
+    }
+
+    /* Table Styling */
+    table {
+        @apply w-full border-collapse;
+        background: transparent !important;
+    }
+
+    table thead {
+        background: linear-gradient(135deg, var(--color-secondary), var(--color-primary)) !important;
+        border-bottom: 2px solid var(--border-color) !important;
+    }
+
+    table thead th {
+        @apply px-4 py-3 text-left text-xs font-bold uppercase tracking-wider;
+        color: white !important;
+        text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        background: transparent !important;
+    }
+
+    table tbody {
+        background: var(--bg-panel) !important;
+    }
+
+    table tbody tr {
+        border-bottom: 1px solid var(--border-color) !important;
+        transition: all 0.2s ease;
+        background: transparent !important;
+    }
+
+    table tbody tr:hover {
+        background: rgba(255, 255, 255, 0.05) !important;
+        box-shadow: 0 0 15px var(--glow-color);
+    }
+
+    table tbody td {
+        @apply px-4 py-3 text-sm;
+        color: var(--color-text-main) !important;
+        background: transparent !important;
+    }
+
+    /* Override any white backgrounds */
+
+    .bg-white table,
+    .bg-white thead,
+    .bg-white tbody,
+    .bg-white tr,
+    .bg-white td,
+    .bg-white th {
+        background: transparent !important;
+    }
+
+    .bg-white table thead {
+        background: linear-gradient(135deg, var(--color-secondary), var(--color-primary)) !important;
+    }
+
+    .bg-white table tbody {
+        background: var(--bg-panel) !important;
+    }
+
+    /* AGGRESSIVE Global overrides for ALL white backgrounds */
+
+    div.bg-white,
+    section.bg-white,
+    article.bg-white,
+    aside.bg-white,
+    main.bg-white {
+        background: var(--bg-panel) !important;
+        color: var(--color-text-main) !important;
+        border-color: var(--border-color) !important;
+    }
+
+    /* Override ANY element with bg-white class */
+    [class*="bg-white"] {
+        background: var(--bg-panel) !important;
+        color: var(--color-text-main) !important;
+    }
+
+    /* Override rounded cards */
+    .rounded-xl.bg-white,
+    .rounded-lg.bg-white,
+    .rounded-2xl.bg-white,
+    .rounded.bg-white {
+        background: var(--bg-panel) !important;
+        border-color: var(--border-color) !important;
+    }
+
+    /* Override shadow cards */
+    .shadow-sm,
+    .shadow-md,
+    .shadow-lg,
+    .shadow-xl,
+    .shadow-2xl {
+        background: var(--bg-panel) !important;
+    }
+
+    /* Override gray backgrounds */
+    .bg-gray-50,
+    .bg-gray-100,
+    .bg-gray-200,
+    .bg-slate-50,
+    .bg-slate-100,
+    .bg-slate-200 {
+        background: rgba(0, 0, 0, 0.3) !important;
+        color: var(--color-text-main) !important;
+    }
+
+    /* Override ALL light color backgrounds */
+    .bg-blue-50,
+    .bg-indigo-50,
+    .bg-purple-50,
+    .bg-pink-50,
+    .bg-red-50,
+    .bg-orange-50,
+    .bg-amber-50,
+    .bg-yellow-50,
+    .bg-lime-50,
+    .bg-green-50,
+    .bg-emerald-50,
+    .bg-teal-50,
+    .bg-cyan-50 {
+        background: rgba(0, 0, 0, 0.2) !important;
+        color: var(--color-text-main) !important;
+    }
+
+    .bg-blue-100,
+    .bg-indigo-100,
+    .bg-purple-100,
+    .bg-pink-100,
+    .bg-red-100,
+    .bg-orange-100,
+    .bg-amber-100,
+    .bg-yellow-100,
+    .bg-lime-100,
+    .bg-green-100,
+    .bg-emerald-100,
+    .bg-teal-100,
+    .bg-cyan-100 {
+        background: rgba(0, 0, 0, 0.25) !important;
+        color: var(--color-text-main) !important;
+    }
+
+    .bg-blue-200,
+    .bg-indigo-200,
+    .bg-purple-200,
+    .bg-pink-200,
+    .bg-red-200,
+    .bg-orange-200,
+    .bg-amber-200,
+    .bg-yellow-200,
+    .bg-lime-200,
+    .bg-green-200,
+    .bg-emerald-200,
+    .bg-teal-200,
+    .bg-cyan-200 {
+        background: rgba(0, 0, 0, 0.3) !important;
+        color: var(--color-text-main) !important;
+    }
+
+    /* Badge styling */
+    .bg-blue-100 {
+        background: rgba(59, 130, 246, 0.2) !important;
+        color: #93c5fd !important;
+    }
+
+    .bg-green-100 {
+        background: rgba(34, 197, 94, 0.2) !important;
+        color: #86efac !important;
+    }
+
+    .bg-yellow-100 {
+        background: rgba(234, 179, 8, 0.2) !important;
+        color: #fde047 !important;
+    }
+
+    .bg-red-100 {
+        background: rgba(239, 68, 68, 0.2) !important;
+        color: #fca5a5 !important;
+    }
+
+    .bg-amber-100 {
+        background: rgba(245, 158, 11, 0.2) !important;
+        color: #fcd34d !important;
+    }
+
+    .bg-slate-100 {
+        background: rgba(148, 163, 184, 0.2) !important;
+        color: #cbd5e1 !important;
+    }
+
+    .bg-orange-100 {
+        background: rgba(249, 115, 22, 0.2) !important;
+        color: #fdba74 !important;
+    }
+
+    .bg-teal-100 {
+        background: rgba(20, 184, 166, 0.2) !important;
+        color: #5eead4 !important;
+    }
+
+    .bg-cyan-100 {
+        background: rgba(6, 182, 212, 0.2) !important;
+        color: #67e8f9 !important;
+    }
+
+    /* Text color overrides */
+    .text-slate-900,
+    .text-slate-800,
+    .text-slate-700,
+    .text-gray-900,
+    .text-gray-800,
+    .text-gray-700 {
+        color: var(--color-text-main) !important;
+    }
+
+    .text-slate-600,
+    .text-slate-500,
+    .text-gray-600,
+    .text-gray-500 {
+        color: var(--color-text-muted) !important;
+    }
+
+    /* Override hover states */
+    .hover\:bg-slate-50:hover,
+    .hover\:bg-slate-100:hover,
+    .hover\:bg-gray-50:hover,
+    .hover\:bg-gray-100:hover,
+    .hover\:bg-white:hover {
+        background: rgba(255, 255, 255, 0.05) !important;
+    }
+
+    /* Override gradient backgrounds */
+    .bg-gradient-to-br,
+    .bg-gradient-to-r,
+    .bg-gradient-to-l,
+    .bg-gradient-to-t,
+    .bg-gradient-to-b {
+        background: var(--bg-panel) !important;
+    }
+
+    /* Force dark backgrounds on common patterns */
+    [class*="from-blue"],
+    [class*="from-indigo"],
+    [class*="from-green"],
+    [class*="from-emerald"],
+    [class*="from-orange"],
+    [class*="from-red"] {
+        background: rgba(0, 0, 0, 0.3) !important;
+    }
+
+    /* Override backgrounds with opacity (slash notation) */
+    [class*="bg-slate-50/"],
+    [class*="bg-slate-100/"],
+    [class*="bg-gray-50/"],
+    [class*="bg-gray-100/"],
+    [class*="bg-blue-50/"],
+    [class*="bg-indigo-50/"],
+    [class*="bg-purple-50/"],
+    [class*="bg-green-50/"],
+    [class*="bg-emerald-50/"],
+    [class*="bg-teal-50/"],
+    [class*="bg-cyan-50/"],
+    [class*="bg-red-50/"],
+    [class*="bg-orange-50/"],
+    [class*="bg-amber-50/"],
+    [class*="bg-yellow-50/"] {
+        background: rgba(0, 0, 0, 0.2) !important;
+    }
+
+    /* Exception: Preview Modal - Force white background for printing */
+    #preview_modal,
+    #preview_modal *,
+    #preview_modal .bg-white,
+    #preview_modal [class*="bg-white"],
+    #preview_content,
+    #preview_content * {
+        background: white !important;
+        color: #0f172a !important;
+    }
+
+    #preview_modal .bg-slate-50 {
+        background: #f8fafc !important;
+    }
+
+    #preview_modal .bg-slate-100 {
+        background: #f1f5f9 !important;
+    }
+
+    #preview_modal .text-slate-900 {
+        color: #0f172a !important;
+    }
+
+    #preview_modal .text-slate-700 {
+        color: #334155 !important;
+    }
+
+    #preview_modal .text-indigo-600 {
+        color: #4f46e5 !important;
+    }
+
+    #preview_modal .border-slate-200 {
+        border-color: #e2e8f0 !important;
+    }
+
+    #preview_modal .border-slate-300 {
+        border-color: #cbd5e1 !important;
+    }
+
+    /* CRITICAL FIX: Force modals above sidebar */
+    /* Override sidebar z-index */
+    aside.theme-sidebar {
+        z-index: 10 !important;
+    }
+
+    /* Force preview modal to absolute maximum z-index */
+    #preview_modal {
+        z-index: 999999 !important;
+    }
+
+    /* Force job order modal above sidebar but below preview */
+    #jobOrderModal {
+        z-index: 99999 !important;
+    }
+
+    /* All modals should be above sidebar */
+    [id$="Modal"],
+    [id$="modal"] {
+        z-index: 99998 !important;
+    }
 }

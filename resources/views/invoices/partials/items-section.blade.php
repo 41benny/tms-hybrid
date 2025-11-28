@@ -1,9 +1,102 @@
 {{-- Preview & Items --}}
+<div id="invoice-items-container" class="space-y-3" data-next-index="{{ isset($previewItems) ? count($previewItems) : 0 }}">
 @if(isset($previewItems) && count($previewItems) > 0)
     @php 
         $subtotalPreview = 0;
         $lastItemType = null;
+        
+        // Get unique job orders from preview items
+        $jobOrderIds = collect($previewItems)
+            ->pluck('job_order_id')
+            ->filter()
+            ->unique()
+            ->values();
     @endphp
+    
+    {{-- Job Order Info Cards (like in modal) --}}
+    @if($jobOrderIds->count() > 0)
+        <div class="mb-6 space-y-3">
+            <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Job Order Terpilih
+            </h4>
+            
+            @foreach($jobOrderIds as $joId)
+                @php
+                    $jo = \App\Models\Operations\JobOrder::with(['items.equipment', 'shipmentLegs'])
+                        ->find($joId);
+                    if (!$jo) continue;
+                    
+                    $mainItem = $jo->items->first();
+                    $equipment = $mainItem?->equipment?->name ?? $mainItem?->cargo_type;
+                    $qty = $mainItem?->quantity;
+                    $qtyText = $qty !== null ? ((float) $qty + 0) . ' unit' : null;
+                    $firstLeg = $jo->shipmentLegs->sortBy('load_date')->first();
+                @endphp
+                
+                <div class="border border-slate-200 dark:border-slate-700 rounded-lg p-4 bg-gradient-to-br from-indigo-50 to-slate-50 dark:from-indigo-900/10 dark:to-slate-800">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="font-semibold text-lg text-slate-900 dark:text-slate-100">
+                                {{ $jo->job_number }}
+                            </div>
+                            
+                            <div class="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                                {{ $jo->origin }} → {{ $jo->destination }}
+                            </div>
+                            
+                            @if($equipment || $qtyText || ($firstLeg && $firstLeg->load_date))
+                                <div class="flex flex-wrap gap-3 text-xs text-slate-500 dark:text-slate-400 mt-2">
+                                    @if($equipment) 
+                                        <span class="flex items-center gap-1">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                            </svg>
+                                            {{ $equipment }}
+                                        </span>
+                                    @endif
+                                    @if($qtyText)
+                                        <span class="flex items-center gap-1">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                                            </svg>
+                                            {{ $qtyText }}
+                                        </span>
+                                    @endif
+                                    @if($firstLeg && $firstLeg->load_date)
+                                        <span class="flex items-center gap-1">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                            </svg>
+                                            Load: {{ $firstLeg->load_date->format('d M Y') }}
+                                        </span>
+                                    @endif
+                                </div>
+                            @endif
+                        </div>
+                        
+                        <div class="text-right">
+                            <div class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium
+                                @if($jo->status === 'completed') bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400
+                                @elseif($jo->status === 'in_progress') bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400
+                                @else bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300
+                                @endif">
+                                {{ ucfirst(str_replace('_', ' ', $jo->status)) }}
+                            </div>
+                            
+                            <div class="text-sm font-semibold text-indigo-600 dark:text-indigo-400 mt-2">
+                                Rp {{ number_format((float) ($jo->invoice_amount ?? 0), 0, ',', '.') }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    @endif
+    
+    {{-- Preview Display (Read-only) --}}
     <div class="space-y-2 mb-4">
         @foreach($previewItems as $item)
             @php
@@ -52,7 +145,7 @@
         </span>
     </div>
     
-    {{-- Add Item Button - Moved to top --}}
+    {{-- Add Item Button --}}
     <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
         <button type="button" 
                 onclick="addInvoiceItemRow()" 
@@ -67,116 +160,133 @@
         </p>
     </div>
     
-    <div id="invoice-items-container" class="mt-3 space-y-3" data-next-index="{{ count($previewItems) }}">
-        @php $lastEditItemType = null; @endphp
-        @foreach($previewItems as $idx => $item)
-            @php
-                $currentEditItemType = $item['item_type'];
-                $showEditSeparator = $lastEditItemType === 'job_order' && in_array($currentEditItemType, ['insurance_billable', 'additional_cost_billable']);
-                $lastEditItemType = $currentEditItemType;
-            @endphp
+    {{-- Editable Items --}}
+    @php $lastEditItemType = null; @endphp
+    @foreach($previewItems as $idx => $item)
+        @php
+            $currentEditItemType = $item['item_type'];
+            $showEditSeparator = $lastEditItemType === 'job_order' && in_array($currentEditItemType, ['insurance_billable', 'additional_cost_billable']);
+            $lastEditItemType = $currentEditItemType;
+        @endphp
+        
+        {{-- Separator between main items and billable items --}}
+        @if($showEditSeparator)
+            <div class="flex items-center gap-3 py-3">
+                <div class="flex-1 border-t-2 border-dashed border-amber-300 dark:border-amber-700"></div>
+                <span class="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider px-3 py-1 bg-amber-50 dark:bg-amber-900/20 rounded-full">
+                    📋 Biaya Tambahan (Billable)
+                </span>
+                <div class="flex-1 border-t-2 border-dashed border-amber-300 dark:border-amber-700"></div>
+            </div>
+        @endif
+        
+        <div class="border border-slate-200 dark:border-slate-700 rounded-lg p-4 bg-slate-50 dark:bg-slate-800/30 relative group">
+            {{-- Delete Button --}}
+            <button type="button" 
+                    onclick="removeInvoiceItemRow(this)"
+                    class="absolute top-2 right-2 p-1.5 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Hapus item ini">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+            </button>
             
-            {{-- Separator between main items and billable items --}}
-            @if($showEditSeparator)
-                <div class="flex items-center gap-3 py-3">
-                    <div class="flex-1 border-t-2 border-dashed border-amber-300 dark:border-amber-700"></div>
-                    <span class="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider px-3 py-1 bg-amber-50 dark:bg-amber-900/20 rounded-full">
-                        📋 Biaya Tambahan (Billable)
-                    </span>
-                    <div class="flex-1 border-t-2 border-dashed border-amber-300 dark:border-amber-700"></div>
-                </div>
+            <input type="hidden" name="items[{{ $idx }}][job_order_id]" value="{{ $item['job_order_id'] }}">
+            @if(isset($item['shipment_leg_id']))
+                <input type="hidden" name="items[{{ $idx }}][shipment_leg_id]" value="{{ $item['shipment_leg_id'] }}">
             @endif
-            
-            <div class="border border-slate-200 dark:border-slate-700 rounded-lg p-4 bg-slate-50 dark:bg-slate-800/30 relative group">
-                {{-- Delete Button --}}
-                <button type="button" 
-                        onclick="removeInvoiceItemRow(this)"
-                        class="absolute top-2 right-2 p-1.5 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                        title="Hapus item ini">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                    </svg>
-                </button>
-                
-                <input type="hidden" name="items[{{ $idx }}][job_order_id]" value="{{ $item['job_order_id'] }}">
-                @if(isset($item['shipment_leg_id']))
-                    <input type="hidden" name="items[{{ $idx }}][shipment_leg_id]" value="{{ $item['shipment_leg_id'] }}">
-                @endif
-                <input type="hidden" name="items[{{ $idx }}][item_type]" value="{{ $item['item_type'] }}">
+            <input type="hidden" name="items[{{ $idx }}][item_type]" value="{{ $item['item_type'] }}">
 
-                <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
-                    <div class="md:col-span-2">
-                        <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                            Deskripsi
-                        </label>
-                        <input type="text"
-                               name="items[{{ $idx }}][description]"
-                               value="{{ old('items.'.$idx.'.description', $item['description']) }}"
-                               class="w-full rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2 py-2 text-sm"
-                               required>
-                        @error('items.'.$idx.'.description')
-                            <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                            Qty
-                        </label>
-                        <input type="number"
-                               step="0.01"
-                               min="0.01"
-                               name="items[{{ $idx }}][quantity]"
-                               value="{{ old('items.'.$idx.'.quantity', $item['quantity']) }}"
-                               class="w-full rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2 py-2 text-sm"
-                               required>
-                        @error('items.'.$idx.'.quantity')
-                            <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                            Unit Price
-                        </label>
-                        <input type="number"
-                               step="0.01"
-                               min="0"
-                               name="items[{{ $idx }}][unit_price]"
-                               value="{{ old('items.'.$idx.'.unit_price', $item['unit_price']) }}"
-                               class="w-full rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2 py-2 text-sm"
-                               required>
-                        @error('items.'.$idx.'.unit_price')
-                            <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                            Subtotal
-                        </label>
-                        <div class="w-full rounded bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-2 py-2 text-sm font-semibold text-slate-900 dark:text-slate-100 item-subtotal">
-                            Rp {{ number_format($item['quantity'] * $item['unit_price'], 0, ',', '.') }}
-                        </div>
-                    </div>
-                </div>
-                
-                {{-- Checkbox untuk Exclude Tax --}}
-                <div class="mt-3 flex items-center gap-2">
-                    <input type="checkbox" 
-                           name="items[{{ $idx }}][exclude_tax]" 
-                           id="exclude_tax_{{ $idx }}"
-                           value="1"
-                           {{ !empty($item['exclude_tax']) ? 'checked' : '' }}
-                           class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
-                    <label for="exclude_tax_{{ $idx }}" class="text-xs text-slate-600 dark:text-slate-400 cursor-pointer">
-                        <span class="font-medium">Exclude dari PPN</span>
-                        <span class="text-slate-500 dark:text-slate-500"> (Item ini tidak dikenakan pajak)</span>
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+                        Deskripsi
                     </label>
+                    <input type="text"
+                           name="items[{{ $idx }}][description]"
+                           value="{{ old('items.'.$idx.'.description', $item['description']) }}"
+                           class="w-full rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2 py-2 text-sm"
+                           required>
+                    @error('items.'.$idx.'.description')
+                        <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+                        Qty
+                    </label>
+                    <input type="number"
+                           step="0.01"
+                           min="0.01"
+                           name="items[{{ $idx }}][quantity]"
+                           value="{{ old('items.'.$idx.'.quantity', $item['quantity']) }}"
+                           class="w-full rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2 py-2 text-sm"
+                           required>
+                    @error('items.'.$idx.'.quantity')
+                        <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+                        Unit Price
+                    </label>
+                    <input type="number"
+                           step="0.01"
+                           min="0"
+                           name="items[{{ $idx }}][unit_price]"
+                           value="{{ old('items.'.$idx.'.unit_price', $item['unit_price']) }}"
+                           class="w-full rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2 py-2 text-sm"
+                           required>
+                    @error('items.'.$idx.'.unit_price')
+                        <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+                        Subtotal
+                    </label>
+                    <div class="w-full rounded bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-2 py-2 text-sm font-semibold text-slate-900 dark:text-slate-100 item-subtotal">
+                        Rp {{ number_format($item['quantity'] * $item['unit_price'], 0, ',', '.') }}
+                    </div>
                 </div>
             </div>
-        @endforeach
+            
+            {{-- Checkbox untuk Exclude Tax --}}
+            <div class="mt-3 flex items-center gap-2">
+                <input type="checkbox" 
+                       name="items[{{ $idx }}][exclude_tax]" 
+                       id="exclude_tax_{{ $idx }}"
+                       value="1"
+                       {{ !empty($item['exclude_tax']) ? 'checked' : '' }}
+                       class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                <label for="exclude_tax_{{ $idx }}" class="text-xs text-slate-600 dark:text-slate-400 cursor-pointer">
+                    <span class="font-medium">Exclude dari PPN</span>
+                    <span class="text-slate-500 dark:text-slate-500"> (Item ini tidak dikenakan pajak)</span>
+                </label>
+            </div>
+        </div>
+    @endforeach
+@else
+    {{-- Empty state when belum ada item --}}
+    <div class="text-center py-12">
+        <svg class="w-16 h-16 mx-auto text-slate-300 dark:text-slate-700 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <h3 class="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">
+            Belum Ada Item
+        </h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+            Pilih customer terlebih dahulu, lalu klik tombol <span class="font-semibold">"Pilih Job Order"</span> di atas untuk menambahkan item invoice.
+        </p>
     </div>
+@endif
+    
 
-    {{-- Tax & Discount --}}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+</div>
+
+{{-- Tax & Discount - Hidden by default if no items, toggled by JS --}}
+<div id="invoice-summary-section" class="{{ (isset($previewItems) && count($previewItems) > 0) ? '' : 'hidden' }}">
+    <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
             <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Tax Amount (PPN)
@@ -236,7 +346,7 @@
     </div>
 
     {{-- Summary --}}
-    <div class="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 rounded-lg p-4 space-y-2">
+    <div class="mt-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 rounded-lg p-4 space-y-2">
         {{-- Breakdown: Taxable vs Non-Taxable --}}
         <div class="pb-2 mb-2 border-b border-slate-200 dark:border-slate-700">
             <div class="flex justify-between items-center text-xs text-slate-600 dark:text-slate-400">
@@ -299,7 +409,7 @@
         <div class="flex justify-between items-center text-base font-bold border-t border-slate-100 dark:border-slate-800 pt-2">
             <span class="text-slate-800 dark:text-slate-200">Total Tagihan (Receivable)</span>
             <span class="text-indigo-600 dark:text-indigo-400" id="display_total">
-                Rp {{ number_format($subtotalPreview, 0, ',', '.') }}
+                Rp {{ number_format($subtotalPreview ?? 0, 0, ',', '.') }}
             </span>
         </div>
         <div class="flex justify-between items-center text-sm text-amber-600 dark:text-amber-400 pt-1">
@@ -308,10 +418,11 @@
         </div>
         <div class="flex justify-between items-center text-sm font-semibold text-emerald-600 dark:text-emerald-400 pt-1">
             <span>Sisa Tagihan (Net Payable)</span>
-            <span id="display_net_payable">Rp {{ number_format($subtotalPreview, 0, ',', '.') }}</span>
+            <span id="display_net_payable">Rp {{ number_format($subtotalPreview ?? 0, 0, ',', '.') }}</span>
         </div>
     </div>
-    {{-- Submit --}}
+
+    {{-- Submit Buttons --}}
     <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
         <x-button :href="route('invoices.index')" variant="outline">
             Batal
@@ -330,19 +441,4 @@
             Simpan Invoice
         </x-button>
     </div>
-@else
-    {{-- Empty state when belum ada item --}}
-    <div class="text-center py-12">
-        <svg class="w-16 h-16 mx-auto text-slate-300 dark:text-slate-700 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-        <h3 class="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">
-            Belum Ada Item
-        </h3>
-        <p class="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-            Setelah memilih customer dan memilih Job Order di atas lalu klik
-            <span class="font-semibold">Preview Items</span>,
-            item dari Job Order yang dipilih akan otomatis muncul di sini.
-        </p>
-    </div>
-@endif
+</div>

@@ -10,13 +10,13 @@
     };
 @endphp
 
-<div id="{{ $id }}" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+<div id="{{ $id }}" class="fixed inset-0 z-[9999] hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    {{-- Backdrop --}}
+    <div class="fixed inset-0 bg-slate-900/80 backdrop-blur-md transition-opacity z-[9998]" onclick="document.getElementById('{{ $id }}').classList.add('hidden')"></div>
+    
     <div class="flex min-h-screen items-center justify-center p-4">
-        {{-- Backdrop --}}
-        <div class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm transition-opacity modal-backdrop" onclick="document.getElementById('{{ $id }}').classList.add('hidden')"></div>
-        
         {{-- Modal Panel --}}
-        <div class="relative {{ $maxWidthClass }} w-full transform overflow-hidden rounded-2xl bg-white dark:bg-[#252525] shadow-2xl transition-all border border-slate-200 dark:border-[#2d2d2d]">
+        <div class="relative {{ $maxWidthClass }} w-full transform overflow-hidden rounded-2xl bg-white dark:bg-[#252525] shadow-2xl transition-all border border-slate-200 dark:border-[#2d2d2d] z-[9999]">
             {{-- Header --}}
             @if($title || isset($header))
                 <div class="border-b border-slate-200 dark:border-[#2d2d2d] px-6 py-4 bg-gradient-to-r from-slate-50 to-transparent dark:from-slate-950 dark:to-transparent">
@@ -35,4 +35,3 @@
         </div>
     </div>
 </div>
-

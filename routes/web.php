@@ -56,13 +56,53 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('legs/{leg}/generate-vendor-bill', [ShipmentLegController::class, 'generateVendorBill'])->name('legs.generate-vendor-bill');
     Route::get('api/truck-driver', [ShipmentLegController::class, 'getDriverByTruck'])->name('api.truck-driver');
 
+    // Sales-friendly console (mobile first)
+    Route::get('sales-console', [\App\Http\Controllers\SalesDashboardController::class, 'index'])
+        ->name('sales.console');
+
     Route::get('finance/dashboard', [FinanceDashboardController::class, 'index'])->name('finance.dashboard');
 
-    Route::resource('invoices', InvoiceController::class);
-    Route::patch('invoices/{invoice}/mark-as-sent', [InvoiceController::class, 'markAsSent'])->name('invoices.mark-as-sent');
-    Route::patch('invoices/{invoice}/revert-to-draft', [InvoiceController::class, 'revertToDraft'])->name('invoices.revert-to-draft');
-    Route::patch('invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('invoices.cancel');
-    Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf');
+    Route::middleware('menu:invoices')->group(function () {
+        Route::get('invoices/approvals', [InvoiceController::class, 'approvals'])
+            ->name('invoices.approvals')
+            ->middleware('permission:invoices.approve');
+
+        Route::resource('invoices', InvoiceController::class);
+
+        Route::patch('invoices/{invoice}/mark-as-sent', [InvoiceController::class, 'markAsSent'])
+            ->name('invoices.mark-as-sent')
+            ->middleware('permission:invoices.manage_status');
+
+        Route::patch('invoices/{invoice}/revert-to-draft', [InvoiceController::class, 'revertToDraft'])
+            ->name('invoices.revert-to-draft')
+            ->middleware('permission:invoices.manage_status');
+
+        Route::patch('invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])
+            ->name('invoices.cancel')
+            ->middleware('permission:invoices.cancel');
+
+        Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf');
+
+        Route::patch('invoices/{invoice}/submit-approval', [InvoiceController::class, 'submitForApproval'])
+            ->name('invoices.submit-approval')
+            ->middleware('permission:invoices.submit');
+
+        Route::patch('invoices/{invoice}/approve', [InvoiceController::class, 'approve'])
+            ->name('invoices.approve')
+            ->middleware('permission:invoices.approve');
+
+        Route::patch('invoices/{invoice}/reject', [InvoiceController::class, 'reject'])
+            ->name('invoices.reject')
+            ->middleware('permission:invoices.approve');
+
+        Route::get('invoices/{invoice}/revise', [InvoiceController::class, 'revise'])
+            ->name('invoices.revise')
+            ->middleware('permission:invoices.update');
+
+        Route::post('invoices/{invoice}/revise', [InvoiceController::class, 'storeRevision'])
+            ->name('invoices.store-revision')
+            ->middleware('permission:invoices.update');
+    });
 
     Route::resource('vendor-bills', VendorBillController::class)->only(['index', 'show']);
     Route::post('vendor-bills/{vendor_bill}/mark-received', [VendorBillController::class, 'markAsReceived'])->name('vendor-bills.mark-received');
@@ -88,10 +128,14 @@ Route::middleware(['auth', 'active'])->group(function () {
 
     Route::get('hutang', [HutangController::class, 'dashboard'])->name('hutang.dashboard')->middleware('menu:hutang');
     Route::resource('driver-advances', DriverAdvanceController::class)->only(['index', 'show']);
+    Route::post('driver-advances/{driverAdvance}/post', [\App\Http\Controllers\Operations\DriverAdvanceController::class, 'post'])->name('driver-advances.post');
+    Route::post('driver-advances/{driverAdvance}/unpost', [\App\Http\Controllers\Operations\DriverAdvanceController::class, 'unpost'])->name('driver-advances.unpost');
     Route::post('driver-advances/{driverAdvance}/pay-dp', [DriverAdvanceController::class, 'payDP'])->name('driver-advances.pay-dp');
     Route::post('driver-advances/{driverAdvance}/settlement', [DriverAdvanceController::class, 'processSettlement'])->name('driver-advances.settlement');
 
     Route::resource('cash-banks', CashBankController::class)->only(['index', 'create', 'store', 'show']);
+    Route::get('cash-banks/{cashBankTransaction}/print', [CashBankController::class, 'print'])->name('cash-banks.print');
+    Route::delete('cash-banks/{cashBankTransaction}/cancel', [CashBankController::class, 'cancel'])->name('cash-banks.cancel');
 
     Route::resource('journals', JournalController::class)->except(['destroy']);
     Route::resource('chart-of-accounts', ChartOfAccountController::class)->except(['show', 'destroy']);
@@ -117,6 +161,12 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::resource('sales', MasterSalesController::class);
     Route::resource('equipment', MasterEquipmentController::class);
 
+    // Master Cash/Bank Accounts
+    Route::prefix('master')->name('master.')->group(function () {
+        Route::resource('cash-bank-accounts', \App\Http\Controllers\Master\CashBankAccountController::class);
+        Route::post('cash-bank-accounts/{cash_bank_account}/activate', [\App\Http\Controllers\Master\CashBankAccountController::class, 'activate'])->name('cash-bank-accounts.activate');
+    });
+
     Route::prefix('reports')->name('reports.')->group(function () {
         Route::get('trial-balance', [ReportAccountingController::class, 'trialBalance'])->name('trial-balance');
         Route::get('general-ledger', [ReportAccountingController::class, 'generalLedger'])->name('general-ledger');
@@ -132,6 +182,12 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::get('pph23-dipungut', [\App\Http\Controllers\Accounting\TaxReportController::class, 'pph23Dipungut'])->name('pph23-dipungut');
             Route::get('pph23-summary', [\App\Http\Controllers\Accounting\TaxReportController::class, 'pph23Summary'])->name('pph23-summary');
         });
+    });
+
+    // Tax Menus
+    Route::prefix('tax')->name('tax.')->group(function () {
+        Route::get('ppn', [\App\Http\Controllers\Accounting\TaxReportController::class, 'ppnSummary'])->name('ppn.index');
+        Route::get('pph23', [\App\Http\Controllers\Accounting\TaxReportController::class, 'pph23Summary'])->name('pph23.index');
     });
 
     // Tax Invoice Requests

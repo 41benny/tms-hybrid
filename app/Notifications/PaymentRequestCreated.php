@@ -46,6 +46,7 @@ class PaymentRequestCreated extends Notification
             'requested_by_name' => $this->paymentRequest->requestedBy?->name ?? 'Unknown',
             'request_date' => $this->paymentRequest->request_date->format('Y-m-d'),
             'status' => $this->paymentRequest->status,
+            'url' => route('payment-requests.show', $this->paymentRequest->id),
         ];
     }
 }

@@ -32,10 +32,26 @@ class NotificationController extends Controller
                     'data' => $notification->data,
                     'read_at' => $notification->read_at,
                     'created_at' => $notification->created_at->diffForHumans(),
+                    'message' => $this->getNotificationMessage($notification),
                 ];
             }),
             'unread_count' => $user->unreadNotifications()->count(),
         ]);
+    }
+
+    /**
+     * Get a human-readable message for the notification.
+     */
+    private function getNotificationMessage($notification): string
+    {
+        $data = $notification->data;
+        
+        return match ($notification->type) {
+            'App\Notifications\InvoiceSubmittedForApproval' => "Invoice #{$data['invoice_number']} for {$data['customer_name']} submitted for approval by {$data['submitted_by_name']}.",
+            'App\Notifications\TaxInvoiceRequestedNotification' => "Tax Invoice Request #{$data['request_number']} from {$data['requester']} ({$data['count']} invoices).",
+            'App\Notifications\PaymentRequestCreated' => "Payment Request #{$data['request_number']} for Rp " . number_format($data['amount'], 0, ',', '.') . " requested by {$data['requested_by_name']}.",
+            default => $data['message'] ?? 'New Notification',
+        };
     }
 
     /**

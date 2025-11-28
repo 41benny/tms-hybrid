@@ -13,11 +13,22 @@ use Illuminate\Validation\Rule;
 
 class InvoiceController extends Controller
 {
+    protected function authorizePermission(string $permission): void
+    {
+        $user = auth()->user();
+
+        if (! $user || ! $user->hasPermission($permission)) {
+            abort(403, 'Anda tidak memiliki izin untuk aksi ini.');
+        }
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
+        $this->authorizePermission('invoices.view');
+
         $query = Invoice::query()->with('customer');
         if ($status = $request->get('status')) {
             $query->where('status', $status);
@@ -43,13 +54,16 @@ class InvoiceController extends Controller
      */
     public function create(Request $request)
     {
+        $this->authorizePermission('invoices.create');
+
         $customers = Customer::orderBy('name')->get();
         
         // Get customer_id from request
         $customerId = $request->get('customer_id');
         
         // Get job orders, filtered by customer if selected
-        $jobOrdersQuery = JobOrder::with(['items.equipment', 'shipmentLegs'])
+        // Optimized: Only load minimal data for modal list
+        $jobOrdersQuery = JobOrder::query()
             ->select('id', 'job_number', 'customer_id', 'origin', 'destination', 'status', 'invoice_amount');
         
         if ($customerId) {
@@ -64,7 +78,18 @@ class InvoiceController extends Controller
             $jobOrdersQuery->where('status', 'in_progress');
         }
         
-        $jobOrders = $jobOrdersQuery->latest()->get();
+        // Only eager load items for the modal list (needed for display)
+        // Load shipmentLegs only for the first leg's load_date
+        $jobOrders = $jobOrdersQuery
+            ->with(['items:id,job_order_id,cargo_type,quantity,equipment_id', 
+                    'items.equipment:id,name',
+                    'shipmentLegs' => function($query) {
+                        $query->select('id', 'job_order_id', 'load_date')
+                              ->orderBy('load_date', 'asc')
+                              ->limit(1);
+                    }])
+            ->latest()
+            ->get();
 
         // AJAX request for job orders list
         if ($request->ajax() && $request->has('load_job_orders')) {
@@ -72,6 +97,124 @@ class InvoiceController extends Controller
                 'jobOrders' => $jobOrders,
                 'selectedJobOrderIds' => (array) $request->get('job_order_ids', [])
             ]);
+        }
+        
+        // AJAX request to load modal dynamically
+        if ($request->ajax() && $request->has('load_modal')) {
+            $selectedCustomer = Customer::find($customerId);
+            if (!$selectedCustomer) {
+                return response()->json(['error' => 'Customer not found'], 404);
+            }
+            
+            return view('invoices.partials.job-order-modal', [
+                'selectedCustomer' => $selectedCustomer,
+                'statusFilter' => $statusFilter,
+                'jobOrders' => $jobOrders
+            ]);
+        }
+
+
+        
+        // AJAX request to fetch job order items as JSON
+        if ($request->ajax() && $request->has('fetch_items')) {
+            $selectedIds = explode(',', $request->get('job_order_ids', ''));
+            $isDp = $request->boolean('is_dp');
+            $dpAmount = $request->float('dp_amount');
+            
+            $items = [];
+            
+            foreach ($selectedIds as $jobOrderId) {
+                // Load job order with all required fields
+                $jobOrder = JobOrder::select('id', 'job_number', 'origin', 'destination', 'invoice_amount')
+                    ->with([
+                        'items:id,job_order_id,cargo_type,quantity,price,equipment_id',
+                        'items.equipment:id,name',
+                        'shipmentLegs.mainCost',
+                        'shipmentLegs.additionalCosts',
+                    ])
+                    ->find($jobOrderId);
+                    
+                if (!$jobOrder) continue;
+                
+                if ($jobOrder->invoice_amount > 0) {
+                    if ($isDp) {
+                        // DP Invoice
+                        $price = $dpAmount > 0 ? $dpAmount : ($jobOrder->invoice_amount * 0.5);
+                        $items[] = [
+                            'description' => "Uang Muka Job Order " . $jobOrder->job_number,
+                            'quantity' => 1,
+                            'unit_price' => $price,
+                            'job_order_id' => $jobOrder->id,
+                            'item_type' => 'job_order',
+                            'exclude_tax' => false,
+                        ];
+                    } else {
+                        // Normal Invoice
+                        if ($jobOrder->items->count() > 0) {
+                            foreach ($jobOrder->items as $joItem) {
+                                $itemDesc = ($joItem->cargo_type ?? 'Item') . 
+                                            ($joItem->equipment ? ' - ' . $joItem->equipment->name : '') .
+                                            ' (' . $jobOrder->origin . ' → ' . $jobOrder->destination . ')';
+                                            
+                                $items[] = [
+                                    'description' => $itemDesc,
+                                    'quantity' => $joItem->quantity ?? 1,
+                                    'unit_price' => $joItem->price ?? 0,
+                                    'job_order_id' => $jobOrder->id,
+                                    'item_type' => 'job_order',
+                                    'exclude_tax' => false,
+                                ];
+                            }
+                        } else {
+                            // Legacy: Single line item
+                            $items[] = [
+                                'description' => $jobOrder->job_number . ' - ' . $jobOrder->origin . ' → ' . $jobOrder->destination,
+                                'quantity' => 1,
+                                'unit_price' => $jobOrder->invoice_amount ?? 0,
+                                'job_order_id' => $jobOrder->id,
+                                'item_type' => 'job_order',
+                                'exclude_tax' => false,
+                            ];
+                        }
+                    }
+                }
+
+                // Add billable shipment leg items after main items (skip for DP)
+                if (!$isDp) {
+                    foreach ($jobOrder->shipmentLegs as $leg) {
+                        // Insurance premium billable
+                        if ($leg->cost_category === 'asuransi' && $leg->mainCost && $leg->mainCost->premium_billable > 0) {
+                            $items[] = [
+                                'description' => 'Premi Asuransi - ' . $jobOrder->job_number . ' (Leg #' . $leg->leg_number . ')',
+                                'quantity' => 1,
+                                'unit_price' => $leg->mainCost->premium_billable,
+                                'job_order_id' => $jobOrder->id,
+                                'shipment_leg_id' => $leg->id,
+                                'item_type' => 'insurance_billable',
+                                'exclude_tax' => true,
+                            ];
+                        }
+
+                        // Additional cost billables
+                        foreach ($leg->additionalCosts as $additionalCost) {
+                            if ($additionalCost->is_billable && $additionalCost->billable_amount > 0) {
+                                $costTypeLabel = ucfirst(str_replace('_', ' ', $additionalCost->cost_type));
+                                $items[] = [
+                                    'description' => $costTypeLabel . ' - ' . $jobOrder->job_number . ' (Leg #' . $leg->leg_number . ')' . ($additionalCost->description ? ' - ' . $additionalCost->description : ''),
+                                    'quantity' => 1,
+                                    'unit_price' => $additionalCost->billable_amount,
+                                    'job_order_id' => $jobOrder->id,
+                                    'shipment_leg_id' => $leg->id,
+                                    'item_type' => 'additional_cost_billable',
+                                    'exclude_tax' => true,
+                                ];
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return response()->json(['items' => $items]);
         }
         
         // Legacy support: also pass as $jobs
@@ -91,7 +234,7 @@ class InvoiceController extends Controller
         if (!empty($selectedJobOrderIds)) {
             // First pass: collect main invoice items
             foreach ($selectedJobOrderIds as $jobOrderId) {
-                $jobOrder = JobOrder::with(['items', 'shipmentLegs.mainCost', 'shipmentLegs.additionalCosts', 'invoices.items'])->find($jobOrderId);
+                $jobOrder = JobOrder::with(['items.equipment', 'shipmentLegs.mainCost', 'shipmentLegs.additionalCosts', 'invoices.items'])->find($jobOrderId);
                 if (!$jobOrder) continue;
                 
                 // Add main job order item (invoice_amount) - TAXABLE
@@ -180,7 +323,7 @@ class InvoiceController extends Controller
             // SKIP billable items if creating DP
             if (!$isDp) {
                 foreach ($selectedJobOrderIds as $jobOrderId) {
-                    $jobOrder = JobOrder::with(['items', 'shipmentLegs.mainCost', 'shipmentLegs.additionalCosts'])->find($jobOrderId);
+                    $jobOrder = JobOrder::with(['items.equipment', 'shipmentLegs.mainCost', 'shipmentLegs.additionalCosts'])->find($jobOrderId);
                     if (!$jobOrder) continue;
                     
                     // Collect billable items from shipment legs - NOT TAXABLE by default
@@ -229,6 +372,8 @@ class InvoiceController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorizePermission('invoices.create');
+
         $data = $request->validate([
             'customer_id' => ['required', 'exists:customers,id'],
             'invoice_date' => ['required', 'date'],
@@ -242,6 +387,8 @@ class InvoiceController extends Controller
             'discount_amount' => ['nullable', 'numeric', 'min:0'],
             'reference' => ['nullable', 'string', 'max:255'],
             'transaction_type' => ['nullable', 'string', 'in:01,02,03,04,05,06,07,08,09'],
+            'invoice_type' => ['nullable', 'string', 'in:normal,down_payment,progress,final'],
+            'is_dp' => ['nullable', 'boolean'], // Legacy support dari form
             'items' => ['array'],
             'items.*.description' => ['required', 'string'],
             'items.*.quantity' => ['required', 'numeric', 'min:0.01'],
@@ -252,12 +399,21 @@ class InvoiceController extends Controller
             'items.*.exclude_tax' => ['nullable', 'boolean'],
         ]);
 
+        // Tentukan invoice_type
+        $invoiceType = $data['invoice_type'] ?? 'normal';
+        
+        // Legacy support: jika is_dp=true, override invoice_type
+        if (!empty($data['is_dp'])) {
+            $invoiceType = 'down_payment';
+        }
+
         $inv = new Invoice;
         $inv->fill([
             'customer_id' => $data['customer_id'],
             'invoice_date' => $data['invoice_date'],
             'due_date' => $data['due_date'],
             'status' => $data['status'] ?? 'draft',
+            'invoice_type' => $invoiceType,
             'notes' => $data['notes'] ?? null,
             'internal_notes' => $data['internal_notes'] ?? null,
             'tax_amount' => $data['tax_amount'] ?? 0,
@@ -303,6 +459,8 @@ class InvoiceController extends Controller
      */
     public function show(Invoice $invoice)
     {
+        $this->authorizePermission('invoices.view');
+
         $invoice->load(['customer', 'items']);
 
         return view('invoices.show', compact('invoice'));
@@ -313,19 +471,251 @@ class InvoiceController extends Controller
      */
     public function pdf(Invoice $invoice)
     {
+        $this->authorizePermission('invoices.view');
+
         $invoice->load(['customer', 'items', 'createdBy']);
-        return view('invoices.pdf', compact('invoice'));
+        
+        // Check if invoice is approved for printing
+        $isDraft = !$invoice->canBePrinted();
+        
+        return view('invoices.pdf', compact('invoice', 'isDraft'));
     }
+
+    /**
+     * Submit invoice for approval.
+     */
+    public function submitForApproval(Invoice $invoice)
+    {
+        $this->authorizePermission('invoices.submit');
+
+        if (!$invoice->canBeSubmittedForApproval()) {
+            return back()->with('error', 'Invoice tidak dapat diajukan untuk approval. Pastikan invoice memiliki items dan total amount > 0.');
+        }
+
+        $invoice->update([
+            'approval_status' => 'pending_approval'
+        ]);
+
+        // Load relationships for notification
+        $invoice->load(['customer', 'createdBy']);
+
+        // Send notification to all super admins
+        $superAdmins = \App\Models\User::where('role', 'super_admin')->where('is_active', true)->get();
+        foreach ($superAdmins as $admin) {
+            $admin->notify(new \App\Notifications\InvoiceSubmittedForApproval($invoice));
+        }
+
+        return back()->with('success', 'Invoice berhasil diajukan untuk approval dan notifikasi telah dikirim ke Super Admin.');
+    }
+
+    /**
+     * Approve invoice.
+     */
+    public function approve(Invoice $invoice)
+    {
+        $this->authorizePermission('invoices.approve');
+
+        if (!$invoice->canBeApproved()) {
+            return back()->with('error', 'Invoice tidak dapat di-approve. Status approval saat ini: ' . $invoice->approval_status);
+        }
+
+        $invoice->update([
+            'approval_status' => 'approved',
+            'approved_by' => auth()->id(),
+            'approved_at' => now()
+        ]);
+
+        return back()->with('success', 'Invoice berhasil di-approve dan siap untuk di-print.');
+    }
+
+    /**
+     * Reject invoice.
+     */
+    public function reject(Request $request, Invoice $invoice)
+    {
+        $this->authorizePermission('invoices.approve');
+
+        if (!$invoice->canBeApproved()) {
+            return back()->with('error', 'Invoice tidak dapat di-reject. Status approval saat ini: ' . $invoice->approval_status);
+        }
+
+        $request->validate([
+            'rejection_reason' => ['required', 'string', 'max:1000']
+        ]);
+
+        $invoice->update([
+            'approval_status' => 'rejected',
+            'rejected_by' => auth()->id(),
+            'rejected_at' => now(),
+            'rejection_reason' => $request->rejection_reason
+        ]);
+
+        return back()->with('success', 'Invoice di-reject. Invoice dapat di-edit kembali.');
+    }
+
+    /**
+     * Show revise invoice form.
+     */
+    public function revise(Invoice $invoice)
+    {
+        $this->authorizePermission('invoices.update');
+
+        if (!$invoice->canBeRevised()) {
+            return back()->with('error', 'Invoice tidak dapat direvisi. Status: ' . $invoice->approval_status);
+        }
+        
+        $periodClosed = $invoice->isAccountingPeriodClosed();
+        
+        return view('invoices.revise', compact('invoice', 'periodClosed'));
+    }
+
+    /**
+     * Store invoice revision.
+     */
+    public function storeRevision(Request $request, Invoice $invoice)
+    {
+        $this->authorizePermission('invoices.update');
+
+        if (!$invoice->canBeRevised()) {
+            return back()->with('error', 'Invoice tidak dapat direvisi.');
+        }
+        
+        $validated = $request->validate([
+            'revision_reason' => ['required', 'string', 'max:1000'],
+            'confirm_period_closed' => ['sometimes', 'accepted'], // if period closed
+        ]);
+        
+        // Check period closed
+        if ($invoice->isAccountingPeriodClosed() && !$request->has('confirm_period_closed')) {
+            return back()->withErrors(['confirm_period_closed' => 'Anda harus mengkonfirmasi bahwa sudah koordinasi dengan accounting.']);
+        }
+        
+        // Update invoice for revision
+        $invoice->update([
+            // Increment revision number
+            'revision_number' => $invoice->revision_number + 1,
+            
+            // Update invoice number with revision suffix
+            'invoice_number' => $invoice->getNextRevisionNumber(),
+            
+            // Reset approval status to draft
+            'approval_status' => 'draft',
+            
+            // Clear approval fields
+            'approved_by' => null,
+            'approved_at' => null,
+            'rejected_by' => null,
+            'rejected_at' => null,
+            'rejection_reason' => null,
+            
+            // Set revision fields
+            'revised_at' => now(),
+            'revised_by' => auth()->id(),
+            'revision_reason' => $validated['revision_reason'],
+            
+            // Keep original invoice reference (if first revision, set to self)
+            'original_invoice_id' => $invoice->original_invoice_id ?? $invoice->id,
+        ]);
+        
+        return redirect()->route('invoices.edit', $invoice)
+            ->with('success', 'Invoice berhasil direvisi. Status kembali ke draft. Silakan edit dan submit kembali untuk approval.');
+    }
+
+    /**
+     * Revert invoice from sent back to draft.
+     */
+    public function revertToDraft(Invoice $invoice)
+    {
+        $this->authorizePermission('invoices.manage_status');
+
+        if ($invoice->status !== 'sent' || $invoice->paid_amount > 0) {
+            return back()->with('error', 'Invoice tidak dapat dikembalikan ke draft.');
+        }
+
+        // Delete related journal entries
+        if (class_exists(JournalService::class)) {
+            try {
+                $invoice->journals()->delete();
+            } catch (\Exception $e) {
+                return back()->with('error', 'Gagal menghapus jurnal: ' . $e->getMessage());
+            }
+        }
+
+        $invoice->update(['status' => 'draft']);
+
+        return back()->with('success', 'Invoice dikembalikan ke status draft dan jurnal dihapus.');
+    }
+
+    /**
+     * Cancel invoice.
+     */
+    public function cancel(Invoice $invoice)
+    {
+        $this->authorizePermission('invoices.cancel');
+
+        if (!$invoice->canBeCancelled()) {
+            return back()->with('error', 'Invoice tidak dapat dibatalkan.');
+        }
+
+        $invoice->update(['status' => 'cancelled']);
+
+        return back()->with('success', 'Invoice dibatalkan.');
+    }
+
 
     /**
      * Show the form for editing the specified resource.
      */
     public function edit(Invoice $invoice)
     {
+        $this->authorizePermission('invoices.update');
+
+        // Check if invoice can be edited
+        if (!$invoice->canBeEdited()) {
+            return redirect()->route('invoices.show', $invoice)
+                ->with('error', 'Invoice cannot be edited because it is not in draft status.');
+        }
+
         $customers = Customer::orderBy('name')->get();
         $invoice->load('items');
 
-        return view('invoices.edit', compact('invoice', 'customers'));
+        // Prepare preview items from existing invoice items
+        $previewItems = $invoice->items->map(function ($item) {
+            return [
+                'job_order_id' => $item->job_order_id,
+                'shipment_leg_id' => $item->shipment_leg_id,
+                'item_type' => $item->item_type ?? 'other',
+                'exclude_tax' => $item->exclude_tax,
+                'description' => $item->description,
+                'quantity' => $item->quantity,
+                'unit_price' => $item->unit_price,
+            ];
+        })->all();
+
+        // Get job orders for the modal
+        $statusFilter = request('status_filter', 'completed');
+        $jobOrdersQuery = JobOrder::query()
+            ->select('id', 'job_number', 'customer_id', 'origin', 'destination', 'status', 'invoice_amount')
+            ->where('customer_id', $invoice->customer_id);
+
+        if ($statusFilter === 'completed') {
+            $jobOrdersQuery->where('status', 'completed');
+        } elseif ($statusFilter === 'in_progress') {
+            $jobOrdersQuery->where('status', 'in_progress');
+        }
+
+        $jobOrders = $jobOrdersQuery
+            ->with(['items:id,job_order_id,cargo_type,quantity,equipment_id', 
+                    'items.equipment:id,name',
+                    'shipmentLegs' => function($query) {
+                        $query->select('id', 'job_order_id', 'load_date')
+                              ->orderBy('load_date', 'asc')
+                              ->limit(1);
+                    }])
+            ->latest()
+            ->get();
+
+        return view('invoices.edit', compact('invoice', 'customers', 'previewItems', 'jobOrders'));
     }
 
     /**
@@ -333,6 +723,14 @@ class InvoiceController extends Controller
      */
     public function update(Request $request, Invoice $invoice)
     {
+        $this->authorizePermission('invoices.update');
+
+        // Check if invoice can be edited
+        if (!$invoice->canBeEdited()) {
+            return redirect()->route('invoices.show', $invoice)
+                ->with('error', 'Invoice cannot be edited because it is not in draft status.');
+        }
+
         $data = $request->validate([
             'customer_id' => ['required', 'exists:customers,id'],
             'invoice_date' => ['required', 'date'],
@@ -355,6 +753,20 @@ class InvoiceController extends Controller
             'items.*.shipment_leg_id' => ['nullable', 'exists:shipment_legs,id'],
             'items.*.exclude_tax' => ['nullable', 'boolean'],
         ]);
+
+        // Check if invoice_date is being changed to a closed period
+        if ($data['invoice_date'] !== $invoice->invoice_date->format('Y-m-d')) {
+            $newDate = new \DateTimeImmutable($data['invoice_date']);
+            $period = \App\Models\Accounting\AccountingPeriod::where('year', $newDate->format('Y'))
+                ->where('month', $newDate->format('n'))
+                ->first();
+            
+            if ($period && $period->is_closed) {
+                return back()->withErrors([
+                    'invoice_date' => 'Tidak dapat mengubah tanggal invoice ke periode akuntansi yang sudah ditutup (' . $newDate->format('F Y') . '). Silakan pilih tanggal di periode yang masih terbuka.'
+                ])->withInput();
+            }
+        }
 
         $invoice->update([
             'customer_id' => $data['customer_id'],
@@ -405,6 +817,8 @@ class InvoiceController extends Controller
      */
     public function destroy(Invoice $invoice)
     {
+        $this->authorizePermission('invoices.cancel');
+
         $invoice->delete();
 
         return redirect()->route('invoices.index')->with('success', 'Invoice dihapus.');
@@ -412,6 +826,8 @@ class InvoiceController extends Controller
 
     public function markAsSent(Invoice $invoice)
     {
+        $this->authorizePermission('invoices.manage_status');
+
         // Validasi total amount
         if ($invoice->total_amount <= 0) {
             return back()->with('error', 'Invoice tidak dapat diposting karena total amount = 0 atau negatif.');
@@ -439,9 +855,42 @@ class InvoiceController extends Controller
 
     public function markAsPaid(Invoice $invoice)
     {
+        $this->authorizePermission('invoices.manage_status');
+
         $invoice->update(['status' => 'paid']);
 
         return back()->with('success', 'Invoice ditandai lunas.');
+    }
+
+    /**
+     * Show invoice approval management page.
+     */
+    public function approvals(Request $request)
+    {
+        $this->authorizePermission('invoices.approve');
+
+        $query = Invoice::query()->with(['customer', 'createdBy', 'approvedBy', 'rejectedBy']);
+
+        // Filter by approval status
+        $status = $request->get('status', 'pending_approval');
+        if ($status && $status !== 'all') {
+            $query->where('approval_status', $status);
+        }
+
+        // Filter by date range
+        if ($from = $request->get('from')) {
+            $query->whereDate('invoice_date', '>=', $from);
+        }
+        if ($to = $request->get('to')) {
+            $query->whereDate('invoice_date', '<=', $to);
+        }
+
+        $invoices = $query->latest('invoice_date')->paginate(15)->withQueryString();
+
+        // Count pending approvals for badge
+        $pendingCount = Invoice::where('approval_status', 'pending_approval')->count();
+
+        return view('invoices.approvals', compact('invoices', 'status', 'pendingCount'));
     }
 
     protected function generateInvoiceNo(string $date): string

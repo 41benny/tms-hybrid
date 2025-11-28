@@ -61,8 +61,8 @@ class VendorBillController extends Controller
             $bill->dpp = $dpp;
             $bill->ppn = $ppn;
             $bill->pph = $pph;
-            $bill->total_paid = $bill->payments->sum('amount');
-            $bill->last_payment_date = $bill->payments->first()?->tanggal;
+            $bill->total_paid = $bill->payments->sum('amount_paid');
+            $bill->last_payment_date = $bill->payments->first()?->payment_date;
             // Tracking pengajuan (bukan pembayaran) menggunakan accessor agar tersedia di view
             $bill->total_requested = $bill->total_requested; // accessor value
             $bill->remaining_to_request = $bill->remaining_to_request; // accessor value
@@ -149,7 +149,7 @@ class VendorBillController extends Controller
         $vendor_bill->dpp = $dpp;
         $vendor_bill->ppn = $ppn;
         $vendor_bill->pph = $pph;
-        $vendor_bill->total_paid = $vendor_bill->payments->sum('amount');
+        $vendor_bill->total_paid = $vendor_bill->payments->sum('amount_paid');
         // Accessor-based tracking of pengajuan
         $vendor_bill->total_requested = $vendor_bill->total_requested;
         $vendor_bill->remaining_to_request = $vendor_bill->remaining_to_request;

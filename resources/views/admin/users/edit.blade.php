@@ -1,4 +1,4 @@
-@php($title = 'Edit User')
+@php $title = 'Edit User'; @endphp
 @extends('layouts.app')
 
 @section('content')
@@ -13,7 +13,12 @@
     </div>
 
     @php
-        $isPrimarySuperAdmin = $user->id === 1 && $user->isSuperAdmin();
+        /** @var \App\Models\User|null $user */
+        $user = $user ?? null;
+        $isPrimarySuperAdmin = $isPrimarySuperAdmin ?? false;
+        if ($isPrimarySuperAdmin === false && $user && method_exists($user, 'isSuperAdmin')) {
+            $isPrimarySuperAdmin = $user->id === 1 && $user->isSuperAdmin();
+        }
     @endphp
 
     @if($isPrimarySuperAdmin)
@@ -36,7 +41,12 @@
     <form action="{{ route('admin.users.update', $user) }}" method="POST" class="space-y-6">
         @csrf
         @method('PUT')
-        @include('admin.users._form', ['user' => $user, 'isPrimarySuperAdmin' => $isPrimarySuperAdmin])
+        @include('admin.users._form', [
+            'user' => $user,
+            'isPrimarySuperAdmin' => $isPrimarySuperAdmin,
+            'selectedMenus' => $selectedMenus ?? ($user->menus->pluck('id')->all() ?? []),
+            'selectedPermissions' => $selectedPermissions ?? ($user->permissions ?? []),
+        ])
         <div class="flex items-center justify-end gap-3">
             <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-600 to-indigo-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-indigo-500/30 hover:shadow-md">
                 Simpan Perubahan

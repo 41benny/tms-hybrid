@@ -114,10 +114,19 @@
                             DP
                         </th>
                         <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                            Tabungan
+                        </th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                            Jaminan
+                        </th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                             Remaining
                         </th>
                         <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                             Status
+                        </th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                            Journal
                         </th>
                         <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                             Actions
@@ -157,6 +166,24 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
+                                @if($adv->deduction_savings > 0)
+                                    <div class="text-emerald-600 dark:text-emerald-400 font-medium">
+                                        Rp {{ number_format($adv->deduction_savings, 0, ',', '.') }}
+                                    </div>
+                                @else
+                                    <span class="text-slate-400">-</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @if($adv->deduction_guarantee > 0)
+                                    <div class="text-purple-600 dark:text-purple-400 font-medium">
+                                        Rp {{ number_format($adv->deduction_guarantee, 0, ',', '.') }}
+                                    </div>
+                                @else
+                                    <span class="text-slate-400">-</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-amber-600 dark:text-amber-400 font-medium">
                                     Rp {{ number_format($adv->remaining_amount, 0, ',', '.') }}
                                 </div>
@@ -171,7 +198,38 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
+                                @if($adv->journal_status === 'posted')
+                                    <x-badge variant="success">Posted</x-badge>
+                                @else
+                                    <x-badge variant="secondary">Unposted</x-badge>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center gap-2">
+                                    @if($adv->journal_status === 'unposted')
+                                        <form method="POST" action="{{ route('driver-advances.post', $adv) }}" class="inline">
+                                            @csrf
+                                            <x-button type="submit" variant="primary" size="sm" title="Post to Journal">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                                Post
+                                            </x-button>
+                                        </form>
+                                    @else
+                                        @if($adv->status === 'pending')
+                                            <form method="POST" action="{{ route('driver-advances.unpost', $adv) }}" class="inline" onsubmit="return confirm('Unpost this driver advance from journal?')">
+                                                @csrf
+                                                <x-button type="submit" variant="ghost" size="sm" title="Unpost from Journal">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                    Unpost
+                                                </x-button>
+                                            </form>
+                                        @endif
+                                    @endif
+                                    
                                     <x-button :href="route('driver-advances.show', $adv)" variant="ghost" size="sm" title="View Details">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />

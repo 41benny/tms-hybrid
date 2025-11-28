@@ -111,11 +111,20 @@ return [
         'job_orders' => [
             'label' => 'Job Orders',
             'items' => [
-                'job_orders.view' => 'View Job Order',
-                'job_orders.create' => 'Create Job Order',
+                'job_orders.view' => 'Lihat Job Order',
+                'job_orders.create' => 'Tambah Job Order',
                 'job_orders.update' => 'Edit Job Order',
-                'job_orders.delete' => 'Delete Job Order',
+                'job_orders.delete' => 'Hapus Job Order',
                 'job_orders.export' => 'Export Job Order',
+            ],
+        ],
+        'shipment_legs' => [
+            'label' => 'Shipment Legs',
+            'items' => [
+                'shipment_legs.view' => 'Lihat Shipment Leg',
+                'shipment_legs.create' => 'Tambah Shipment Leg',
+                'shipment_legs.update' => 'Edit Shipment Leg',
+                'shipment_legs.delete' => 'Hapus Shipment Leg',
             ],
         ],
         'hutang' => [

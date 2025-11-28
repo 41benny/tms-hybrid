@@ -12,6 +12,7 @@
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             font-size: 12px;
             color: #1f2933;
+            background-color: #ffffff;
             margin: 0;
             padding: 24px;
         }
@@ -45,9 +46,24 @@
             body { padding: 0; }
             .no-print { display: none !important; }
         }
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 120px;
+            font-weight: 900;
+            color: rgba(0, 0, 0, 0.08);
+            z-index: -1;
+            pointer-events: none;
+            user-select: none;
+        }
     </style>
 </head>
 <body>
+@if($isDraft ?? false)
+    <div class="watermark">DRAFT</div>
+@endif
 <div class="invoice-wrapper">
     <div class="flex justify-between items-start mb-4">
         <div>
@@ -175,6 +191,20 @@
             <div style="margin-top:48px;border-top:1px solid #d0d7de;padding-top:4px;">(________________________)</div>
         </div>
     </div>
+
+    @if($invoice->isApproved())
+    <div class="mt-6 pt-4" style="margin-top: 24px; padding-top: 16px; border-top: 2px solid #059669;">
+        <div class="text-xs" style="font-size: 10px; color: #059669;">
+            <div class="font-bold mb-1" style="font-weight: 700; margin-bottom: 4px; font-size: 11px;">✓ INVOICE APPROVED</div>
+            <div style="color: #64748b; line-height: 1.5;">
+                Invoice ini telah mendapatkan persetujuan dari <strong>{{ $invoice->approvedBy->name }}</strong> pada <strong>{{ $invoice->approved_at->format('d F Y, H:i') }} WIB</strong>.
+            </div>
+            <div style="color: #64748b; margin-top: 4px; line-height: 1.5;">
+                Dokumen ini sah dan dapat digunakan sebagai bukti transaksi resmi.
+            </div>
+        </div>
+    </div>
+    @endif
 
     <div class="mt-4 text-center no-print">
         <button onclick="window.print()" style="padding:6px 12px;border:1px solid #d0d7de;border-radius:4px;background:#111827;color:#fff;cursor:pointer;">

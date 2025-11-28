@@ -1,0 +1,104 @@
+    /**
+     * Post driver advance payment journal
+     * Pays down the liability created when shipment leg was created
+     * 
+     * DP Payment:
+     *   Dr. Hutang Uang Jalan Supir (DP amount)
+     *     Cr. Kas/Bank (DP amount)
+     * 
+     * Settlement:
+     *   Dr. Hutang Uang Jalan Supir (gross)
+     *     Cr. Kas/Bank (net)
+     *     Cr. Hutang Tabungan (savings)
+     *     Cr. Hutang Jaminan (guarantee)
+     */
+    public function postDriverAdvancePayment(CashBankTransaction $trx): Journal
+    {
+        if ($j = $this->alreadyPosted('uang_jalan', $trx->id)) {
+            return $j;
+        }
+        
+        $cash = $this->map('cash');
+        $driverPayable = $this->map('driver_payable'); // 2155 - Hutang Uang Jalan Supir
+        
+        $netAmount = (float) $trx->amount; // Net paid to driver
+        $savingsDeduction = 0;
+        $guaranteeDeduction = 0;
+        $isSettlement = false;
+        
+        // Load driver advance payment records
+        $driverAdvancePayments = \App\Models\Operations\DriverAdvancePayment::where('cash_bank_transaction_id', $trx->id)
+            ->with(['driverAdvance.shipmentLeg.mainCost'])
+            ->get();
+        
+        foreach ($driverAdvancePayments as $payment) {
+            $advance = $payment->driverAdvance;
+            if ($advance) {
+                // Check if this is settlement
+                if ($advance->dp_amount > 0 || $advance->status === 'dp_paid') {
+                    $isSettlement = true;
+                    
+                    // Only add deductions during settlement
+                    if ($advance->shipmentLeg && $advance->shipmentLeg->mainCost) {
+                        $mainCost = $advance->shipmentLeg->mainCost;
+                        $savingsDeduction += (float) ($mainCost->driver_savings_deduction ?? 0);
+                        $guaranteeDeduction += (float) ($mainCost->driver_guarantee_deduction ?? 0);
+                    }
+                }
+            }
+        }
+        
+        // Gross amount = amount of liability being paid off
+        $grossPayable = $netAmount;
+        if ($isSettlement) {
+            $grossPayable = $netAmount + $savingsDeduction + $guaranteeDeduction;
+        }
+        
+        $lines = [];
+        
+        // Dr. Hutang Uang Jalan Supir (paying off liability)
+        $lines[] = [
+            'account_code' => $driverPayable,
+            'debit' => $grossPayable,
+            'credit' => 0,
+            'desc' => 'Pembayaran hutang uang jalan - ' . ($isSettlement ? 'Pelunasan' : 'DP')
+        ];
+        
+        // Cr. Kas/Bank
+        $lines[] = [
+            'account_code' => $cash,
+            'debit' => 0,
+            'credit' => $netAmount,
+            'desc' => 'Pembayaran uang jalan driver'
+        ];
+        
+        // Settlement only: add deduction liabilities
+        if ($isSettlement) {
+            if ($savingsDeduction > 0) {
+                $driverSavings = $this->map('driver_savings');
+                $lines[] = [
+                    'account_code' => $driverSavings,
+                    'debit' => 0,
+                    'credit' => $savingsDeduction,
+                    'desc' => 'Potongan tabungan supir'
+                ];
+            }
+            
+            if ($guaranteeDeduction > 0) {
+                $driverGuarantee = $this->map('driver_guarantee');
+                $lines[] = [
+                    'account_code' => $driverGuarantee,
+                    'debit' => 0,
+                    'credit' => $guaranteeDeduction,
+                    'desc' => 'Potongan jaminan supir'
+                ];
+            }
+        }
+        
+        return $this->posting->postGeneral([
+            'journal_date' => $trx->tanggal->toDateString(),
+            'source_type' => 'uang_jalan',
+            'source_id' => $trx->id,
+            'memo' => $trx->description ?? 'Pembayaran uang jalan driver',
+        ], $lines);
+    }

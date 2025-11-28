@@ -214,6 +214,14 @@
         <div>
             <x-card title="Actions">
                 <div class="space-y-2">
+                    @if($request->status === 'approved')
+                    <x-button :href="route('cash-banks.create', ['payment_request_id' => $request->id])" class="w-full justify-center bg-indigo-600 hover:bg-indigo-700 text-white">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        Pay Request
+                    </x-button>
+                    @endif
                     <x-button :href="route('payment-requests.index')" variant="outline" class="w-full justify-center">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />

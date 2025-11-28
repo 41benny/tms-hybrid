@@ -1,26 +1,25 @@
+import defaultTheme from 'tailwindcss/defaultTheme';
+
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: 'class',
   content: [
+    './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
+    './storage/framework/views/*.php',
     './resources/**/*.blade.php',
     './resources/**/*.js',
     './resources/**/*.vue',
-    './app/View/**/*.php',
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        sans: ['Inter', ...defaultTheme.fontFamily.sans],
+        mono: ['JetBrains Mono', ...defaultTheme.fontFamily.mono],
+      },
+    },
   },
-  // Production optimizations
   safelist: [
-    // Keep commonly used utility classes
-    'bg-green-100',
-    'bg-blue-100',
-    'bg-yellow-100',
-    'bg-red-100',
-    'text-green-600',
-    'text-blue-600',
-    'text-yellow-600',
-    'text-red-600',
+    'bg-green-100', 'bg-blue-100', 'bg-yellow-100', 'bg-red-100',
+    'text-green-600', 'text-blue-600', 'text-yellow-600', 'text-red-600',
   ],
 };
-

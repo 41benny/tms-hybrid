@@ -4,417 +4,697 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $title ?? config('app.name', 'TMS') }}</title>
+    <title>{{ $title ?? config('app.name', 'TMS Premium') }}</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
     @vite(['resources/css/app.css','resources/js/app.js'])
-    <link rel="stylesheet" href="{{ asset('resources/css/table-font-xs.css') }}">
-    <script>
-        // Apply saved theme ASAP to avoid flash
-        (function() {
-            try {
-                var key = 'tms-theme';
-                var saved = localStorage.getItem(key);
-                var isDark = saved ? saved === 'dark' : true; // default: dark
-                var root = document.documentElement;
-                if (isDark) root.classList.add('dark'); else root.classList.remove('dark');
-            } catch (e) {
-                // no-op
-            }
-        })();
-    </script>
-
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="h-full bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 dark:bg-[#1e1e1e] text-slate-900 dark:text-slate-100">
-<div class="min-h-screen flex">
-    {{-- Sidebar --}}
-    <aside class="hidden md:flex flex-col w-64 shrink-0 border-r border-slate-200 dark:border-[#2d2d2d] bg-white dark:bg-[#1e1e1e] shadow-lg">
-        {{-- Logo / Brand --}}
-        <div class="p-6 border-b border-slate-200 dark:border-[#2d2d2d]">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-800 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                    <span class="text-white text-lg">T</span>
-                </div>
-                <div>
-                    <div class="text-lg bg-gradient-to-r from-indigo-600 to-indigo-800 bg-clip-text text-transparent">TMS</div>
-                    <div class="text-xs text-slate-500 dark:text-slate-400">Transport System</div>
-                </div>
-            </div>
-        </div>
+<body class="h-full font-sans antialiased selection:bg-cyan-500 selection:text-white">
 
-        {{-- Navigation --}}
-        @php
-            $canAccessMenu = static fn (string $slug): bool => auth()->user()?->canAccessMenu($slug) ?? false;
-        @endphp
-        <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-            @php($dashboardAccess = $canAccessMenu('dashboard'))
-            <a href="{{ route('dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('dashboard') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $dashboardAccess ? '' : 'opacity-60' }}">
-                <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('dashboard') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('dashboard') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $dashboardAccess ? '' : 'opacity-80' }}">Dashboard</span>
-            </a>
+    <div class="fixed inset-0 z-[-1] theme-bg-gradient transition-all duration-700"></div>
 
-            {{-- Master Section --}}
-            <div class="pt-4">
-                <div class="px-3 pb-2 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-500">Master Data</div>
-                @php($customersAccess = $canAccessMenu('customers'))
-                <a href="{{ route('customers.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('customers.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $customersAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('customers.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('customers.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $customersAccess ? '' : 'opacity-80' }}">Customers</span>
-                </a>
-                @php($vendorsAccess = $canAccessMenu('vendors'))
-                <a href="{{ route('vendors.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('vendors.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $vendorsAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('vendors.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('vendors.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $vendorsAccess ? '' : 'opacity-80' }}">Vendors</span>
-                </a>
-                @php($trucksAccess = $canAccessMenu('trucks'))
-                <a href="{{ route('trucks.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('trucks.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $trucksAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('trucks.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('trucks.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $trucksAccess ? '' : 'opacity-80' }}">Trucks</span>
-                </a>
-                @php($driversAccess = $canAccessMenu('drivers'))
-                <a href="{{ route('drivers.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('drivers.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $driversAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('drivers.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('drivers.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $driversAccess ? '' : 'opacity-80' }}">Drivers</span>
-                </a>
-                @php($salesAccess = $canAccessMenu('sales'))
-                <a href="{{ route('sales.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('sales.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $salesAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('sales.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('sales.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $salesAccess ? '' : 'opacity-80' }}">Sales</span>
-                </a>
-                @php($equipmentAccess = $canAccessMenu('equipment'))
-                <a href="{{ route('equipment.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('equipment.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $equipmentAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('equipment.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('equipment.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $equipmentAccess ? '' : 'opacity-80' }}">Equipment</span>
-                </a>
-            </div>
-
-            {{-- Operations Section --}}
-            <div class="pt-4">
-                <div class="px-3 pb-2 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-500">Operations</div>
-                @php($jobOrdersAccess = $canAccessMenu('job-orders'))
-                <a href="{{ route('job-orders.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('job-orders.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $jobOrdersAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('job-orders.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('job-orders.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $jobOrdersAccess ? '' : 'opacity-80' }}">Job Orders</span>
-                </a>
-            </div>
-
-            {{-- Inventory Section --}}
-            <div class="pt-4">
-                <div class="px-3 pb-2 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-500">Inventory</div>
-                @php($inventoryDashboardAccess = $canAccessMenu('inventory.dashboard'))
-                <a href="{{ route('inventory.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('inventory.dashboard') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $inventoryDashboardAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('inventory.dashboard') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('inventory.dashboard') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $inventoryDashboardAccess ? '' : 'opacity-80' }}">Inventory Dashboard</span>
-                </a>
-                @php($partsAccess = $canAccessMenu('parts'))
-                <a href="{{ route('parts.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('parts.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $partsAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('parts.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('parts.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $partsAccess ? '' : 'opacity-80' }}">Spare Parts</span>
-                </a>
-                @php($partPurchasesAccess = $canAccessMenu('part-purchases'))
-                <a href="{{ route('part-purchases.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('part-purchases.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $partPurchasesAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('part-purchases.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('part-purchases.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $partPurchasesAccess ? '' : 'opacity-80' }}">Part Purchases</span>
-                </a>
-                @php($partUsagesAccess = $canAccessMenu('part-usages'))
-                <a href="{{ route('part-usages.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('part-usages.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $partUsagesAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('part-usages.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('part-usages.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $partUsagesAccess ? '' : 'opacity-80' }}">Part Usage</span>
-                </a>
-            </div>
-
-            {{-- Finance Section --}}
-            <div class="pt-4">
-                <div class="px-3 pb-2 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-500">Finance</div>
-                @php($financeDashboardAccess = $canAccessMenu('finance.dashboard'))
-                <a href="{{ route('finance.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('finance.dashboard') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $financeDashboardAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('finance.dashboard') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('finance.dashboard') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $financeDashboardAccess ? '' : 'opacity-80' }}">Finance Dashboard</span>
-                </a>
-                @php($hutangAccess = $canAccessMenu('hutang'))
-                <a href="{{ route('hutang.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('hutang.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $hutangAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('hutang.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('hutang.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $hutangAccess ? '' : 'opacity-80' }}">Payables Dashboard</span>
-                </a>
-                @php($invoicesAccess = $canAccessMenu('invoices'))
-                <a href="{{ route('invoices.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('invoices.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $invoicesAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('invoices.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('invoices.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $invoicesAccess ? '' : 'opacity-80' }}">Invoices</span>
-                </a>
-                @php($paymentRequestsAccess = $canAccessMenu('payment-requests'))
-                <a href="{{ route('payment-requests.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('payment-requests.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $paymentRequestsAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('payment-requests.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('payment-requests.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $paymentRequestsAccess ? '' : 'opacity-80' }}">Payment Requests</span>
-                </a>
-                @php($cashBanksAccess = $canAccessMenu('cash-banks'))
-                <a href="{{ route('cash-banks.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('cash-banks.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $cashBanksAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('cash-banks.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('cash-banks.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $cashBanksAccess ? '' : 'opacity-80' }}">Cash/Bank</span>
-                </a>
-            </div>
-
-            {{-- Accounting Section --}}
-            <div class="pt-4">
-                <div class="px-3 pb-2 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-500">Accounting</div>
-                @php($journalsAccess = $canAccessMenu('accounting.journals'))
-                <a href="{{ route('journals.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('journals.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $journalsAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('journals.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('journals.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $journalsAccess ? '' : 'opacity-80' }}">Journals</span>
-                </a>
-                @php($chartAccountsAccess = $canAccessMenu('accounting.coa'))
-                <a href="{{ route('chart-of-accounts.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('chart-of-accounts.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $chartAccountsAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('chart-of-accounts.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('chart-of-accounts.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $chartAccountsAccess ? '' : 'opacity-80' }}">Chart of Accounts</span>
-                </a>
-                @php($fiscalPeriodsAccess = $canAccessMenu('accounting.periods'))
-                <a href="{{ route('accounting.periods.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('accounting.periods.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $fiscalPeriodsAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('accounting.periods.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('accounting.periods.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $fiscalPeriodsAccess ? '' : 'opacity-80' }}">Fiscal Periods</span>
-                </a>
-                @php($generalLedgerAccess = $canAccessMenu('accounting.general-ledger'))
-                <a href="{{ route('reports.general-ledger') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('reports.general-ledger') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $generalLedgerAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.general-ledger') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.general-ledger') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $generalLedgerAccess ? '' : 'opacity-80' }}">General Ledger</span>
-                </a>
-                @php($trialBalanceAccess = $canAccessMenu('accounting.trial-balance'))
-                <a href="{{ route('reports.trial-balance') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('reports.trial-balance') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $trialBalanceAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.trial-balance') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.trial-balance') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $trialBalanceAccess ? '' : 'opacity-80' }}">Trial Balance</span>
-                </a>
-                @php($profitLossAccess = $canAccessMenu('accounting.profit-loss'))
-                <a href="{{ route('reports.profit-loss') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('reports.profit-loss') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $profitLossAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.profit-loss') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.profit-loss') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $profitLossAccess ? '' : 'opacity-80' }}">Profit & Loss</span>
-                </a>
-                @php($balanceSheetAccess = $canAccessMenu('accounting.balance-sheet'))
-                <a href="{{ route('reports.balance-sheet') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('reports.balance-sheet') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $balanceSheetAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.balance-sheet') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.balance-sheet') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $balanceSheetAccess ? '' : 'opacity-80' }}">Balance Sheet</span>
-                </a>
-                @php($fixedAssetsAccess = $canAccessMenu('fixed-assets'))
-                <a href="{{ route('fixed-assets.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('fixed-assets.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $fixedAssetsAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('fixed-assets.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7l9-4 9 4-9 4-9-4zm0 6l9 4 9-4m-9 4v6" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('fixed-assets.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $fixedAssetsAccess ? '' : 'opacity-80' }}">Fixed Assets</span>
-                </a>
-            </div>
-
-            {{-- Tax Reports Section --}}
-            <div class="pt-4">
-                <div class="px-3 pb-2 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-500">Tax Reports</div>
-                @php($taxReportsAccess = $canAccessMenu('accounting.tax-reports'))
-                <a href="{{ route('reports.tax.ppn-summary') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('reports.tax.ppn-summary') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $taxReportsAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.tax.ppn-summary') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.tax.ppn-summary') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $taxReportsAccess ? '' : 'opacity-80' }}">PPN Summary</span>
-                </a>
-
-                @php($taxInvoiceAccess = $canAccessMenu('tax-invoices'))
-                <a href="{{ route('tax-invoices.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('tax-invoices.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $taxInvoiceAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('tax-invoices.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('tax-invoices.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $taxInvoiceAccess ? '' : 'opacity-80' }}">Faktur Pajak</span>
-                </a>
-                <a href="{{ route('reports.tax.ppn-keluaran') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('reports.tax.ppn-keluaran') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $taxReportsAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.tax.ppn-keluaran') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.tax.ppn-keluaran') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $taxReportsAccess ? '' : 'opacity-80' }}">PPN Keluaran</span>
-                </a>
-                <a href="{{ route('reports.tax.ppn-masukan') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('reports.tax.ppn-masukan') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $taxReportsAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.tax.ppn-masukan') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.tax.ppn-masukan') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $taxReportsAccess ? '' : 'opacity-80' }}">PPN Masukan</span>
-                </a>
-                <a href="{{ route('reports.tax.pph23-summary') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('reports.tax.pph23-summary') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $taxReportsAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.tax.pph23-summary') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.tax.pph23-summary') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $taxReportsAccess ? '' : 'opacity-80' }}">PPh 23 Summary</span>
-                </a>
-                <a href="{{ route('reports.tax.pph23-dipotong') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('reports.tax.pph23-dipotong') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $taxReportsAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.tax.pph23-dipotong') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.tax.pph23-dipotong') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $taxReportsAccess ? '' : 'opacity-80' }}">PPh 23 Dipotong</span>
-                </a>
-                <a href="{{ route('reports.tax.pph23-dipungut') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('reports.tax.pph23-dipungut') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $taxReportsAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.tax.pph23-dipungut') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('reports.tax.pph23-dipungut') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $taxReportsAccess ? '' : 'opacity-80' }}">PPh 23 Dipungut</span>
-                </a>
-            </div>
-
-            {{-- AI Section --}}
-            <div class="pt-4 pb-4">
-                <div class="px-3 pb-2 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-500">AI Tools</div>
-                @php($aiAccess = $canAccessMenu('ai-assistant'))
-                <a href="{{ route('ai-assistant.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/50 transition-all {{ request()->routeIs('ai-assistant.*') ? 'ring-2 ring-indigo-500' : '' }} {{ $aiAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                    </svg>
-                    <span>AI Assistant</span>
-                </a>
-            </div>
-
-            <div class="pt-4">
-                <div class="px-3 pb-2 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-500">Admin</div>
-                @php($userManagementAccess = $canAccessMenu('admin.users'))
-                <a href="{{ route('admin.users.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors group {{ request()->routeIs('admin.users.*') ? 'bg-slate-100 dark:bg-[#2d2d2d]' : '' }} {{ $userManagementAccess ? '' : 'opacity-60' }}">
-                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('admin.users.*') ? 'text-slate-900 dark:text-white' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A9 9 0 1115 21v-2a6 6 0 00-5.879-6 4.5 4.5 0 10-4 0 6 6 0 00-.121 4.804z" />
-                    </svg>
-                    <span class="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white {{ request()->routeIs('admin.users.*') ? 'text-slate-900 dark:text-white' : '' }} text-sm {{ $userManagementAccess ? '' : 'opacity-80' }}">User Management</span>
-                </a>
-            </div>
-        </nav>
-    </aside>
-
-    {{-- Main Content --}}
-    <main class="flex-1 min-w-0 flex flex-col bg-gradient-to-br from-slate-50 via-slate-50 to-slate-200 dark:bg-[#1e1e1e]">
-        {{-- Accessibility heading for screen readers --}}
-        <h1 class="sr-only">{{ $header ?? ($title ?? 'Dashboard') }}</h1>
-
-        {{-- Header --}}
-        <header class="sticky top-0 z-20 border-b border-slate-200 dark:border-[#2d2d2d] bg-white dark:bg-[#1e1e1e] shadow-sm">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                    <button class="md:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors" aria-label="Open menu">
-                        <span class="text-xl">☰</span>
-                    </button>
-                    <div>
-                        <div class="text-lg text-slate-900 dark:text-slate-100">{{ $header ?? ($title ?? 'Dashboard') }}</div>
+    <div class="h-screen flex overflow-hidden">
+        
+        {{-- SIDEBAR --}}
+        <aside id="sidebar" class="hidden md:flex flex-col w-72 shrink-0 theme-sidebar backdrop-blur-xl relative z-20 transition-all duration-300 fixed md:relative inset-y-0 left-0 h-full overflow-y-auto md:overflow-visible">
+            
+            {{-- Logo / Brand --}}
+            <div class="p-6 pb-3 relative">
+                <div class="absolute top-0 left-0 w-full h-1" style="background: linear-gradient(90deg, var(--color-primary), transparent);"></div>
+                <div class="flex items-center gap-3 relative">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg border theme-border shrink-0" style="background: rgba(255,255,255,0.05); color: var(--color-primary);">
+                        <span class="font-bold text-xl">T</span>
+                    </div>
+                    <div class="sidebar-text flex-1">
+                        <h1 class="font-bold text-lg tracking-wider text-white whitespace-nowrap">NEXUS<span class="theme-text-primary">TMS</span></h1>
+                        <p class="text-[10px] theme-text-muted tracking-[0.2em] uppercase whitespace-nowrap">Transport System</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-3">
-                    {{-- Notifications --}}
-                    @auth
-                    <div class="relative" x-data="{ open: false }">
-                        <button
-                            @click="open = !open"
-                            class="relative p-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-all hover:scale-105"
-                            aria-label="Notifications"
-                            id="notification-button"
-                        >
-                            <svg class="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                            </svg>
-                            <span id="notification-badge" class="absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
-                        </button>
+            </div>
+            
+            {{-- Toggle Button --}}
+            <div class="px-4 pb-4">
+                <button id="sidebarToggle" class="w-full py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg hover:shadow-indigo-500/50 transition-all border border-indigo-400/30 flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
+                    </svg>
+                    <span class="text-xs font-semibold sidebar-text">Collapse</span>
+                </button>
+            </div>
 
-                        {{-- Dropdown --}}
-                        <div
-                            x-show="open"
-                            @click.away="open = false"
-                            x-transition:enter="transition ease-out duration-100"
-                            x-transition:enter-start="transform opacity-0 scale-95"
-                            x-transition:enter-end="transform opacity-100 scale-100"
-                            x-transition:leave="transition ease-in duration-75"
-                            x-transition:leave-start="transform opacity-100 scale-100"
-                            x-transition:leave-end="transform opacity-0 scale-95"
-                            class="absolute right-0 mt-2 w-80 bg-white dark:bg-[#252525] rounded-lg shadow-lg border border-slate-200 dark:border-[#2d2d2d] z-50 max-h-96 overflow-hidden flex flex-col"
-                            style="display: none;"
-                            id="notification-dropdown"
-                        >
-                            <div class="p-4 border-b border-slate-200 dark:border-[#2d2d2d] flex items-center justify-between">
-                                <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Notifications</h3>
-                                <button id="mark-all-read" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">Mark all as read</button>
-                            </div>
-                            <div id="notification-list" class="overflow-y-auto max-h-64">
-                                <div class="p-4 text-center text-sm text-slate-500 dark:text-slate-400">
-                                    Loading notifications...
-                                </div>
-                            </div>
-                            <div class="p-2 border-t border-slate-200 dark:border-[#2d2d2d] text-center">
-                                <a href="{{ route('payment-requests.index') }}" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">View all requests</a>
-                            </div>
-                        </div>
-                    </div>
-                    @endauth
+            {{-- Navigation --}}
+            @php
+                $canAccessMenu = static fn (string $slug): bool => auth()->user()?->canAccessMenu($slug) ?? false;
+                $role = auth()->user()->role ?? null;
+            @endphp
 
-                    <button id="theme-toggle" class="p-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-all hover:scale-105" aria-label="Toggle dark mode" title="Toggle theme">
-                        <span class="text-xl inline dark:hidden">🌙</span>
-                        <span class="text-xl hidden dark:inline">☀️</span>
+            <nav class="flex-1 px-4 space-y-1 pb-4 overflow-y-auto md:overflow-y-auto">
+                
+                {{-- Dashboard --}}
+                <a href="{{ route('dashboard') }}" class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                    <span class="sidebar-text">Dashboard</span>
+                </a>
+
+                {{-- Master Data Group --}}
+                <div class="menu-group" data-group="master-data">
+                    <button class="group-header w-full flex items-center justify-between pt-6 pb-2 px-2 hover:bg-white/5 rounded transition-colors cursor-pointer">
+                        <p class="text-[10px] font-bold text-slate-300 uppercase tracking-widest opacity-90 sidebar-text">Master Data</p>
+                        <svg class="w-3 h-3 text-slate-300 transition-transform duration-200 sidebar-text chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
                     </button>
-                    <div class="hidden sm:flex items-center gap-3 px-4 py-2 rounded-lg bg-slate-100 dark:bg-[#2d2d2d]">
-                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white">
-                            {{ substr(auth()->user()->name ?? 'G', 0, 1) }}
-                        </div>
-                        <div class="text-sm">
-                            <div class="text-slate-900 dark:text-slate-100">{{ auth()->user()->name ?? 'Guest' }}</div>
-                        </div>
+                    <div class="group-items">
+                        <a href="{{ route('customers.index') }}" class="nav-item {{ request()->routeIs('customers.*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                            <span class="sidebar-text">Customers</span>
+                        </a>
+                        <a href="{{ route('vendors.index') }}" class="nav-item {{ request()->routeIs('vendors.*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                            <span class="sidebar-text">Vendors</span>
+                        </a>
+                        <a href="{{ route('trucks.index') }}" class="nav-item {{ request()->routeIs('trucks.*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                            <span class="sidebar-text">Trucks</span>
+                        </a>
+                        <a href="{{ route('drivers.index') }}" class="nav-item {{ request()->routeIs('drivers.*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                            <span class="sidebar-text">Drivers</span>
+                        </a>
+                        <a href="{{ route('sales.index') }}" class="nav-item {{ request()->routeIs('sales.*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                            <span class="sidebar-text">Sales</span>
+                        </a>
+                        <a href="{{ route('equipment.index') }}" class="nav-item {{ request()->routeIs('equipment.*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                            <span class="sidebar-text">Equipment</span>
+                        </a>
+                        <a href="{{ route('master.cash-bank-accounts.index') }}" class="nav-item {{ request()->routeIs('master.cash-bank-accounts.*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                            <span class="sidebar-text">Cash & Bank</span>
+                        </a>
+                    </div>
+                </div>
+
+                {{-- Operations Group --}}
+                <div class="menu-group" data-group="operations">
+                    <button class="group-header w-full flex items-center justify-between pt-4 pb-2 px-2 hover:bg-white/5 rounded transition-colors cursor-pointer">
+                        <p class="text-[10px] font-bold text-slate-300 uppercase tracking-widest opacity-90 sidebar-text">Operations</p>
+                        <svg class="w-3 h-3 text-slate-300 transition-transform duration-200 sidebar-text chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div class="group-items">
+                        <a href="{{ route('job-orders.index') }}" class="nav-item {{ request()->routeIs('job-orders.*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                            <span class="sidebar-text">Job Orders</span>
+                        </a>
+                        @if(in_array($role, ['sales','admin','super_admin'], true))
+                            <a href="{{ route('sales.console') }}" class="nav-item {{ request()->routeIs('sales.console') ? 'active' : '' }}">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h8l2 4h8M3 13h8l2 4h8M3 7v13" />
+                                </svg>
+                                <span class="sidebar-text">Sales Console</span>
+                            </a>
+                        @endif
+                        <a href="{{ route('invoices.index') }}" class="nav-item {{ request()->routeIs('invoices.index') || request()->routeIs('invoices.create') || request()->routeIs('invoices.show') || request()->routeIs('invoices.edit') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            <span class="sidebar-text">Invoices</span>
+                        </a>
+                        <a href="{{ route('invoices.approvals') }}" class="nav-item {{ request()->routeIs('invoices.approvals') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span class="sidebar-text">Invoice Approvals</span>
+                        </a>
+                        <a href="{{ route('payment-requests.index') }}" class="nav-item {{ request()->routeIs('payment-requests.*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            <span class="sidebar-text">Payment Requests</span>
+                        </a>
+                        <a href="{{ route('driver-advances.index') }}" class="nav-item {{ request()->routeIs('driver-advances.*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                            <span class="sidebar-text">Driver Advances</span>
+                        </a>
+                        <a href="{{ route('vendor-bills.index') }}" class="nav-item {{ request()->routeIs('vendor-bills.*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            <span class="sidebar-text">Vendor Bills</span>
+                        </a>
+                    </div>
+                </div>
+
+                {{-- Finance Group --}}
+                <div class="menu-group" data-group="finance">
+                    <button class="group-header w-full flex items-center justify-between pt-4 pb-2 px-2 hover:bg-white/5 rounded transition-colors cursor-pointer">
+                        <p class="text-[10px] font-bold text-slate-300 uppercase tracking-widest opacity-90 sidebar-text">Finance</p>
+                        <svg class="w-3 h-3 text-slate-300 transition-transform duration-200 sidebar-text chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div class="group-items">
+                        <a href="{{ route('finance.dashboard') }}" class="nav-item {{ request()->routeIs('finance.dashboard') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span class="sidebar-text">Finance Dash</span>
+                        </a>
+                        <a href="{{ route('hutang.dashboard') }}" class="nav-item {{ request()->routeIs('hutang.*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                            <span class="sidebar-text">Payables Dash</span>
+                        </a>
+                        <a href="{{ route('cash-banks.index') }}" class="nav-item {{ request()->routeIs('cash-banks.*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                            <span class="sidebar-text">Cash/Bank</span>
+                        </a>
+                    </div>
+                </div>
+                 {{-- Inventory Group --}}
+                <div class="menu-group" data-group="inventory">
+                    <button class="group-header w-full flex items-center justify-between pt-4 pb-2 px-2 hover:bg-white/5 rounded transition-colors cursor-pointer">
+                        <p class="text-[10px] font-bold text-slate-300 uppercase tracking-widest opacity-90 sidebar-text">Inventory</p>
+                        <svg class="w-3 h-3 text-slate-300 transition-transform duration-200 sidebar-text chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div class="group-items">
+                        <a href="{{ route('inventory.dashboard') }}" class="nav-item {{ request()->routeIs('inventory.dashboard') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                            <span class="sidebar-text">Inventory Dash</span>
+                        </a>
+                        <a href="{{ route('parts.index') }}" class="nav-item {{ request()->routeIs('parts.*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                            <span class="sidebar-text">Spare Parts</span>
+                        </a>
+                        <a href="{{ route('part-purchases.index') }}" class="nav-item {{ request()->routeIs('part-purchases.*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                            <span class="sidebar-text">Part Purchases</span>
+                        </a>
+                        <a href="{{ route('part-usages.index') }}" class="nav-item {{ request()->routeIs('part-usages.*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                            <span class="sidebar-text">Part Usage</span>
+                        </a>
+                    </div>
+                </div>
+
+                {{-- Accounting Group --}}
+                <div class="menu-group" data-group="accounting">
+                    <button class="group-header w-full flex items-center justify-between pt-4 pb-2 px-2 hover:bg-white/5 rounded transition-colors cursor-pointer">
+                        <p class="text-[10px] font-bold text-slate-300 uppercase tracking-widest opacity-90 sidebar-text">Accounting</p>
+                        <svg class="w-3 h-3 text-slate-300 transition-transform duration-200 sidebar-text chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div class="group-items">
+                        <a href="{{ route('journals.index') }}" class="nav-item {{ request()->routeIs('journals.*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            <span class="sidebar-text">Journals</span>
+                        </a>
+                        <a href="{{ route('chart-of-accounts.index') }}" class="nav-item {{ request()->routeIs('chart-of-accounts.*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+                            <span class="sidebar-text">Chart of Accounts</span>
+                        </a>
+                        <a href="{{ route('accounting.periods.index') }}" class="nav-item {{ request()->routeIs('accounting.periods.*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            <span class="sidebar-text">Fiscal Periods</span>
+                        </a>
+                        <a href="{{ route('reports.general-ledger') }}" class="nav-item {{ request()->routeIs('reports.general-ledger') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                            <span class="sidebar-text">General Ledger</span>
+                        </a>
+                        <a href="{{ route('reports.trial-balance') }}" class="nav-item {{ request()->routeIs('reports.trial-balance') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                            <span class="sidebar-text">Trial Balance</span>
+                        </a>
+                        <a href="{{ route('reports.profit-loss') }}" class="nav-item {{ request()->routeIs('reports.profit-loss') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                            <span class="sidebar-text">Profit & Loss</span>
+                        </a>
+                        <a href="{{ route('reports.balance-sheet') }}" class="nav-item {{ request()->routeIs('reports.balance-sheet') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                            <span class="sidebar-text">Balance Sheet</span>
+                        </a>
+                        <a href="{{ route('fixed-assets.index') }}" class="nav-item {{ request()->routeIs('fixed-assets.*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7l9-4 9 4-9 4-9-4zm0 6l9 4 9-4m-9 4v6"></path></svg>
+                            <span class="sidebar-text">Fixed Assets</span>
+                        </a>
+                    </div>
+                </div>
+
+                {{-- Tax Reports Group --}}
+                <div class="menu-group" data-group="tax-reports">
+                    <button class="group-header w-full flex items-center justify-between pt-4 pb-2 px-2 hover:bg-white/5 rounded transition-colors cursor-pointer">
+                        <p class="text-[10px] font-bold text-slate-300 uppercase tracking-widest opacity-90 sidebar-text">Tax Reports</p>
+                        <svg class="w-3 h-3 text-slate-300 transition-transform duration-200 sidebar-text chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div class="group-items">
+                        <a href="{{ route('reports.tax.ppn-summary') }}" class="nav-item {{ request()->routeIs('reports.tax.ppn-summary') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                            <span class="sidebar-text">PPN Summary</span>
+                        </a>
+                        <a href="{{ route('tax-invoices.index') }}" class="nav-item {{ request()->routeIs('tax-invoices.*') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            <span class="sidebar-text">Faktur Pajak</span>
+                        </a>
+                        <a href="{{ route('reports.tax.ppn-keluaran') }}" class="nav-item {{ request()->routeIs('reports.tax.ppn-keluaran') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            <span class="sidebar-text">PPN Keluaran</span>
+                        </a>
+                        <a href="{{ route('reports.tax.ppn-masukan') }}" class="nav-item {{ request()->routeIs('reports.tax.ppn-masukan') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
+                            <span class="sidebar-text">PPN Masukan</span>
+                        </a>
+                        <a href="{{ route('reports.tax.pph23-summary') }}" class="nav-item {{ request()->routeIs('reports.tax.pph23-summary') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                            <span class="sidebar-text">PPh 23 Summary</span>
+                        </a>
+                        <a href="{{ route('reports.tax.pph23-dipotong') }}" class="nav-item {{ request()->routeIs('reports.tax.pph23-dipotong') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+                            <span class="sidebar-text">PPh 23 Dipotong</span>
+                        </a>
+                        <a href="{{ route('reports.tax.pph23-dipungut') }}" class="nav-item {{ request()->routeIs('reports.tax.pph23-dipungut') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                            <span class="sidebar-text">PPh 23 Dipungut</span>
+                        </a>
+                    </div>
+                </div>
+
+                {{-- AI Assistant --}}
+                <div class="pt-6 pb-2">
+                    <a href="{{ route('ai-assistant.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg hover:shadow-indigo-500/50 transition-all border border-indigo-400/30">
+                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        <span class="font-bold text-sm sidebar-text">AI Assistant</span>
+                    </a>
+                </div>
+
+                {{-- Admin --}}
+                <div class="pt-4 pb-2 px-2 sidebar-text"><p class="text-[10px] font-bold theme-text-primary uppercase tracking-widest opacity-80">Admin</p></div>
+                
+                <a href="{{ route('admin.users.index') }}" class="nav-item {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A9 9 0 1115 21v-2a6 6 0 00-5.879-6 4.5 4.5 0 10-4 0 6 6 0 00-.121 4.804z"></path></svg>
+                    <span class="sidebar-text">User Management</span>
+                </a>
+
+            </nav>
+
+            {{-- Footer Sidebar --}}
+            <div class="p-4 mt-auto border-t theme-border">
+                <div class="flex items-center gap-3 px-3 py-2 rounded-xl bg-black/20 border theme-border">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-black" style="background: var(--color-primary);">
+                        {{ substr(auth()->user()->name ?? 'U', 0, 1) }}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-xs font-medium text-white truncate">{{ auth()->user()->name ?? 'Guest' }}</p>
+                        <p class="text-[10px] theme-text-primary truncate">Online</p>
                     </div>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg border border-slate-200 dark:border-[#2d2d2d] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors">
-                            Logout
+                        <button type="submit" class="text-xs text-red-400 hover:text-white" title="Logout">
+                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                         </button>
                     </form>
                 </div>
             </div>
-        </header>
+        </aside>
 
-        {{-- Page Content --}}
-        <div class="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8 bg-slate-50 dark:bg-[#1e1e1e]">
-            <div class="bg-white dark:bg-[#252525] rounded-2xl shadow-sm border border-slate-200 dark:border-[#2d2d2d] p-6 sm:p-8">
+        {{-- MAIN CONTENT --}}
+        <main class="flex-1 flex flex-col relative z-10 overflow-hidden">
+            
+            {{-- HEADER --}}
+            <header class="h-16 theme-panel flex items-center justify-between px-6 sticky top-0 z-30 transition-colors duration-500" style="border-width: 0 0 1px 0;">
+                <div class="flex items-center gap-4">
+                    @if($role !== 'sales')
+                        <button class="md:hidden text-white" onclick="document.querySelector('aside').classList.toggle('hidden')">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                        </button>
+                    @endif
+                    <h2 class="text-lg font-semibold tracking-wide text-white">{{ $header ?? ($title ?? 'Dashboard') }}</h2>
+                    <div class="h-4 w-[1px] bg-slate-700 hidden sm:block"></div>
+                    <span class="hidden sm:flex items-center gap-2 text-xs font-mono px-2 py-1 rounded border theme-border" style="background: rgba(0,0,0,0.2); color: var(--color-primary);">
+                        <span class="w-1.5 h-1.5 rounded-full animate-pulse" style="background: var(--color-primary);"></span>
+                        SYSTEM: OPTIMAL
+                    </span>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                     {{-- Notifications --}}
+                     <div class="relative" x-data="{ 
+                        open: false,
+                        notifications: [],
+                        unreadCount: 0,
+                        loading: false,
+                        async fetchNotifications() {
+                            this.loading = true;
+                            try {
+                                const response = await fetch('{{ route('notifications.index') }}');
+                                const data = await response.json();
+                                this.notifications = data.notifications;
+                                this.unreadCount = data.unread_count;
+                            } catch (error) {
+                                console.error('Error fetching notifications:', error);
+                            } finally {
+                                this.loading = false;
+                            }
+                        },
+                        async markAsRead(id) {
+                            try {
+                                const url = '{{ route('notifications.read', ':id') }}'.replace(':id', id);
+                                await fetch(url, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                    },
+                                });
+                                await this.fetchNotifications();
+                            } catch (error) {
+                                console.error('Error marking as read:', error);
+                            }
+                        },
+                        getNotificationUrl(notification) {
+                            // If URL exists in data, use it
+                            if (notification.data?.url) {
+                                return notification.data.url;
+                            }
+                            
+                            // Fallback: generate URL based on notification type
+                            if (notification.type === 'App\\Notifications\\PaymentRequestCreated' && notification.data?.payment_request_id) {
+                                return `/payment-requests/${notification.data.payment_request_id}`;
+                            }
+                            if (notification.type === 'App\\Notifications\\InvoiceSubmittedForApproval' && notification.data?.invoice_id) {
+                                return `/invoices/${notification.data.invoice_id}`;
+                            }
+                            if (notification.type === 'App\\Notifications\\TaxInvoiceRequestedNotification') {
+                                return '/tax-invoices';
+                            }
+                            
+                            return '#'; // Default fallback
+                        },
+                        init() {
+                            this.fetchNotifications();
+                            // Poll for new notifications every minute
+                            setInterval(() => this.fetchNotifications(), 60000);
+                        }
+                     }">
+                        <button @click="open = !open" class="relative p-2 rounded-lg hover:bg-white/10 transition-colors theme-text-muted hover:text-white">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                            <span x-show="unreadCount > 0" class="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 shadow-[0_0_8px_red]" style="display: none;"></span>
+                        </button>
+                        <div x-show="open" @click.away="open = false" style="display: none; background-color: #0f172a !important; border: 1px solid #334155 !important;" class="absolute right-0 mt-2 w-96 rounded-xl shadow-2xl z-50 overflow-hidden">
+                            <div class="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-800/50">
+                                <span class="text-sm font-bold text-white">Notifications</span>
+                                <span x-text="unreadCount > 0 ? `${unreadCount} new` : 'No new'" class="text-xs text-slate-400"></span>
+                            </div>
+                            <div class="max-h-96 overflow-y-auto">
+                                <template x-if="loading && notifications.length === 0">
+                                    <div class="p-4 text-center text-slate-400 text-xs">Loading...</div>
+                                </template>
+                                <template x-if="!loading && notifications.length === 0">
+                                    <div class="p-4 text-center text-slate-400 text-xs">No notifications</div>
+                                </template>
+                                <template x-for="notification in notifications" :key="notification.id">
+                                    <a 
+                                        :href="getNotificationUrl(notification)" 
+                                        @click.prevent="async function() {
+                                            const url = getNotificationUrl(notification);
+                                            console.log('Notification clicked:', notification);
+                                            console.log('Navigating to:', url);
+                                            
+                                            try {
+                                                // Mark as read first
+                                                await markAsRead(notification.id);
+                                                
+                                                // Close dropdown
+                                                open = false;
+                                                
+                                                // Navigate after a short delay
+                                                if (url && url !== '#') {
+                                                    setTimeout(() => {
+                                                        window.location.href = url;
+                                                    }, 100);
+                                                }
+                                            } catch (error) {
+                                                console.error('Navigation error:', error);
+                                                // Navigate anyway even if mark as read fails
+                                                if (url && url !== '#') {
+                                                    window.location.href = url;
+                                                }
+                                            }
+                                        }"
+                                        class="block p-4 border-b border-slate-700 hover:bg-slate-800 transition-colors cursor-pointer" 
+                                        :class="notification.read_at ? 'bg-slate-900/50' : 'bg-slate-900'"
+                                    >
+                                        <div class="flex items-start gap-3">
+                                            <div class="flex-shrink-0 mt-1" :class="notification.read_at ? 'opacity-40' : ''">
+                                                <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-sm font-medium text-white leading-relaxed" x-text="notification.message"></p>
+                                                <div class="flex items-center gap-2 mt-2">
+                                                    <p class="text-xs text-slate-400" x-text="notification.created_at"></p>
+                                                    <template x-if="!notification.read_at">
+                                                        <span class="px-2 py-0.5 text-[10px] bg-indigo-500 text-white rounded-full font-medium">New</span>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </template>
+                            </div>
+                        </div>
+                     </div>
+
+                    {{-- Theme Switcher (macOS Style - Right Aligned) --}}
+                    @if($role !== 'sales')
+                    <div class="hidden md:flex items-center gap-2 pl-4 border-l border-white/10">
+                        <button onclick="setTheme('default')" class="w-2.5 h-2.5 rounded-full bg-[#22D3EE] hover:brightness-110 transition-all shadow-[0_0_5px_rgba(34,211,238,0.5)] hover:scale-125" title="Midnight Cyan"></button>
+                        <button onclick="setTheme('gold')" class="w-2.5 h-2.5 rounded-full bg-[#FBBF24] hover:brightness-110 transition-all shadow-[0_0_5px_rgba(251,191,36,0.5)] hover:scale-125" title="Royal Gold"></button>
+                        <button onclick="setTheme('emerald')" class="w-2.5 h-2.5 rounded-full bg-[#34D399] hover:brightness-110 transition-all shadow-[0_0_5px_rgba(52,211,153,0.5)] hover:scale-125" title="Emerald Glass"></button>
+                    </div>
+                    @endif
+                </div>
+            </header>
+
+            {{-- CONTENT SCROLL AREA --}}
+            <div class="flex-1 overflow-y-auto p-6 pb-24 md:p-8 md:pb-8 space-y-6">
                 {{ $slot ?? '' }}
                 @yield('content')
             </div>
-        </div>
-    </main>
-</div>
-@stack('scripts')
+
+        </main>
+
+        {{-- SALES BOTTOM NAV (mobile only) --}}
+        @if($role === 'sales')
+            <nav class="fixed bottom-0 inset-x-0 z-40 border-t border-slate-700/60 bg-slate-900/95 backdrop-blur md:hidden">
+                <div class="flex">
+                    <a href="{{ route('sales.console') }}"
+                       class="flex-1 flex flex-col items-center justify-center py-2 text-[11px] {{ request()->routeIs('sales.console') ? 'text-cyan-300' : 'text-slate-400' }}">
+                        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3" />
+                        </svg>
+                        <span>Home</span>
+                    </a>
+                    <a href="{{ route('job-orders.index') }}"
+                       class="flex-1 flex flex-col items-center justify-center py-2 text-[11px] {{ request()->routeIs('job-orders.*') ? 'text-cyan-300' : 'text-slate-400' }}">
+                        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        <span>Job Order</span>
+                    </a>
+                    <a href="{{ route('payment-requests.index') }}"
+                       class="flex-1 flex flex-col items-center justify-center py-2 text-[11px] {{ request()->routeIs('payment-requests.*') ? 'text-cyan-300' : 'text-slate-400' }}">
+                        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Pay Request</span>
+                    </a>
+                    <a href="{{ route('invoices.index') }}"
+                       class="flex-1 flex flex-col items-center justify-center py-2 text-[11px] {{ request()->routeIs('invoices.*') ? 'text-cyan-300' : 'text-slate-400' }}">
+                        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <span>Invoice</span>
+                    </a>
+                </div>
+            </nav>
+        @endif
+
+
+
+        {{-- SCRIPT GANTI TEMA --}}
+        <script>
+            const savedTheme = localStorage.getItem('tms-theme');
+            if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+
+            function setTheme(themeName) {
+                if (themeName === 'default') {
+                    document.documentElement.removeAttribute('data-theme');
+                    localStorage.removeItem('tms-theme');
+                } else {
+                    document.documentElement.setAttribute('data-theme', themeName);
+                    localStorage.setItem('tms-theme', themeName);
+                }
+            }
+        </script>
+        
+        {{-- SIDEBAR COLLAPSE SCRIPT --}}
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const sidebar = document.getElementById('sidebar');
+                const toggleBtn = document.getElementById('sidebarToggle');
+                
+                // Load saved sidebar state
+                const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+                if (isCollapsed) {
+                    sidebar.classList.add('collapsed');
+                }
+                
+                // Toggle sidebar collapse/expand
+                toggleBtn.addEventListener('click', function() {
+                    sidebar.classList.toggle('collapsed');
+                    const collapsed = sidebar.classList.contains('collapsed');
+                    localStorage.setItem('sidebar-collapsed', collapsed);
+                });
+                
+                // Menu group collapse/expand functionality
+                const groupHeaders = document.querySelectorAll('.group-header');
+                
+                groupHeaders.forEach(header => {
+                    const group = header.closest('.menu-group');
+                    const groupName = group.dataset.group;
+                    const groupItems = group.querySelector('.group-items');
+                    const chevron = header.querySelector('.chevron');
+                    
+                    // Load saved group state (default: expanded)
+                    const isGroupCollapsed = localStorage.getItem(`menu-group-${groupName}`) === 'true';
+                    if (isGroupCollapsed) {
+                        groupItems.style.maxHeight = '0';
+                        groupItems.style.overflow = 'hidden';
+                        chevron.style.transform = 'rotate(-90deg)';
+                    } else {
+                        groupItems.style.maxHeight = groupItems.scrollHeight + 'px';
+                    }
+                    
+                    // Toggle group on header click
+                    header.addEventListener('click', function() {
+                        const isCurrentlyCollapsed = groupItems.style.maxHeight === '0px';
+                        
+                        if (isCurrentlyCollapsed) {
+                            // Expand
+                            groupItems.style.maxHeight = groupItems.scrollHeight + 'px';
+                            groupItems.style.overflow = 'visible';
+                            chevron.style.transform = 'rotate(0deg)';
+                            localStorage.setItem(`menu-group-${groupName}`, 'false');
+                        } else {
+                            // Collapse
+                            groupItems.style.maxHeight = '0';
+                            groupItems.style.overflow = 'hidden';
+                            chevron.style.transform = 'rotate(-90deg)';
+                            localStorage.setItem(`menu-group-${groupName}`, 'true');
+                        }
+                    });
+                });
+            });
+        </script>
+        
+        {{-- SIDEBAR COLLAPSE STYLES --}}
+        <style>
+            #sidebar {
+                transition: width 0.3s ease;
+            }
+            
+            #sidebar.collapsed {
+                width: 6rem !important;
+            }
+            
+            /* Hide all text elements when collapsed */
+            #sidebar.collapsed .sidebar-text {
+                display: none !important;
+            }
+            
+            #sidebar:not(.collapsed) .sidebar-text {
+                opacity: 1;
+                width: auto;
+            }
+            
+            /* Nav items when collapsed - show icons centered */
+            #sidebar.collapsed .nav-item {
+                justify-content: center !important;
+                padding: 0.75rem !important;
+            }
+            
+            #sidebar.collapsed .nav-item svg {
+                margin: 0 !important;
+            }
+            
+            /* Adjust logo section when collapsed */
+            #sidebar.collapsed .p-6 {
+                padding: 1rem !important;
+            }
+            
+            /* Adjust footer when collapsed */
+            #sidebar.collapsed .p-4.mt-auto {
+                padding: 1rem !important;
+            }
+            
+            #sidebar.collapsed .p-4.mt-auto .flex-1 {
+                display: none;
+            }
+            
+            #sidebar.collapsed .p-4.mt-auto .flex {
+                justify-content: center;
+            }
+            
+            /* Toggle button icon rotation when collapsed */
+            #sidebar.collapsed #sidebarToggle svg {
+                transform: rotate(180deg);
+            }
+            
+            /* Adjust toggle button container when collapsed */
+            #sidebar.collapsed .px-4.pb-4 {
+                padding: 0.5rem !important;
+            }
+            
+            /* Menu Group Styles */
+            .menu-group {
+                margin-bottom: 0.25rem;
+            }
+            
+            .group-header {
+                outline: none;
+                border: none;
+                background: transparent;
+            }
+            
+            .group-header:focus {
+                outline: none;
+            }
+            
+            .group-items {
+                transition: max-height 0.3s ease, overflow 0.3s ease;
+                overflow: visible;
+            }
+            
+            .chevron {
+                transition: transform 0.2s ease;
+            }
+            
+            /* Hide group headers when sidebar collapsed */
+            #sidebar.collapsed .group-header {
+                display: none;
+            }
+            
+            /* Show group items directly when sidebar collapsed */
+            #sidebar.collapsed .group-items {
+                max-height: none !important;
+                overflow: visible !important;
+            }
+        </style>
+        
+        {{-- FORM KEYBOARD SHORTCUTS (Ctrl+S to Save) --}}
+        <script src="{{ asset('js/form-shortcuts.js') }}"></script>
+        
+        @stack('scripts')
+    </div>
 </body>
 </html>

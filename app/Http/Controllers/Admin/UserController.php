@@ -34,6 +34,7 @@ class UserController extends Controller
             'menus' => $this->groupedMenus(),
             'permissions' => config('permissions.available_permissions', []),
             'selectedPermissions' => collect(old('permissions', []))->all(),
+            'isPrimarySuperAdmin' => false,
         ]);
     }
 
@@ -63,6 +64,7 @@ class UserController extends Controller
     public function edit(User $user): View
     {
         $user->load('menus');
+        $isPrimarySuperAdmin = $user->id === 1 && $user->isSuperAdmin();
 
         return view('admin.users.edit', [
             'user' => $user,
@@ -76,6 +78,7 @@ class UserController extends Controller
                 'permissions',
                 $user->permissions ?? (config('permissions.role_permissions')[$user->role] ?? [])
             ))->all(),
+            'isPrimarySuperAdmin' => $isPrimarySuperAdmin,
         ]);
     }
 

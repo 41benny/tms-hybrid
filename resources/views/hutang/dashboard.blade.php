@@ -8,106 +8,91 @@
         <p class="text-sm text-slate-600 dark:text-slate-400">Monitoring semua hutang vendor (Trucking, Vendor, Pelayaran, Asuransi) dan uang jalan driver</p>
     </div>
 
-    {{-- Payables Metrics Row --}}
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <x-card>
-            <div class="p-5">
-                <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Total Tagihan Vendor</p>
-                <h3 class="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">Rp {{ number_format($totalVendorBills,0,',','.') }}</h3>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Semua vendor bills (exclude cancelled)</p>
+    {{-- Consolidated Info Panel --}}
+    <x-card>
+        <div class="p-6">
+            {{-- Main Metrics --}}
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 pb-6 border-b border-slate-200 dark:border-slate-700">
+                <div>
+                    <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Total Tagihan Vendor</p>
+                    <h3 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-2">Rp {{ number_format($totalVendorBills,0,',','.') }}</h3>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Semua vendor bills (exclude cancelled)</p>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Sudah Diajukan</p>
+                    <h3 class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">Rp {{ number_format($totalRequested,0,',','.') }}</h3>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Payment requests (pending/approved/paid)</p>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Sisa Belum Diajukan</p>
+                    <h3 class="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-2">Rp {{ number_format($totalRemainingToRequest,0,',','.') }}</h3>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Outstanding (remaining to request)</p>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Dibayar Bulan Ini</p>
+                    <h3 class="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-2">Rp {{ number_format($paidThisMonth,0,',','.') }}</h3>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Payment requests status PAID ({{ now()->format('M Y') }})</p>
+                </div>
             </div>
-        </x-card>
-        <x-card>
-            <div class="p-5">
-                <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Sudah Diajukan</p>
-                <h3 class="text-xl md:text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">Rp {{ number_format($totalRequested,0,',','.') }}</h3>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Payment requests (pending/approved/paid)</p>
-            </div>
-        </x-card>
-        <x-card>
-            <div class="p-5">
-                <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Sisa Belum Diajukan</p>
-                <h3 class="text-xl md:text-2xl font-bold text-rose-600 dark:text-rose-400 mt-1">Rp {{ number_format($totalRemainingToRequest,0,',','.') }}</h3>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Outstanding (remaining to request)</p>
-            </div>
-        </x-card>
-        <x-card>
-            <div class="p-5">
-                <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Dibayar Bulan Ini</p>
-                <h3 class="text-xl md:text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">Rp {{ number_format($paidThisMonth,0,',','.') }}</h3>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Payment requests status PAID ({{ now()->format('M Y') }})</p>
-            </div>
-        </x-card>
-    </div>
 
-    {{-- Summary Cards --}}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {{-- Hutang Vendor Pending --}}
-        <x-card>
-            <a href="javascript:void(0)" onclick="showTab('pending-legs')" class="block">
-                <div class="p-6">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-slate-600 dark:text-slate-400">Pending Order Legs</p>
-                            <h3 class="text-2xl font-bold text-orange-600 dark:text-orange-400 mt-1">
-                                Rp {{ number_format($totalPendingVendorLegs, 0, ',', '.') }}
-                            </h3>
-                            <p class="text-xs text-slate-500 dark:text-slate-500 mt-1">{{ $pendingVendorLegs->count() }} legs (semua kategori) belum dibuat bill</p>
-                        </div>
-                        <div class="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
-                            <svg class="w-6 h-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {{-- Summary Cards --}}
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
+                {{-- Pending Order Legs --}}
+                <a href="javascript:void(0)" onclick="showTab('pending-legs')" class="block group">
+                    <div class="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-900/20 dark:to-orange-800/10 border border-orange-200 dark:border-orange-800/30 hover:shadow-lg transition-all">
+                        <div class="w-12 h-12 rounded-xl bg-orange-500 dark:bg-orange-600 flex items-center justify-center flex-shrink-0 shadow-lg">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                             </svg>
                         </div>
-                    </div>
-                </div>
-            </a>
-        </x-card>
-
-        {{-- Vendor Bills Belum Lunas --}}
-        <x-card>
-            <a href="javascript:void(0)" onclick="showTab('unpaid-bills')" class="block">
-                <div class="p-6">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-slate-600 dark:text-slate-400">Unpaid Vendor Bills</p>
-                            <h3 class="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">
-                                Rp {{ number_format($totalUnpaidVendorBills, 0, ',', '.') }}
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs font-semibold text-orange-700 dark:text-orange-400 uppercase tracking-wide">Pending Order Legs</p>
+                            <h3 class="text-xl font-bold text-orange-900 dark:text-orange-300 mt-1">
+                                Rp {{ number_format($totalPendingVendorLegs, 0, ',', '.') }}
                             </h3>
-                            <p class="text-xs text-slate-500 dark:text-slate-500 mt-1">{{ $unpaidVendorBills->count() }} bills outstanding</p>
+                            <p class="text-[10px] text-orange-600 dark:text-orange-500 mt-1">{{ $pendingVendorLegs->count() }} legs belum dibuat bill</p>
                         </div>
-                        <div class="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                            <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    </div>
+                </a>
+
+                {{-- Unpaid Vendor Bills --}}
+                <a href="javascript:void(0)" onclick="showTab('unpaid-bills')" class="block group">
+                    <div class="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-900/20 dark:to-red-800/10 border border-red-200 dark:border-red-800/30 hover:shadow-lg transition-all">
+                        <div class="w-12 h-12 rounded-xl bg-red-500 dark:bg-red-600 flex items-center justify-center flex-shrink-0 shadow-lg">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                             </svg>
                         </div>
-                    </div>
-                </div>
-            </a>
-        </x-card>
-
-        {{-- Uang Jalan Driver Pending --}}
-        <x-card>
-            <a href="javascript:void(0)" onclick="showTab('driver-advances')" class="block">
-                <div class="p-6">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-slate-600 dark:text-slate-400">Pending Driver Advances</p>
-                            <h3 class="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">
-                                Rp {{ number_format($totalPendingDriverAdvances, 0, ',', '.') }}
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs font-semibold text-red-700 dark:text-red-400 uppercase tracking-wide">Unpaid Vendor Bills</p>
+                            <h3 class="text-xl font-bold text-red-900 dark:text-red-300 mt-1">
+                                Rp {{ number_format($totalUnpaidVendorBills, 0, ',', '.') }}
                             </h3>
-                            <p class="text-xs text-slate-500 dark:text-slate-500 mt-1">{{ $pendingDriverAdvances->count() }} advances pending</p>
+                            <p class="text-[10px] text-red-600 dark:text-red-500 mt-1">{{ $unpaidVendorBills->count() }} bills outstanding</p>
                         </div>
-                        <div class="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                            <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    </div>
+                </a>
+
+                {{-- Pending Driver Advances --}}
+                <a href="javascript:void(0)" onclick="showTab('driver-advances')" class="block group">
+                    <div class="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10 border border-blue-200 dark:border-blue-800/30 hover:shadow-lg transition-all">
+                        <div class="w-12 h-12 rounded-xl bg-blue-500 dark:bg-blue-600 flex items-center justify-center flex-shrink-0 shadow-lg">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                             </svg>
                         </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide">Pending Driver Advances</p>
+                            <h3 class="text-xl font-bold text-blue-900 dark:text-blue-300 mt-1">
+                                Rp {{ number_format($totalPendingDriverAdvances, 0, ',', '.') }}
+                            </h3>
+                            <p class="text-[10px] text-blue-600 dark:text-blue-500 mt-1">{{ $pendingDriverAdvances->count() }} advances pending</p>
+                        </div>
                     </div>
-                </div>
-            </a>
-        </x-card>
-    </div>
+                </a>
+            </div>
+        </div>
+    </x-card>
 
     {{-- Tabs --}}
     <div class="bg-white dark:bg-[#1e1e1e] rounded-xl shadow-lg">
@@ -116,13 +101,13 @@
                 <button onclick="showTab('pending-legs')" id="tab-pending-legs" class="tab-button px-4 py-4 text-sm font-medium border-b-2 border-indigo-600 text-indigo-600">
                     Pending Order Legs ({{ $pendingVendorLegs->count() }})
                 </button>
-                <button onclick="showTab('unpaid-bills')" id="tab-unpaid-bills" class="tab-button px-4 py-4 text-sm font-medium border-b-2 border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
+                <button onclick="showTab('unpaid-bills')" id="tab-unpaid-bills" class="tab-button px-4 py-4 text-sm font-medium border-b-2 border-transparent text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-slate-300 dark:hover:border-slate-600">
                     Unpaid Bills ({{ $unpaidVendorBills->count() }})
                 </button>
-                <button onclick="showTab('driver-advances')" id="tab-driver-advances" class="tab-button px-4 py-4 text-sm font-medium border-b-2 border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
+                <button onclick="showTab('driver-advances')" id="tab-driver-advances" class="tab-button px-4 py-4 text-sm font-medium border-b-2 border-transparent text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-slate-300 dark:hover:border-slate-600">
                     Driver Advances ({{ $pendingDriverAdvances->count() }})
                 </button>
-                <button onclick="showTab('summary')" id="tab-summary" class="tab-button px-4 py-4 text-sm font-medium border-b-2 border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
+                <button onclick="showTab('summary')" id="tab-summary" class="tab-button px-4 py-4 text-sm font-medium border-b-2 border-transparent text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-slate-300 dark:hover:border-slate-600">
                     Summary
                 </button>
             </nav>

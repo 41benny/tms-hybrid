@@ -9,13 +9,17 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class VendorBill extends Model
 {
     protected $fillable = [
-        'vendor_id', 'vendor_bill_number', 'bill_date', 'due_date', 'total_amount', 'status', 'notes',
+        'vendor_id', 'vendor_bill_number', 'bill_date', 'due_date', 'total_amount', 'amount_paid', 'status', 'notes',
     ];
 
     protected $casts = [
         'bill_date' => 'date',
         'due_date' => 'date',
+        'total_amount' => 'decimal:2',
+        'amount_paid' => 'decimal:2',
     ];
+    
+    protected $appends = ['outstanding_balance'];
 
     public function vendor(): BelongsTo
     {
@@ -29,6 +33,12 @@ class VendorBill extends Model
 
     public function payments(): HasMany
     {
+        return $this->hasMany(VendorBillPayment::class)
+            ->orderBy('payment_date', 'desc');
+    }
+    
+    public function cashBankTransactions(): HasMany
+    {
         return $this->hasMany(CashBankTransaction::class, 'vendor_bill_id')
             ->where('sumber', 'vendor_payment')
             ->orderBy('tanggal', 'desc');
@@ -38,6 +48,17 @@ class VendorBill extends Model
     {
         return $this->hasMany(\App\Models\Operations\PaymentRequest::class, 'vendor_bill_id')
             ->orderBy('request_date', 'desc');
+    }
+    
+    // Computed Properties
+    public function getOutstandingBalanceAttribute(): float
+    {
+        return (float) ($this->total_amount - $this->amount_paid);
+    }
+    
+    public function getIsFullyPaidAttribute(): bool
+    {
+        return $this->amount_paid >= $this->total_amount;
     }
 
     protected static function booted(): void

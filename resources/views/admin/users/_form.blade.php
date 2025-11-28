@@ -10,7 +10,7 @@
 
 <div class="space-y-8" x-data="userPermissionsManager()">
     {{-- User Information Section --}}
-    <div class="rounded-2xl border border-slate-200 dark:border-[#2d2d2d] bg-white dark:bg-[#1e1e1e] p-6 shadow-sm">
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#020617] p-6 shadow-sm">
         <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-5 flex items-center gap-2">
             <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
             Informasi User
@@ -26,7 +26,7 @@
                         name="name"
                         value="{{ old('name', $user->name ?? '') }}"
                         required
-                        class="w-full rounded-lg border border-slate-200 dark:border-[#2d2d2d] bg-slate-50 dark:bg-[#1c1c1c] px-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-[#262626] transition-colors"
+                        class="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-[#020617] px-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white dark:focus:bg-[#020617] transition-colors"
                         placeholder="Masukkan nama lengkap"
                     >
                     @error('name')
@@ -43,7 +43,7 @@
                         value="{{ old('email', $user->email ?? '') }}"
                         required
                         {{ isset($isPrimarySuperAdmin) && $isPrimarySuperAdmin ? 'readonly' : '' }}
-                        class="w-full rounded-lg border border-slate-200 dark:border-[#2d2d2d] bg-slate-50 dark:bg-[#1c1c1c] px-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-[#262626] transition-colors {{ isset($isPrimarySuperAdmin) && $isPrimarySuperAdmin ? 'opacity-60 cursor-not-allowed' : '' }}"
+                        class="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-[#020617] px-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white dark:focus:bg-[#020617] transition-colors {{ isset($isPrimarySuperAdmin) && $isPrimarySuperAdmin ? 'opacity-60 cursor-not-allowed' : '' }}"
                         placeholder="nama@example.com"
                     >
                     @if(isset($isPrimarySuperAdmin) && $isPrimarySuperAdmin)
@@ -60,7 +60,7 @@
                         <select
                             id="role"
                             name="role"
-                            class="w-full rounded-lg border border-slate-200 dark:border-[#2d2d2d] bg-slate-50 dark:bg-[#1c1c1c] px-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-[#262626] appearance-none transition-colors"
+                            class="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-[#020617] px-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white dark:focus:bg-[#020617] appearance-none transition-colors"
                             required
                         >
                             <option value="" disabled {{ old('role', $user->role ?? '') === '' ? 'selected' : '' }}>Pilih role user...</option>
@@ -118,7 +118,7 @@
                                 value="1" 
                                 @checked((int) old('is_active', $user->is_active ?? 1) === 1) 
                                 {{ isset($isPrimarySuperAdmin) && $isPrimarySuperAdmin ? 'disabled' : '' }}
-                                class="text-indigo-600 focus:ring-indigo-500"
+                                class="text-indigo-400 focus:ring-indigo-400"
                             >
                             <span class="text-sm text-slate-700 dark:text-slate-300">Aktif</span>
                         </label>
@@ -129,7 +129,7 @@
                                 value="0" 
                                 @checked((int) old('is_active', $user->is_active ?? 1) === 0) 
                                 {{ isset($isPrimarySuperAdmin) && $isPrimarySuperAdmin ? 'disabled' : '' }}
-                                class="text-indigo-600 focus:ring-indigo-500"
+                                class="text-indigo-400 focus:ring-indigo-400"
                             >
                             <span class="text-sm text-slate-700 dark:text-slate-300">Nonaktif</span>
                         </label>
@@ -155,7 +155,7 @@
                 </h3>
                 <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Atur izin akses untuk setiap modul dan fitur</p>
             </div>
-            <div class="text-xs px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/30">
+            <div class="text-xs px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700/60">
                 <span class="font-medium">💡 Tip:</span> Centang section untuk aktifkan semua menu di dalamnya
             </div>
         </div>
@@ -165,15 +165,15 @@
                 $sectionId = Str::slug($section);
             @endphp
             
-            <div class="rounded-2xl border-2 border-slate-200 dark:border-[#2d2d2d] bg-white dark:bg-[#1e1e1e] overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+            <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#020617] overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                 {{-- Section Header --}}
-                <div class="px-6 py-4 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-[#222] dark:to-[#1a1a1a] border-b border-slate-200 dark:border-[#2d2d2d]">
+                <div class="px-6 py-4 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-[#050816] dark:to-[#020617] border-b border-slate-200 dark:border-slate-700">
                     <div class="flex items-center justify-between">
                         <label class="flex items-center gap-3 cursor-pointer select-none group">
                             <input
                                 type="checkbox"
                                 @change="toggleSection('{{ $sectionId }}', $el.checked)"
-                                class="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                                class="w-5 h-5 rounded border-slate-500 dark:border-slate-500 bg-transparent text-indigo-400 focus:ring-2 focus:ring-indigo-400 cursor-pointer"
                             >
                             <div>
                                 <h4 class="text-base font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wide group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
@@ -217,13 +217,13 @@
 
                         <div class="space-y-3" data-section="{{ $sectionId }}" data-menu="{{ $permKey }}">
                             {{-- Menu Row --}}
-                            <div class="flex items-start gap-4 p-4 rounded-xl bg-slate-50 dark:bg-[#1c1c1c] border border-slate-200 dark:border-[#2d2d2d]">
+                            <div class="flex items-start gap-4 p-4 rounded-xl bg-slate-50 dark:bg-[#050816] border border-slate-200 dark:border-slate-700">
                                 <div class="flex-1">
                                     <div class="flex items-center gap-3 mb-3">
                                         <div class="w-1.5 h-6 bg-gradient-to-b from-indigo-500 to-purple-500 rounded-full"></div>
                                         <h5 class="font-semibold text-slate-800 dark:text-slate-100">{{ $menu->label }}</h5>
                                         @if(!$hasPermissions)
-                                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 dark:bg-[#2d2d2d] text-slate-500 dark:text-slate-400">View Only</span>
+                                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 dark:bg-[#111827] text-slate-500 dark:text-slate-400">View Only</span>
                                         @endif
                                     </div>
 
@@ -231,7 +231,7 @@
                                     @if($hasPermissions)
                                         <div class="flex flex-wrap gap-2 ml-5">
                                             @foreach ($groupPermissions['items'] as $pKey => $pLabel)
-                                                <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 border-slate-200 dark:border-[#2d2d2d] bg-white dark:bg-[#262626] hover:border-indigo-400 dark:hover:border-indigo-600 hover:shadow-sm cursor-pointer select-none group transition-all">
+                                                <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#020617] hover:border-indigo-400 dark:hover:border-indigo-500 hover:shadow-sm cursor-pointer select-none group transition-all">
                                                     <input
                                                         type="checkbox"
                                                         name="permissions[]"
@@ -239,7 +239,7 @@
                                                         data-section="{{ $sectionId }}"
                                                         data-menu="{{ $permKey }}"
                                                         @checked(in_array($pKey, $selectedPermissions, true))
-                                                        class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500"
+                                                        class="w-4 h-4 rounded border-slate-500 dark:border-slate-500 bg-transparent text-indigo-400 focus:ring-2 focus:ring-indigo-400"
                                                     >
                                                     <span class="text-xs font-medium text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white">{{ $pLabel }}</span>
                                                 </label>

@@ -14,7 +14,11 @@
 
     <form action="{{ route('admin.users.store') }}" method="POST" class="space-y-6">
         @csrf
-        @include('admin.users._form', ['user' => new \App\Models\User(), 'selectedMenus' => []])
+        @include('admin.users._form', [
+            'user' => new \App\Models\User(),
+            'selectedPermissions' => [],
+            'isPrimarySuperAdmin' => false,
+        ])
         <div class="flex items-center justify-end gap-3">
             <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-600 to-indigo-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-indigo-500/30 hover:shadow-md">
                 Simpan

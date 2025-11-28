@@ -184,6 +184,45 @@
                     >
                     <input type="hidden" name="other_costs" id="other_costs_input" value="{{ old('other_costs', 0) }}">
                 </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Potongan Tabungan (IDR)</label>
+                    <input
+                        type="text"
+                        id="driver_savings_deduction_display"
+                        placeholder="200.000"
+                        class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                    >
+                    <input type="hidden" name="driver_savings_deduction" id="driver_savings_deduction_input" value="{{ old('driver_savings_deduction', 0) }}">
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">Potongan untuk tabungan supir</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Potongan Jaminan (IDR)</label>
+                    <input
+                        type="text"
+                        id="driver_guarantee_deduction_display"
+                        placeholder="300.000"
+                        class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                    >
+                    <input type="hidden" name="driver_guarantee_deduction" id="driver_guarantee_deduction_input" value="{{ old('driver_guarantee_deduction', 0) }}">
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">Potongan untuk jaminan supir</p>
+                </div>
+
+                {{-- Net Uang Jalan Display --}}
+                <div class="md:col-span-3">
+                    <div class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-lg p-4 border border-green-200 dark:border-green-800">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-xs font-semibold text-green-600 dark:text-green-400 mb-1">Uang Jalan Bersih (Diterima Supir)</div>
+                                <div class="text-sm text-green-700 dark:text-green-300">Uang Jalan - Tabungan - Jaminan</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-2xl font-bold text-green-600 dark:text-green-400" id="net_uang_jalan_display">Rp 0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {{-- Vendor Costs --}}
@@ -318,35 +357,39 @@
                         placeholder="e.g., POL-2024-001234"
                     />
 
-                    <x-input
-                        name="insured_value"
-                        type="number"
-                        step="0.01"
-                        label="Nilai Pertanggungan (IDR)"
-                        :value="old('insured_value', 0)"
-                        placeholder="e.g., 5000000000"
-                        id="insured_value"
-                    />
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Nilai Pertanggungan (IDR)</label>
+                        <input
+                            type="text"
+                            id="insured_value_display"
+                            placeholder="5.000.000.000"
+                            class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                        >
+                        <input type="hidden" name="insured_value" id="insured_value" value="{{ old('insured_value', 0) }}">
+                    </div>
 
                     <x-input
                         name="premium_rate"
                         type="number"
-                        step="0.01"
+                        step="0.0001"
                         label="Rate Premi (%)"
                         :value="old('premium_rate', 0)"
-                        placeholder="e.g., 0.10"
+                        placeholder="e.g., 0.1250"
                         id="premium_rate"
                     />
 
-                    <x-input
-                        name="admin_fee"
-                        type="number"
-                        step="0.01"
-                        label="Biaya Admin (IDR)"
-                        :value="old('admin_fee', 0)"
-                        placeholder="e.g., 50000"
-                        id="admin_fee"
-                    />
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Biaya Admin (IDR)</label>
+                        <input
+                            type="text"
+                            id="admin_fee_display"
+                            placeholder="50.000"
+                            class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                        >
+                        <input type="hidden" name="admin_fee" id="admin_fee" value="{{ old('admin_fee', 0) }}">
+                    </div>
+
 
                     <div>
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
@@ -384,10 +427,10 @@
                         <x-input
                             name="billable_rate"
                             type="number"
-                            step="0.01"
+                            step="0.0001"
                             label="Rate untuk Customer (%)"
                             :value="old('billable_rate', 0)"
-                            placeholder="e.g., 0.15"
+                            placeholder="e.g., 0.1500"
                             id="billable_rate"
                         />
 
@@ -451,15 +494,21 @@
                         placeholder="e.g., 08123456789"
                     />
 
-                    <x-input
-                        name="pic_amount"
-                        type="number"
-                        step="0.01"
-                        label="Jumlah Pembayaran (IDR)"
-                        :value="old('pic_amount', 0)"
-                        :error="$errors->first('pic_amount')"
-                        placeholder="e.g., 500000"
-                    />
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Jumlah Pembayaran (IDR)</label>
+                        <input
+                            type="text"
+                            id="pic_amount_display"
+                            placeholder="500.000"
+                            class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                        >
+                        <input type="hidden" name="pic_amount" id="pic_amount_input" value="{{ old('pic_amount', 0) }}">
+                        @if($errors->first('pic_amount'))
+                            <p class="text-sm text-rose-600 dark:text-rose-400 mt-1.5">{{ $errors->first('pic_amount') }}</p>
+                        @endif
+                    </div>
+
 
                     <div class="md:col-span-2">
                         <x-textarea
@@ -551,9 +600,49 @@ document.addEventListener('DOMContentLoaded', function() {
     setupFormattedInput('vendor_cost_display', 'vendor_cost_input');
     setupFormattedInput('freight_cost_display', 'freight_cost_input');
     setupFormattedInput('uang_jalan_display', 'uang_jalan_input');
+    setupFormattedInput('driver_savings_deduction_display', 'driver_savings_deduction_input');
+    setupFormattedInput('driver_guarantee_deduction_display', 'driver_guarantee_deduction_input');
     setupFormattedInput('bbm_display', 'bbm_input');
     setupFormattedInput('toll_display', 'toll_input');
     setupFormattedInput('other_costs_display', 'other_costs_input');
+    setupFormattedInput('pic_amount_display', 'pic_amount_input');
+
+    // Auto-calculate Net Uang Jalan
+    function calculateNetUangJalan() {
+        const uangJalan = parseFloat(document.getElementById('uang_jalan_input')?.value) || 0;
+        const bbm = parseFloat(document.getElementById('bbm_input')?.value) || 0;
+        const toll = parseFloat(document.getElementById('toll_input')?.value) || 0;
+        const otherCosts = parseFloat(document.getElementById('other_costs_input')?.value) || 0;
+        const savings = parseFloat(document.getElementById('driver_savings_deduction_input')?.value) || 0;
+        const guarantee = parseFloat(document.getElementById('driver_guarantee_deduction_input')?.value) || 0;
+        
+        // Total = (Uang Jalan + BBM + Tol + Other Costs) - Potongan Tabungan - Potongan Jaminan
+        const totalGross = uangJalan + bbm + toll + otherCosts;
+        const netAmount = totalGross - savings - guarantee;
+        const netDisplay = document.getElementById('net_uang_jalan_display');
+        
+        if (netDisplay) {
+            netDisplay.textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(netAmount);
+        }
+    }
+
+    // Add event listeners for auto-calculation
+    const uangJalanInput = document.getElementById('uang_jalan_input');
+    const bbmInput = document.getElementById('bbm_input');
+    const tollInput = document.getElementById('toll_input');
+    const otherCostsInput = document.getElementById('other_costs_input');
+    const savingsInput = document.getElementById('driver_savings_deduction_input');
+    const guaranteeInput = document.getElementById('driver_guarantee_deduction_input');
+
+    if (uangJalanInput) uangJalanInput.addEventListener('input', calculateNetUangJalan);
+    if (bbmInput) bbmInput.addEventListener('input', calculateNetUangJalan);
+    if (tollInput) tollInput.addEventListener('input', calculateNetUangJalan);
+    if (otherCostsInput) otherCostsInput.addEventListener('input', calculateNetUangJalan);
+    if (savingsInput) savingsInput.addEventListener('input', calculateNetUangJalan);
+    if (guaranteeInput) guaranteeInput.addEventListener('input', calculateNetUangJalan);
+
+    // Initial calculation
+    calculateNetUangJalan();
 
     // Fields containers
     const truckingFields = document.getElementById('trucking_fields');
@@ -658,6 +747,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Trigger on page load
     updateFields();
+
+    // Setup formatted input for insured value (nilai pertanggungan)
+    setupFormattedInput('insured_value_display', 'insured_value');
+    
+    // Setup formatted input for admin fee (biaya admin)
+    setupFormattedInput('admin_fee_display', 'admin_fee');
 
     // Auto-calculate Insurance Premium
     const insuredValue = document.getElementById('insured_value');

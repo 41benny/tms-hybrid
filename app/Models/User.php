@@ -6,6 +6,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\Models\Master\Sales;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -28,6 +30,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'permissions',
         'is_active',
         'deactivated_at',
     ];
@@ -52,6 +55,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'permissions' => 'array',
             'is_active' => 'boolean',
             'deactivated_at' => 'datetime',
         ];
@@ -63,6 +67,14 @@ class User extends Authenticatable
     public function menus(): BelongsToMany
     {
         return $this->belongsToMany(Menu::class)->withTimestamps();
+    }
+
+    /**
+     * Optional link to master Sales record (matched by email).
+     */
+    public function salesProfile(): HasOne
+    {
+        return $this->hasOne(Sales::class, 'email', 'email');
     }
 
     /**
@@ -97,6 +109,44 @@ class User extends Authenticatable
     public function isActive(): bool
     {
         return $this->is_active;
+    }
+
+    /**
+     * Get permissions for this user's role.
+     *
+     * @return list<string>
+     */
+    public function permissions(): array
+    {
+        $map = config('permissions.role_permissions', []);
+        $custom = is_array($this->permissions) ? $this->permissions : null;
+
+        if ($this->isSuperAdmin()) {
+            return collect($map)
+                ->flatten()
+                ->unique()
+                ->values()
+                ->all();
+        }
+
+        if ($custom !== null) {
+            return collect($custom)->unique()->values()->all();
+        }
+
+        return $map[$this->role] ?? [];
+    }
+
+    public function hasPermission(string ...$permissions): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        $userPermissions = $this->permissions();
+
+        return collect($permissions)->contains(
+            fn (string $permission): bool => in_array($permission, $userPermissions, true)
+        );
     }
 
     public function canAccessMenu(string $slug): bool

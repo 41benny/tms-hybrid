@@ -16,7 +16,7 @@
             }
         @endphp
         <div 
-            class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-lg transition-shadow cursor-pointer flex flex-col"
+            class="theme-panel rounded-2xl shadow-lg hover:shadow-2xl transition-all cursor-pointer flex flex-col hover:scale-[1.02]"
             onclick="window.location.href='{{ route('job-orders.show', $order) }}'"
             role="link"
             tabindex="0"
@@ -24,10 +24,10 @@
             <!-- Header -->
             <div class="px-4 pt-4 pb-3 flex items-start justify-between gap-2">
                 <div class="min-w-0">
-                    <a href="{{ route('job-orders.show', $order) }}" class="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+                    <a href="{{ route('job-orders.show', $order) }}" class="text-sm font-semibold theme-text-primary hover:underline">
                         {{ $order->job_number }}
                     </a>
-                    <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
+                    <p class="mt-1 text-sm font-semibold text-slate-100 dark:text-slate-200 truncate">
                         {{ $order->customer->name }}
                     </p>
                 </div>
@@ -49,38 +49,38 @@
                 </div>
             </div>
 
-            <div class="border-t border-slate-200 dark:border-slate-700"></div>
+            <div class="border-t theme-border"></div>
 
             <!-- Body -->
             <div class="px-4 py-4 space-y-3 flex-1">
                 <!-- Sales (label kanan-kiri) -->
-                <div class="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
-                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="flex items-center gap-2 text-xs theme-text-muted">
+                    <svg class="w-4 h-4 theme-text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A4 4 0 019 15h6a4 4 0 013.879 2.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    <span class="shrink-0 text-slate-500 dark:text-slate-400">Sales:</span>
-                    <span class="font-medium text-slate-800 dark:text-slate-200 truncate">
+                    <span class="shrink-0 theme-text-muted">Sales:</span>
+                    <span class="font-medium text-slate-100 dark:text-slate-200 truncate">
                         {{ $order->sales?->name ?? '-' }}
                     </span>
                 </div>
 
                 <!-- Cargo summary (label kanan-kiri) -->
                 @if($cargoTitle)
-                    <div class="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
-                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="flex items-center gap-2 text-xs theme-text-muted">
+                        <svg class="w-4 h-4 theme-text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7l9-4 9 4-9 4-9-4z" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 17l9 4 9-4M3 12l9 4 9-4" />
                         </svg>
-                        <span class="shrink-0 text-slate-500 dark:text-slate-400">Cargo:</span>
-                        <span class="font-semibold text-slate-900 dark:text-slate-100 truncate">
+                        <span class="shrink-0 theme-text-muted">Cargo:</span>
+                        <span class="font-semibold text-slate-100 dark:text-slate-200 truncate">
                             {{ $cargoTitle }}
                             @if($additionalItems > 0)
-                                <span class="font-normal text-xs text-slate-500 dark:text-slate-400">
+                                <span class="font-normal text-xs theme-text-muted">
                                     (+{{ $additionalItems }} item{{ $additionalItems > 1 ? 's' : '' }})
                                 </span>
                             @endif
                             @if($totalQuantityFormatted)
-                                <span class="font-normal text-xs text-slate-500 dark:text-slate-400">
+                                <span class="font-normal text-xs theme-text-muted">
                                     &mdash; {{ $totalQuantityFormatted }} units total
                                 </span>
                             @endif
@@ -89,27 +89,27 @@
                 @endif
 
                 <!-- Route (From / To dalam satu baris) -->
-                <div class="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
-                    <span class="shrink-0 text-slate-500 dark:text-slate-400">From:</span>
-                    <span class="font-medium text-slate-900 dark:text-slate-100 truncate max-w-[35%]">
+                <div class="flex items-center gap-2 text-xs theme-text-muted">
+                    <span class="shrink-0 theme-text-muted">From:</span>
+                    <span class="font-medium text-slate-100 dark:text-slate-200 truncate max-w-[35%]">
                         {{ $order->origin ?: '-' }}
                     </span>
-                    <span class="shrink-0 text-slate-500 dark:text-slate-400 ml-2">To:</span>
-                    <span class="font-medium text-slate-900 dark:text-slate-100 truncate max-w-[35%]">
+                    <span class="shrink-0 theme-text-muted ml-2">To:</span>
+                    <span class="font-medium text-slate-100 dark:text-slate-200 truncate max-w-[35%]">
                         {{ $order->destination ?: '-' }}
                     </span>
                 </div>
 
                 <!-- Legs only -->
                 <div class="flex items-center justify-end text-xs">
-                    <span class="text-slate-500 dark:text-slate-400">
+                    <span class="theme-text-muted">
                         {{ $order->shipmentLegs->count() }} legs
                     </span>
                 </div>
 
                 <!-- Ordered date -->
-                <div class="flex items-center gap-2 pt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="flex items-center gap-2 pt-0.5 text-xs theme-text-muted">
+                    <svg class="w-4 h-4 theme-text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2m-9 4h10m-9 4h6m5-9H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2v-9a2 2 0 00-2-2z" />
                     </svg>
                     <span>Ordered on {{ $order->order_date->format('m/d/Y') }}</span>

@@ -33,7 +33,7 @@
             <form method="post" action="{{ route('vendor-bills.mark-received', $bill) }}" class="inline">
                 @csrf
                 <button type="submit" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition-colors">
-                    Mark Received
+                    Post to Journal
                 </button>
             </form>
             @endif

@@ -58,7 +58,6 @@ class JournalService
         }
 
         $ar = $this->map('ar');
-        $revenue = $this->map('revenue');
         $vatOut = $this->map('vat_out');
 
         $lines = [];
@@ -66,8 +65,31 @@ class JournalService
         // Dr. Piutang Usaha (total yang akan diterima dari customer)
         $lines[] = ['account_code' => $ar, 'debit' => $totalReceivable, 'credit' => 0, 'desc' => 'Piutang Invoice '.$invoice->invoice_number, 'customer_id' => $invoice->customer_id];
 
-        // Cr. Pendapatan (DPP)
-        $lines[] = ['account_code' => $revenue, 'debit' => 0, 'credit' => $dpp, 'desc' => 'Pendapatan Invoice '.$invoice->invoice_number, 'customer_id' => $invoice->customer_id];
+        // Cek apakah ini invoice DP atau Normal
+        if ($invoice->invoice_type === 'down_payment') {
+            // INVOICE DP: Cr. Hutang Uang Muka (bukan pendapatan)
+            $customerDeposit = $this->map('customer_deposit');
+            $lines[] = ['account_code' => $customerDeposit, 'debit' => 0, 'credit' => $dpp, 'desc' => 'Uang Muka Customer Invoice '.$invoice->invoice_number, 'customer_id' => $invoice->customer_id];
+        } else {
+            // INVOICE NORMAL/FINAL: Cr. Pendapatan (DPP)
+            $revenue = $this->map('revenue');
+            $lines[] = ['account_code' => $revenue, 'debit' => 0, 'credit' => $dpp, 'desc' => 'Pendapatan Invoice '.$invoice->invoice_number, 'customer_id' => $invoice->customer_id];
+            
+            // Jika invoice final dengan DP, balik hutang uang muka
+            if ($invoice->invoice_type === 'final' && $invoice->related_invoice_id) {
+                $relatedInvoice = Invoice::find($invoice->related_invoice_id);
+                if ($relatedInvoice && $relatedInvoice->invoice_type === 'down_payment') {
+                    $dpAmount = (float) $relatedInvoice->subtotal;
+                    $customerDeposit = $this->map('customer_deposit');
+                    
+                    // Dr. Hutang Uang Muka (mengurangi hutang)
+                    $lines[] = ['account_code' => $customerDeposit, 'debit' => $dpAmount, 'credit' => 0, 'desc' => 'Pembalikan DP dari Invoice '.$relatedInvoice->invoice_number, 'customer_id' => $invoice->customer_id];
+                    
+                    // Cr. Pendapatan (mengakui pendapatan DP)
+                    $lines[] = ['account_code' => $revenue, 'debit' => 0, 'credit' => $dpAmount, 'desc' => 'Pengakuan Pendapatan DP dari Invoice '.$relatedInvoice->invoice_number, 'customer_id' => $invoice->customer_id];
+                }
+            }
+        }
 
         // Cr. PPN Keluaran (jika ada PPN)
         if ($ppn > 0) {
@@ -77,6 +99,7 @@ class JournalService
         \Log::info('Invoice Journal Breakdown', [
             'invoice_id' => $invoice->id,
             'invoice_number' => $invoice->invoice_number,
+            'invoice_type' => $invoice->invoice_type,
             'total_amount' => $invoice->total_amount,
             'subtotal' => $invoice->subtotal,
             'tax_amount' => $invoice->tax_amount,
@@ -93,8 +116,10 @@ class JournalService
             'memo' => 'Invoice '.$invoice->invoice_number,
         ], $lines);
 
-        // Balik jurnal biaya dimuka untuk shipment legs yang terkait invoice ini
-        $this->reversePrepaidsForInvoice($invoice);
+        // Balik jurnal biaya dimuka HANYA untuk invoice NORMAL atau FINAL (bukan DP)
+        if ($invoice->invoice_type !== 'down_payment') {
+            $this->reversePrepaidsForInvoice($invoice);
+        }
 
         return $journal;
     }
@@ -106,9 +131,14 @@ class JournalService
         }
         $cash = $this->map('cash');
         $ar = $this->map('ar');
-        $cashReceived = (float) $trx->amount;
+        
+        // Amount di sini adalah Total Invoice yang dilunasi (AR)
+        $arAmount = (float) $trx->amount;
         $withholding = (float) ($trx->withholding_pph23 ?? 0);
-        $totalApplied = $cashReceived + $withholding;
+        $adminFee = (float) ($trx->admin_fee ?? 0);
+        
+        // Uang yang masuk ke bank = AR - PPh23 - Admin Fee
+        $cashReceived = $arAmount - $withholding - $adminFee;
 
         $lines = [
             ['account_code' => $cash, 'debit' => $cashReceived, 'credit' => 0, 'desc' => 'Penerimaan invoice '.$trx->invoice?->invoice_number, 'customer_id' => $trx->customer_id],
@@ -118,8 +148,13 @@ class JournalService
             $pph23Claim = $this->map('pph23_claim');
             $lines[] = ['account_code' => $pph23Claim, 'debit' => $withholding, 'credit' => 0, 'desc' => 'Piutang PPh 23 invoice '.$trx->invoice?->invoice_number, 'customer_id' => $trx->customer_id];
         }
+        
+        if ($adminFee > 0) {
+            $adminExp = $this->map('expense_bank_admin');
+            $lines[] = ['account_code' => $adminExp, 'debit' => $adminFee, 'credit' => 0, 'desc' => 'Biaya admin bank', 'customer_id' => $trx->customer_id];
+        }
 
-        $lines[] = ['account_code' => $ar, 'debit' => 0, 'credit' => $totalApplied, 'desc' => 'Pelunasan invoice '.$trx->invoice?->invoice_number, 'customer_id' => $trx->customer_id];
+        $lines[] = ['account_code' => $ar, 'debit' => 0, 'credit' => $arAmount, 'desc' => 'Pelunasan invoice '.$trx->invoice?->invoice_number, 'customer_id' => $trx->customer_id];
 
         return $this->posting->postGeneral([
             'journal_date' => $trx->tanggal->toDateString(),
@@ -217,11 +252,41 @@ class JournalService
         }
         $ap = $this->map('ap');
         $cash = $this->map('cash');
-        $amt = (float) $trx->amount;
+        
+        // Amount di sini adalah Total Hutang yang dibayar (AP)
+        $apAmount = (float) $trx->amount;
+        $withholding = (float) ($trx->withholding_pph23 ?? 0);
+        $adminFee = (float) ($trx->admin_fee ?? 0);
+        
+        // Uang yang keluar dari bank = AP - PPh23 + Admin Fee
+        // Note: PPh23 di sini adalah PPh23 yang KITA potong saat bayar vendor (Hutang PPh23)
+        // Tapi biasanya PPh23 sudah dicatat saat Vendor Bill (Accrual Basis).
+        // Jika saat payment ada PPh23 lagi, berarti ada adjustment?
+        // Asumsi: withholding_pph23 di payment adalah PPh23 yang baru dipotong saat payment (Cash Basis logic?)
+        // ATAU pelunasan hutang PPh23?
+        // Biasanya di sistem ini, PPh23 dicatat saat Bill. Jadi saat payment hanya bayar Net.
+        // Tapi jika user input PPh23 saat payment, mungkin maksudnya koreksi atau pemotongan cash.
+        
+        // Mari ikuti logika form: Total Bank = Amount - PPh23 + Admin
+        $cashPaid = $apAmount - $withholding + $adminFee;
+        
         $lines = [
-            ['account_code' => $ap, 'debit' => $amt, 'credit' => 0, 'desc' => 'Pelunasan hutang vendor', 'vendor_id' => $trx->vendor_id],
-            ['account_code' => $cash, 'debit' => 0, 'credit' => $amt, 'desc' => 'Pembayaran hutang vendor', 'vendor_id' => $trx->vendor_id],
+            ['account_code' => $ap, 'debit' => $apAmount, 'credit' => 0, 'desc' => 'Pelunasan hutang vendor', 'vendor_id' => $trx->vendor_id],
         ];
+        
+        if ($adminFee > 0) {
+            $adminExp = $this->map('expense_bank_admin');
+            $lines[] = ['account_code' => $adminExp, 'debit' => $adminFee, 'credit' => 0, 'desc' => 'Biaya admin bank', 'vendor_id' => $trx->vendor_id];
+        }
+        
+        if ($withholding > 0) {
+            // Jika ada PPh23 saat payment, anggap sebagai Hutang PPh23 (yang belum dicatat saat bill?)
+            // Atau jika ini mengurangi cash yang dibayar, berarti kita menahan uangnya -> Hutang PPh23 bertambah
+            $pph23Payable = $this->map('pph23');
+            $lines[] = ['account_code' => $pph23Payable, 'debit' => 0, 'credit' => $withholding, 'desc' => 'PPh 23 dipotong saat pembayaran', 'vendor_id' => $trx->vendor_id];
+        }
+        
+        $lines[] = ['account_code' => $cash, 'debit' => 0, 'credit' => $cashPaid, 'desc' => 'Pembayaran hutang vendor', 'vendor_id' => $trx->vendor_id];
 
         return $this->posting->postGeneral([
             'journal_date' => $trx->tanggal->toDateString(),
@@ -249,6 +314,221 @@ class JournalService
             'source_type' => 'expense',
             'source_id' => $trx->id,
             'memo' => 'Pengeluaran biaya',
+        ], $lines);
+    }
+
+    public function postOtherIncome(CashBankTransaction $trx): Journal
+    {
+        if ($j = $this->alreadyPosted('other_in', $trx->id)) {
+            return $j;
+        }
+        $cash = $this->map('cash');
+        $incomeCode = $trx->accountCoa?->code ?? $this->map('other_income');
+        $amt = (float) $trx->amount;
+        $lines = [
+            ['account_code' => $cash, 'debit' => $amt, 'credit' => 0, 'desc' => 'Penerimaan kas/bank'],
+            ['account_code' => $incomeCode, 'debit' => 0, 'credit' => $amt, 'desc' => 'Pendapatan lain-lain'],
+        ];
+
+        return $this->posting->postGeneral([
+            'journal_date' => $trx->tanggal->toDateString(),
+            'source_type' => 'other_in',
+            'source_id' => $trx->id,
+            'memo' => $trx->description ?? 'Pendapatan lain-lain',
+        ], $lines);
+    }
+
+    public function postOtherExpense(CashBankTransaction $trx): Journal
+    {
+        if ($j = $this->alreadyPosted('other_out', $trx->id)) {
+            return $j;
+        }
+        $cash = $this->map('cash');
+        $expenseCode = $trx->accountCoa?->code ?? $this->map('expense_other');
+        $amt = (float) $trx->amount;
+        $lines = [
+            ['account_code' => $expenseCode, 'debit' => $amt, 'credit' => 0, 'desc' => 'Pengeluaran lain-lain'],
+            ['account_code' => $cash, 'debit' => 0, 'credit' => $amt, 'desc' => 'Pengeluaran kas/bank'],
+        ];
+
+        return $this->posting->postGeneral([
+            'journal_date' => $trx->tanggal->toDateString(),
+            'source_type' => 'other_out',
+            'source_id' => $trx->id,
+            'memo' => $trx->description ?? 'Pengeluaran lain-lain',
+        ], $lines);
+    }
+
+    /**
+     * Post driver advance to journal (accrual basis)
+     * Called when user clicks "Post" button on driver advance
+     * 
+     * Dr. Biaya Dimuka - Uang Jalan (gross)
+     *   Cr. Hutang Uang Jalan Supir (gross)
+     */
+    public function postDriverAdvance(\App\Models\Operations\DriverAdvance $advance): Journal
+    {
+        // Check if already posted
+        if ($advance->journal_status === 'posted' || $advance->journal_id) {
+            throw new \Exception('Driver advance already posted to journal');
+        }
+        
+        // Load relationships
+        $advance->load(['shipmentLeg.jobOrder', 'shipmentLeg.mainCost', 'driver']);
+        
+        $leg = $advance->shipmentLeg;
+        $mainCost = $leg->mainCost;
+        
+        if (!$mainCost) {
+            throw new \Exception('Main cost not found for shipment leg');
+        }
+        
+        // Calculate gross amount
+        $grossAmount = (float) ($mainCost->uang_jalan ?? 0)
+                     + (float) ($mainCost->bbm ?? 0)
+                     + (float) ($mainCost->toll ?? 0)
+                     + (float) ($mainCost->other_costs ?? 0);
+        
+        if ($grossAmount <= 0) {
+            throw new \Exception('No uang jalan amount to post');
+        }
+        
+        $prepaid = $this->map('prepaid_expense'); // 1500
+        $driverPayable = $this->map('driver_payable'); // 2155
+        
+        $lines = [
+            [
+                'account_code' => $prepaid,
+                'debit' => $grossAmount,
+                'credit' => 0,
+                'desc' => 'Biaya dimuka uang jalan - ' . $leg->jobOrder->job_number
+            ],
+            [
+                'account_code' => $driverPayable,
+                'debit' => 0,
+                'credit' => $grossAmount,
+                'desc' => 'Hutang uang jalan supir - ' . ($advance->driver->name ?? 'N/A')
+            ],
+        ];
+        
+        $journal = $this->posting->postGeneral([
+            'journal_date' => $advance->advance_date,
+            'source_type' => 'driver_advance',
+            'source_id' => $advance->id,
+            'memo' => 'Biaya dimuka uang jalan ' . $advance->advance_number,
+        ], $lines);
+        
+        // Update driver advance status
+        $advance->update([
+            'journal_status' => 'posted',
+            'journal_id' => $journal->id
+        ]);
+        
+        return $journal;
+    }
+
+    /**
+     * Post driver advance payment journal
+     * Pays down the liability created when shipment leg was created
+     * 
+     * DP Payment:
+     *   Dr. Hutang Uang Jalan Supir (DP amount)
+     *     Cr. Kas/Bank (DP amount)
+     * 
+     * Settlement:
+     *   Dr. Hutang Uang Jalan Supir (gross)
+     *     Cr. Kas/Bank (net)
+     *     Cr. Hutang Tabungan (savings)
+     *     Cr. Hutang Jaminan (guarantee)
+     */
+    public function postDriverAdvancePayment(CashBankTransaction $trx): Journal
+    {
+        if ($j = $this->alreadyPosted('uang_jalan', $trx->id)) {
+            return $j;
+        }
+        
+        $cash = $this->map('cash');
+        $driverPayable = $this->map('driver_payable'); // 2155 - Hutang Uang Jalan Supir
+        
+        $netAmount = (float) $trx->amount; // Net paid to driver
+        $savingsDeduction = 0;
+        $guaranteeDeduction = 0;
+        $isSettlement = false;
+        
+        // Load driver advance payment records
+        $driverAdvancePayments = \App\Models\Operations\DriverAdvancePayment::where('cash_bank_transaction_id', $trx->id)
+            ->with(['driverAdvance.shipmentLeg.mainCost'])
+            ->get();
+        
+        foreach ($driverAdvancePayments as $payment) {
+            $advance = $payment->driverAdvance;
+            if ($advance) {
+                // Check if this is settlement
+                if ($advance->dp_amount > 0 || $advance->status === 'dp_paid') {
+                    $isSettlement = true;
+                    
+                    // Only add deductions during settlement
+                    if ($advance->shipmentLeg && $advance->shipmentLeg->mainCost) {
+                        $mainCost = $advance->shipmentLeg->mainCost;
+                        $savingsDeduction += (float) ($mainCost->driver_savings_deduction ?? 0);
+                        $guaranteeDeduction += (float) ($mainCost->driver_guarantee_deduction ?? 0);
+                    }
+                }
+            }
+        }
+        
+        // Gross amount = amount of liability being paid off
+        $grossPayable = $netAmount;
+        if ($isSettlement) {
+            $grossPayable = $netAmount + $savingsDeduction + $guaranteeDeduction;
+        }
+        
+        $lines = [];
+        
+        // Dr. Hutang Uang Jalan Supir (paying off liability)
+        $lines[] = [
+            'account_code' => $driverPayable,
+            'debit' => $grossPayable,
+            'credit' => 0,
+            'desc' => 'Pembayaran hutang uang jalan - ' . ($isSettlement ? 'Pelunasan' : 'DP')
+        ];
+        
+        // Cr. Kas/Bank
+        $lines[] = [
+            'account_code' => $cash,
+            'debit' => 0,
+            'credit' => $netAmount,
+            'desc' => 'Pembayaran uang jalan driver'
+        ];
+        
+        // Settlement only: add deduction liabilities
+        if ($isSettlement) {
+            if ($savingsDeduction > 0) {
+                $driverSavings = $this->map('driver_savings');
+                $lines[] = [
+                    'account_code' => $driverSavings,
+                    'debit' => 0,
+                    'credit' => $savingsDeduction,
+                    'desc' => 'Potongan tabungan supir'
+                ];
+            }
+            
+            if ($guaranteeDeduction > 0) {
+                $driverGuarantee = $this->map('driver_guarantee');
+                $lines[] = [
+                    'account_code' => $driverGuarantee,
+                    'debit' => 0,
+                    'credit' => $guaranteeDeduction,
+                    'desc' => 'Potongan jaminan supir'
+                ];
+            }
+        }
+        
+        return $this->posting->postGeneral([
+            'journal_date' => $trx->tanggal->toDateString(),
+            'source_type' => 'uang_jalan',
+            'source_id' => $trx->id,
+            'memo' => $trx->description ?? 'Pembayaran uang jalan driver',
         ], $lines);
     }
 
@@ -365,27 +645,42 @@ class JournalService
 
     protected function reversePrepaidsForInvoice(Invoice $invoice): void
     {
-        // Ambil transport IDs dari items
-        $transportIds = $invoice->items()->whereNotNull('transport_id')->pluck('transport_id')->unique();
+        // Ambil shipment_leg_ids dari invoice items
+        $shipmentLegIds = $invoice->items()
+            ->whereNotNull('shipment_leg_id')
+            ->pluck('shipment_leg_id')
+            ->unique();
         
-        if ($transportIds->isEmpty()) {
+        if ($shipmentLegIds->isEmpty()) {
+            // Jika tidak ada shipment_leg_id, coba via job_order_id
+            $jobOrderIds = $invoice->items()
+                ->whereNotNull('job_order_id')
+                ->pluck('job_order_id')
+                ->unique();
+            
+            if ($jobOrderIds->isEmpty()) {
+                return;
+            }
+            
+            // Ambil shipment legs via job orders
+            $shipmentLegIds = \App\Models\Operations\ShipmentLeg::whereIn('job_order_id', $jobOrderIds)
+                ->pluck('id');
+            
+            if ($shipmentLegIds->isEmpty()) {
+                return;
+            }
+        }
+
+        // Ambil vendor bills yang terkait dengan shipment legs ini
+        $vendorBills = VendorBill::whereHas('items', function($q) use ($shipmentLegIds) {
+            $q->whereIn('shipment_leg_id', $shipmentLegIds);
+        })->with('items')->get();
+
+        if ($vendorBills->isEmpty()) {
             return;
         }
 
-        $transports = Transport::with('shipmentLegs.vendorBill')->whereIn('id', $transportIds)->get();
-
-        foreach ($transports as $transport) {
-
-        // Ambil semua shipment legs yang terkait transport ini
-        $legs = $transport->shipmentLegs ?? collect();
-
-        foreach ($legs as $leg) {
-            // Cek apakah leg ini punya vendor bill
-            $vendorBill = $leg->vendorBill;
-            if (! $vendorBill) {
-                continue;
-            }
-
+        foreach ($vendorBills as $vendorBill) {
             // Cek apakah sudah ada jurnal untuk vendor bill ini
             $vendorBillJournal = Journal::where('source_type', 'vendor_bill')
                 ->where('source_id', $vendorBill->id)
@@ -395,7 +690,7 @@ class JournalService
                 continue;
             }
 
-            // Cek apakah jurnal tersebut menggunakan biaya dimuka (1400)
+            // Cek apakah jurnal tersebut menggunakan biaya dimuka (1500)
             $prepaidCode = $this->map('prepaid_expense');
             $hasPrepaid = $vendorBillJournal->lines()
                 ->whereHas('account', function ($q) use ($prepaidCode) {
@@ -413,13 +708,25 @@ class JournalService
                 continue;
             }
 
+            // Hitung DPP dari vendor bill (total - PPN - PPh23)
+            $dpp = 0;
+            foreach ($vendorBill->items as $item) {
+                $desc = strtolower($item->description);
+                if (!str_contains($desc, 'ppn') && !str_contains($desc, 'pph')) {
+                    $dpp += $item->subtotal;
+                }
+            }
+
+            if ($dpp <= 0) {
+                continue;
+            }
+
             // Buat jurnal pembalik: Dr Beban Vendor, Cr Biaya Dimuka
             $expense = $this->map('expense_vendor');
-            $amt = (float) $vendorBill->total_amount;
 
             $lines = [
-                ['account_code' => $expense, 'debit' => $amt, 'credit' => 0, 'desc' => 'Pengakuan beban vendor bill '.$vendorBill->vendor_bill_number.' untuk invoice '.$invoice->invoice_number, 'vendor_id' => $vendorBill->vendor_id],
-                ['account_code' => $prepaidCode, 'debit' => 0, 'credit' => $amt, 'desc' => 'Pembalikan biaya dimuka vendor bill '.$vendorBill->vendor_bill_number, 'vendor_id' => $vendorBill->vendor_id],
+                ['account_code' => $expense, 'debit' => $dpp, 'credit' => 0, 'desc' => 'Pengakuan beban vendor bill '.$vendorBill->vendor_bill_number.' untuk invoice '.$invoice->invoice_number, 'vendor_id' => $vendorBill->vendor_id],
+                ['account_code' => $prepaidCode, 'debit' => 0, 'credit' => $dpp, 'desc' => 'Pembalikan biaya dimuka vendor bill '.$vendorBill->vendor_bill_number, 'vendor_id' => $vendorBill->vendor_id],
             ];
 
             try {
@@ -429,11 +736,18 @@ class JournalService
                     'source_id' => 0,
                     'memo' => 'Pembalikan biaya dimuka untuk invoice '.$invoice->invoice_number,
                 ], $lines);
+                
+                \Log::info('Reversed prepaid expense for invoice', [
+                    'invoice_id' => $invoice->id,
+                    'invoice_number' => $invoice->invoice_number,
+                    'vendor_bill_id' => $vendorBill->id,
+                    'vendor_bill_number' => $vendorBill->vendor_bill_number,
+                    'amount' => $dpp
+                ]);
             } catch (\Exception $e) {
                 // Log error but don't fail the transaction
                 \Log::warning('Failed to reverse prepaid for invoice '.$invoice->invoice_number.': '.$e->getMessage());
             }
-        }
         }
     }
 }

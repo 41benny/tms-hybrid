@@ -14,6 +14,8 @@ class LegMainCost extends Model
         'pic_phone',
         'vendor_cost',
         'uang_jalan',
+        'driver_savings_deduction',
+        'driver_guarantee_deduction',
         'bbm',
         'toll',
         'other_costs',
@@ -40,6 +42,8 @@ class LegMainCost extends Model
         return [
             'vendor_cost' => 'decimal:2',
             'uang_jalan' => 'decimal:2',
+            'driver_savings_deduction' => 'decimal:2',
+            'driver_guarantee_deduction' => 'decimal:2',
             'bbm' => 'decimal:2',
             'toll' => 'decimal:2',
             'other_costs' => 'decimal:2',
@@ -79,5 +83,25 @@ class LegMainCost extends Model
                $this->premium_cost +  // Insurance premium
                $this->admin_fee +  // Insurance admin fee
                $this->pic_amount;  // PIC payment
+    }
+
+    /**
+     * Get net uang jalan (after deductions)
+     */
+    public function getNetUangJalanAttribute(): float
+    {
+        $gross = (float) $this->uang_jalan;
+        $savings = (float) $this->driver_savings_deduction;
+        $guarantee = (float) $this->driver_guarantee_deduction;
+        
+        return $gross - $savings - $guarantee;
+    }
+
+    /**
+     * Get total deductions
+     */
+    public function getTotalDeductionsAttribute(): float
+    {
+        return (float) $this->driver_savings_deduction + (float) $this->driver_guarantee_deduction;
     }
 }

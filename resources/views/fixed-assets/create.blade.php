@@ -1,59 +1,148 @@
-@extends('layouts.app')
+@extends('layouts.app', ['title' => 'Tambah Aset Tetap'])
+
 @section('content')
-<div class="container">
-    <div class="mb-4 text-xl font-bold">Tambah Aset Tetap</div>
-    <form method="post" action="{{ route('fixed-assets.store') }}">
+<div class="max-w-4xl mx-auto space-y-6">
+    {{-- Breadcrumb / Back Button --}}
+    <div class="flex items-center gap-3">
+        <x-button :href="route('fixed-assets.index')" variant="ghost" size="sm">
+            ← Kembali
+        </x-button>
+        <div class="text-sm text-slate-500 dark:text-slate-400">
+            <span>Aset Tetap</span> / <span class="text-slate-900 dark:text-slate-100">Tambah Baru</span>
+        </div>
+    </div>
+
+    <form method="post" action="{{ route('fixed-assets.store') }}" class="space-y-6">
         @csrf
-        <div class="row mb-3">
-            <div class="col">
-                <label class="form-label">Kode</label>
-                <input name="code" class="form-control" required>
+        
+        {{-- Informasi Dasar --}}
+        <x-card title="Informasi Dasar" subtitle="Data identitas aset tetap">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <x-input 
+                    name="code" 
+                    label="Kode Aset" 
+                    :value="old('code')"
+                    :error="$errors->first('code')"
+                    :required="true"
+                    placeholder="Contoh: AST-001"
+                />
+                
+                <x-input 
+                    name="name" 
+                    label="Nama Aset" 
+                    :value="old('name')"
+                    :error="$errors->first('name')"
+                    :required="true"
+                    placeholder="Contoh: Komputer Dell Latitude"
+                />
             </div>
-            <div class="col">
-                <label class="form-label">Nama</label>
-                <input name="name" class="form-control" required>
+        </x-card>
+
+        {{-- Nilai & Depresiasi --}}
+        <x-card title="Nilai & Depresiasi" subtitle="Informasi perolehan dan umur ekonomis">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <x-input 
+                    name="acquisition_date" 
+                    label="Tanggal Perolehan" 
+                    type="date"
+                    :value="old('acquisition_date')"
+                    :error="$errors->first('acquisition_date')"
+                    :required="true"
+                />
+                
+                <x-input 
+                    name="acquisition_cost" 
+                    label="Nilai Perolehan" 
+                    type="number"
+                    step="0.01"
+                    :value="old('acquisition_cost')"
+                    :error="$errors->first('acquisition_cost')"
+                    :required="true"
+                    placeholder="Contoh: 15000000"
+                />
+                
+                <x-input 
+                    name="useful_life_months" 
+                    label="Umur Ekonomis (bulan)" 
+                    type="number"
+                    :value="old('useful_life_months')"
+                    :error="$errors->first('useful_life_months')"
+                    :required="true"
+                    placeholder="Contoh: 60"
+                    helpText="Estimasi umur manfaat aset dalam bulan"
+                />
+                
+                <x-input 
+                    name="residual_value" 
+                    label="Nilai Residu" 
+                    type="number"
+                    step="0.01"
+                    :value="old('residual_value', 0)"
+                    :error="$errors->first('residual_value')"
+                    placeholder="Contoh: 1000000"
+                    helpText="Nilai sisa di akhir masa manfaat"
+                />
             </div>
-        </div>
-        <div class="row mb-3">
-            <div class="col">
-                <label class="form-label">Tanggal Perolehan</label>
-                <input type="date" name="acquisition_date" class="form-control" required>
+        </x-card>
+
+        {{-- Akun Akuntansi --}}
+        <x-card title="Akun Akuntansi" subtitle="Mapping ke chart of accounts">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <x-select 
+                    name="account_asset_id" 
+                    label="Akun Aset"
+                    :error="$errors->first('account_asset_id')"
+                    :required="true"
+                >
+                    <option value="">Pilih Akun Aset</option>
+                    @foreach($accounts as $a)
+                        <option value="{{ $a->id }}" @selected(old('account_asset_id')==$a->id)>
+                            {{ $a->code }} - {{ $a->name }}
+                        </option>
+                    @endforeach
+                </x-select>
+                
+                <x-select 
+                    name="account_accum_id" 
+                    label="Akun Akumulasi Penyusutan"
+                    :error="$errors->first('account_accum_id')"
+                    :required="true"
+                >
+                    <option value="">Pilih Akun Akumulasi</option>
+                    @foreach($accounts as $a)
+                        <option value="{{ $a->id }}" @selected(old('account_accum_id')==$a->id)>
+                            {{ $a->code }} - {{ $a->name }}
+                        </option>
+                    @endforeach
+                </x-select>
+                
+                <x-select 
+                    name="account_expense_id" 
+                    label="Akun Beban Penyusutan"
+                    :error="$errors->first('account_expense_id')"
+                    :required="true"
+                >
+                    <option value="">Pilih Akun Beban</option>
+                    @foreach($accounts as $a)
+                        <option value="{{ $a->id }}" @selected(old('account_expense_id')==$a->id)>
+                            {{ $a->code }} - {{ $a->name }}
+                        </option>
+                    @endforeach
+                </x-select>
             </div>
-            <div class="col">
-                <label class="form-label">Nilai Perolehan</label>
-                <input type="number" step="0.01" name="acquisition_cost" class="form-control" required>
+        </x-card>
+
+        {{-- Action Buttons --}}
+        <x-card>
+            <div class="flex justify-end gap-3">
+                <x-button :href="route('fixed-assets.index')" variant="outline">
+                    Batal
+                </x-button>
+                <x-button type="submit" variant="primary">
+                    💾 Simpan Aset Tetap
+                </x-button>
             </div>
-            <div class="col">
-                <label class="form-label">Umur (bulan)</label>
-                <input type="number" name="useful_life_months" class="form-control" required>
-            </div>
-            <div class="col">
-                <label class="form-label">Nilai Residu</label>
-                <input type="number" step="0.01" name="residual_value" class="form-control" value="0">
-            </div>
-        </div>
-        <div class="row mb-3">
-            <div class="col">
-                <label class="form-label">Akun Aset</label>
-                <select name="account_asset_id" class="form-select" required>
-                    @foreach($accounts as $a)<option value="{{ $a->id }}">{{ $a->code }} - {{ $a->name }}</option>@endforeach
-                </select>
-            </div>
-            <div class="col">
-                <label class="form-label">Akun Akumulasi</label>
-                <select name="account_accum_id" class="form-select" required>
-                    @foreach($accounts as $a)<option value="{{ $a->id }}">{{ $a->code }} - {{ $a->name }}</option>@endforeach
-                </select>
-            </div>
-            <div class="col">
-                <label class="form-label">Akun Beban Depresiasi</label>
-                <select name="account_expense_id" class="form-select" required>
-                    @foreach($accounts as $a)<option value="{{ $a->id }}">{{ $a->code }} - {{ $a->name }}</option>@endforeach
-                </select>
-            </div>
-        </div>
-        <button class="btn btn-success">Simpan</button>
-        <a href="{{ route('fixed-assets.index') }}" class="btn btn-secondary">Batal</a>
+        </x-card>
     </form>
 </div>
 @endsection

@@ -143,7 +143,9 @@
         <x-card>
             <div class="flex justify-end gap-3">
                 <x-button :href="route('journals.index')" variant="outline">Batal</x-button>
-                <x-button type="submit" variant="primary" :disabled="!isBalanced">Simpan</x-button>
+                <button type="submit" x-bind:disabled="!isBalanced" :class="isBalanced ? 'bg-indigo-600 hover:bg-indigo-500' : 'bg-slate-400 cursor-not-allowed'" class="px-4 py-2 rounded text-white font-medium transition-colors">
+                    Simpan
+                </button>
             </div>
         </x-card>
     </form>
