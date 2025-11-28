@@ -27,7 +27,7 @@
                     <a href="{{ route('job-orders.show', $order) }}" class="text-sm font-semibold theme-text-primary hover:underline">
                         {{ $order->job_number }}
                     </a>
-                    <p class="mt-1 text-sm font-semibold text-slate-100 dark:text-slate-200 truncate">
+                    <p class="mt-1 text-sm font-semibold text-contrast truncate">
                         {{ $order->customer->name }}
                     </p>
                 </div>
@@ -59,7 +59,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A4 4 0 019 15h6a4 4 0 013.879 2.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                     <span class="shrink-0 theme-text-muted">Sales:</span>
-                    <span class="font-medium text-slate-100 dark:text-slate-200 truncate">
+                    <span class="font-medium text-contrast truncate">
                         {{ $order->sales?->name ?? '-' }}
                     </span>
                 </div>
@@ -72,7 +72,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 17l9 4 9-4M3 12l9 4 9-4" />
                         </svg>
                         <span class="shrink-0 theme-text-muted">Cargo:</span>
-                        <span class="font-semibold text-slate-100 dark:text-slate-200 truncate">
+                        <span class="font-semibold text-contrast truncate">
                             {{ $cargoTitle }}
                             @if($additionalItems > 0)
                                 <span class="font-normal text-xs theme-text-muted">
@@ -91,11 +91,11 @@
                 <!-- Route (From / To dalam satu baris) -->
                 <div class="flex items-center gap-2 text-xs theme-text-muted">
                     <span class="shrink-0 theme-text-muted">From:</span>
-                    <span class="font-medium text-slate-100 dark:text-slate-200 truncate max-w-[35%]">
+                    <span class="font-medium text-contrast truncate max-w-[35%]">
                         {{ $order->origin ?: '-' }}
                     </span>
                     <span class="shrink-0 theme-text-muted ml-2">To:</span>
-                    <span class="font-medium text-slate-100 dark:text-slate-200 truncate max-w-[35%]">
+                    <span class="font-medium text-contrast truncate max-w-[35%]">
                         {{ $order->destination ?: '-' }}
                     </span>
                 </div>

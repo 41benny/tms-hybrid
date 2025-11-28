@@ -322,11 +322,11 @@
             <header class="h-16 theme-panel flex items-center justify-between px-6 sticky top-0 z-30 transition-colors duration-500" style="border-width: 0 0 1px 0;">
                 <div class="flex items-center gap-4">
                     @if($role !== 'sales')
-                        <button class="md:hidden text-white" onclick="document.querySelector('aside').classList.toggle('hidden')">
+                        <button class="md:hidden text-contrast" onclick="document.querySelector('aside').classList.toggle('hidden')">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                         </button>
                     @endif
-                    <h2 class="text-lg font-semibold tracking-wide text-white">{{ $header ?? ($title ?? 'Dashboard') }}</h2>
+                    <h2 class="text-lg font-semibold tracking-wide text-contrast">{{ $header ?? ($title ?? 'Dashboard') }}</h2>
                     <div class="h-4 w-[1px] bg-slate-700 hidden sm:block"></div>
                     <span class="hidden sm:flex items-center gap-2 text-xs font-mono px-2 py-1 rounded border theme-border" style="background: rgba(0,0,0,0.2); color: var(--color-primary);">
                         <span class="w-1.5 h-1.5 rounded-full animate-pulse" style="background: var(--color-primary);"></span>
@@ -394,7 +394,7 @@
                             setInterval(() => this.fetchNotifications(), 60000);
                         }
                      }">
-                        <button @click="open = !open" class="relative p-2 rounded-lg hover:bg-white/10 transition-colors theme-text-muted hover:text-white">
+                        <button @click="open = !open" class="relative p-2 rounded-lg hover:bg-white/10 transition-colors theme-text-muted hover:text-contrast">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                             <span x-show="unreadCount > 0" class="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 shadow-[0_0_8px_red]" style="display: none;"></span>
                         </button>
@@ -469,7 +469,7 @@
                     <div class="hidden md:flex items-center gap-2 pl-4 border-l border-white/10">
                         <button onclick="setTheme('default')" class="w-2.5 h-2.5 rounded-full bg-[#22D3EE] hover:brightness-110 transition-all shadow-[0_0_5px_rgba(34,211,238,0.5)] hover:scale-125" title="Midnight Cyan"></button>
                         <button onclick="setTheme('gold')" class="w-2.5 h-2.5 rounded-full bg-[#FBBF24] hover:brightness-110 transition-all shadow-[0_0_5px_rgba(251,191,36,0.5)] hover:scale-125" title="Royal Gold"></button>
-                        <button onclick="setTheme('emerald')" class="w-2.5 h-2.5 rounded-full bg-[#34D399] hover:brightness-110 transition-all shadow-[0_0_5px_rgba(52,211,153,0.5)] hover:scale-125" title="Emerald Glass"></button>
+                        <button onclick="setTheme('aurora')" class="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-violet-500 via-fuchsia-500 to-pink-500 hover:brightness-110 transition-all shadow-[0_0_8px_rgba(168,85,247,0.6)] hover:scale-125" title="Aurora Nebula"></button>
                     </div>
                     @endif
                 </div>

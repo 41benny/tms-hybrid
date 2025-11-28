@@ -10,6 +10,7 @@ use App\Models\Operations\JobOrder;
 use App\Models\Operations\LegAdditionalCost;
 use App\Models\Operations\LegMainCost;
 use App\Models\Operations\ShipmentLeg;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -400,6 +401,54 @@ class ShipmentLegController extends Controller
                 ->with('success', count($bills)." vendor bill berhasil dibuat (Mode: Pisah)! Main Cost: {$bills[0]->vendor_bill_number}".
                     (isset($bills[1]) ? ", Additional Costs: {$bills[1]->vendor_bill_number}" : ''));
         }
+    }
+
+    /**
+     * Quick flow khusus Sales:
+     *  - Generate vendor bill (mode gabung) untuk Shipment Leg vendor/pelayaran/asuransi/PIC
+     *  - Langsung redirect ke form Payment Request dengan vendor_bill_id tersebut.
+     */
+    public function salesQuickVendorRequest(Request $request, ShipmentLeg $leg)
+    {
+        $user = $request->user();
+
+        if (! $user || $user->role !== User::ROLE_SALES) {
+            abort(403, 'Hanya Sales yang dapat menggunakan fitur ini.');
+        }
+
+        if (! in_array($leg->cost_category, ['vendor', 'pelayaran', 'asuransi', 'pic'], true)) {
+            return back()->with('error', 'Quick ajukan hanya untuk leg dengan vendor / pelayaran / asuransi / PIC.');
+        }
+
+        if (! $leg->vendor_id) {
+            return back()->with('error', 'Leg ini tidak memiliki vendor yang ditunjuk.');
+        }
+
+        if ($leg->status === 'cancelled') {
+            return back()->with('error', 'Tidak bisa membuat vendor bill untuk leg yang dibatalkan.');
+        }
+
+        // Jika sudah ada vendor bill items, minta user proses dari modul finance
+        if ($leg->vendorBillItems()->exists()) {
+            return back()->with('error', 'Leg ini sudah memiliki Vendor Bill. Ajukan pembayaran dari menu hutang / vendor bill.');
+        }
+
+        $mainCost = $leg->mainCost;
+        if (! $mainCost) {
+            return back()->with('error', 'Leg ini tidak memiliki data biaya utama.');
+        }
+
+        if ($leg->total_cost <= 0) {
+            return back()->with('error', 'Total biaya leg masih 0. Lengkapi biaya sebelum mengajukan pembayaran.');
+        }
+
+        // Generate vendor bill (mode gabung) lalu langsung arahkan ke Payment Request
+        $additionalCosts = $leg->additionalCosts()->get();
+        $bill = $this->createCombinedBill($leg, $mainCost, $additionalCosts);
+
+        return redirect()
+            ->route('payment-requests.create', ['vendor_bill_id' => $bill->id])
+            ->with('success', "Vendor bill {$bill->vendor_bill_number} dibuat. Silakan lengkapi pengajuan pembayaran.");
     }
 
     protected function createCombinedBill(ShipmentLeg $leg, LegMainCost $mainCost, $additionalCosts)

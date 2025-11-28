@@ -63,7 +63,7 @@
                 </div>
 
                 {{-- Trucking Fields (Own Fleet) --}}
-                <div id="trucking_fields" class="hidden grid-cols-subgrid col-span-2 gap-6">
+                <div id="trucking_fields" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6 col-span-2">
                     <x-select
                         name="truck_id"
                         label="Nopol Truck"

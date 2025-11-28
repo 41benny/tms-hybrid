@@ -54,6 +54,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::put('additional-costs/{cost}', [ShipmentLegController::class, 'updateAdditionalCost'])->name('additional-costs.update');
     Route::delete('additional-costs/{cost}', [ShipmentLegController::class, 'destroyAdditionalCost'])->name('additional-costs.destroy');
     Route::post('legs/{leg}/generate-vendor-bill', [ShipmentLegController::class, 'generateVendorBill'])->name('legs.generate-vendor-bill');
+    Route::post('legs/{leg}/sales-quick-vendor-request', [ShipmentLegController::class, 'salesQuickVendorRequest'])->name('legs.sales-quick-vendor-request');
     Route::get('api/truck-driver', [ShipmentLegController::class, 'getDriverByTruck'])->name('api.truck-driver');
 
     // Sales-friendly console (mobile first)

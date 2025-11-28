@@ -5,27 +5,27 @@
     <x-card>
         <x-slot:header>
             {{-- Filter Section with Create Button --}}
-            <form method="get" class="flex flex-wrap gap-2 items-center">
+            <form method="get" class="flex flex-nowrap gap-2 items-center overflow-x-auto pb-2">
                 <input type="hidden" name="view" value="{{ request('view', 'table') }}">
 
-                <select name="status" class="rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-2 py-1.5 text-xs text-slate-900 dark:text-slate-100">
+                <select name="status" class="rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-2 py-1.5 text-xs text-slate-900 dark:text-slate-100 shrink-0">
                     <option value="">Semua Status</option>
                     @foreach(['draft' => 'Draft', 'confirmed' => 'Confirmed', 'in_progress' => 'In Progress', 'completed' => 'Completed', 'cancelled' => 'Cancelled'] as $val => $label)
                         <option value="{{ $val }}" @selected(request('status')===$val)>{{ $label }}</option>
                     @endforeach
                 </select>
 
-                <select name="invoice_status" class="rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-2 py-1.5 text-xs text-slate-900 dark:text-slate-100">
+                <select name="invoice_status" class="rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-2 py-1.5 text-xs text-slate-900 dark:text-slate-100 shrink-0">
                     <option value="">Semua Invoice Status</option>
                     <option value="not_invoiced" @selected(request('invoice_status')==='not_invoiced')>⚠️ Belum Diinvoice</option>
                     <option value="invoiced" @selected(request('invoice_status')==='invoiced')>✓ Sudah Diinvoice</option>
                 </select>
 
-                <input type="date" name="from" value="{{ request('from') }}" placeholder="Dari Tanggal" class="rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-2 py-1.5 text-xs text-slate-900 dark:text-slate-100">
+                <input type="date" name="from" value="{{ request('from') }}" placeholder="Dari Tanggal" class="rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-2 py-1.5 text-xs text-slate-900 dark:text-slate-100 shrink-0">
 
-                <input type="date" name="to" value="{{ request('to') }}" placeholder="Sampai Tanggal" class="rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-2 py-1.5 text-xs text-slate-900 dark:text-slate-100">
+                <input type="date" name="to" value="{{ request('to') }}" placeholder="Sampai Tanggal" class="rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-2 py-1.5 text-xs text-slate-900 dark:text-slate-100 shrink-0">
 
-                <x-button type="submit" variant="primary" size="sm">
+                <x-button type="submit" variant="primary" size="sm" class="shrink-0">
                     Filter
                 </x-button>
 

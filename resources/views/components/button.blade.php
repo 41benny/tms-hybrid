@@ -10,7 +10,7 @@
     ];
     
     $variantClasses = [
-        'primary' => 'bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] text-white border border-white/20 shadow-md dark:shadow-black/30 hover:shadow-xl hover:scale-105 hover:-translate-y-0.5 focus:ring-[var(--color-primary)]',
+        'primary' => 'btn-primary bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] text-white border border-white/20 shadow-md dark:shadow-black/30 hover:shadow-xl hover:scale-105 hover:-translate-y-0.5 focus:ring-[var(--color-primary)]',
         'secondary' => 'bg-slate-600 dark:bg-[#3d3d3d] hover:bg-slate-700 dark:hover:bg-[#4d4d4d] text-white shadow-md dark:shadow-black/30 hover:shadow-xl hover:scale-105 hover:-translate-y-0.5 focus:ring-slate-500',
         'success' => 'bg-emerald-600 dark:bg-emerald-800 hover:bg-emerald-700 dark:hover:bg-emerald-700 text-white shadow-md dark:shadow-black/30 hover:shadow-xl hover:scale-105 hover:-translate-y-0.5 focus:ring-emerald-500',
         'danger' => 'bg-rose-600 dark:bg-rose-800 hover:bg-rose-700 dark:hover:bg-rose-700 text-white shadow-md dark:shadow-black/30 hover:shadow-xl hover:scale-105 hover:-translate-y-0.5 focus:ring-rose-500',

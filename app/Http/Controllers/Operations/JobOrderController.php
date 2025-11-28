@@ -138,6 +138,7 @@ class JobOrderController extends Controller
             'shipmentLegs.driver',
             'shipmentLegs.mainCost',
             'shipmentLegs.additionalCosts',
+            'shipmentLegs.driverAdvance',
             'shipmentLegs.vendorBillItems.vendorBill.paymentRequests',
         ]);
 

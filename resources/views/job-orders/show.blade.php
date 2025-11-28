@@ -1,6 +1,9 @@
 @extends('layouts.app', ['title' => 'Job Order Detail'])
 
 @section('content')
+@php
+    $isSalesUser = auth()->check() && auth()->user()->role === \App\Models\User::ROLE_SALES;
+@endphp
 <div class="space-y-6">
     {{-- Header Card --}}
     <x-card>
@@ -193,7 +196,7 @@
                         {{-- Nilai Tagihan & Total Biaya (side by side) --}}
                         <div class="grid grid-cols-2 gap-3 mb-3">
                             {{-- Nilai Tagihan --}}
-                            <div class="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/30 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                            <div class="glass-blue rounded-lg p-4">
                                 <div class="text-xs font-medium text-blue-600 dark:text-blue-400 mb-2">Nilai Tagihan</div>
                                 <div class="font-bold text-lg text-blue-700 dark:text-blue-300 break-words">
                                     Rp {{ number_format($job->invoice_amount + $job->total_billable, 0, ',', '.') }}
@@ -205,7 +208,7 @@
                             </div>
 
                             {{-- Total Biaya --}}
-                            <div class="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/30 dark:to-orange-900/30 rounded-lg p-4 border border-orange-200 dark:border-orange-800">
+                            <div class="glass-orange rounded-lg p-4">
                                 <div class="text-xs font-medium text-orange-600 dark:text-orange-400 mb-2">Total Biaya</div>
                                 <div class="font-bold text-lg text-orange-700 dark:text-orange-300 break-words">
                                     Rp {{ number_format($job->total_cost, 0, ',', '.') }}
@@ -218,7 +221,7 @@
                         </div>
 
                         {{-- Estimasi Margin (full width) --}}
-                        <div class="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/30 dark:to-green-900/30 rounded-lg p-4 border border-green-200 dark:border-green-800">
+                        <div class="glass-green rounded-lg p-4">
                             <div class="flex items-end justify-between gap-4">
                                 <div class="flex-1 min-w-0">
                                     <div class="text-xs font-medium text-green-600 dark:text-green-400 mb-2">Estimasi Margin</div>
@@ -376,13 +379,59 @@
                                                 {{ strtoupper(str_replace('_', ' ', $leg->status)) }}
                                             </x-badge>
                                         </div>
+
+                                        @php
+                                            $driverAdvance = $leg->driverAdvance;
+                                            $advanceStatus = $driverAdvance?->status;
+                                            $canRequestDp = $driverAdvance && $advanceStatus === 'pending';
+                                            $canRequestSettlement = $driverAdvance && $advanceStatus === 'dp_paid';
+                                        @endphp
+
+                                        @if($isSalesUser && ($canRequestDp || $canRequestSettlement))
+                                            <div class="mt-2 flex justify-end">
+                                                <a
+                                                    href="{{ $canRequestDp
+                                                        ? route('payment-requests.create', ['driver_advance_id' => $driverAdvance->id])
+                                                        : route('payment-requests.create', ['driver_advance_id' => $driverAdvance->id, 'type' => 'settlement']) }}"
+                                                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-cyan-600 hover:bg-cyan-500 text-white shadow-sm"
+                                                >
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                                    </svg>
+                                                    {{ $canRequestDp ? 'Ajukan DP' : 'Ajukan Pelunasan' }}
+                                                </a>
+                                            </div>
+                                        @endif
+
+                                        @php
+                                            $canQuickVendor = $isSalesUser
+                                                && in_array($leg->cost_category, ['vendor', 'pelayaran', 'asuransi', 'pic'], true)
+                                                && $leg->vendor_id
+                                                && $leg->mainCost
+                                                && $leg->total_cost > 0
+                                                && $leg->vendorBillItems->isEmpty();
+                                        @endphp
+
+                                        @if($canQuickVendor)
+                                            <div class="mt-2 flex justify-end">
+                                                <form method="POST" action="{{ route('legs.sales-quick-vendor-request', $leg) }}">
+                                                    @csrf
+                                                    <button type="submit" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                                        </svg>
+                                                        Ajukan Vendor
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
 
                             {{-- Leg Details (Collapsible) --}}
-                            <div id="leg-{{ $leg->id }}" class="hidden border-t border-slate-200 dark:border-slate-800">
-                                <div class="p-5 bg-slate-50/50 dark:bg-slate-800/20">
+                            <div id="leg-{{ $leg->id }}" class="hidden leg-details-bg">
+                                <div class="p-5">
                                     {{-- Leg Info Grid --}}
                                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                                         <div>
@@ -431,7 +480,7 @@
 
                                     {{-- Main Costs --}}
                                     @if($leg->mainCost)
-                                    <div class="bg-indigo-50 dark:bg-indigo-950/20 rounded-lg p-4 mb-3">
+                                    <div class="glass-panel rounded-lg p-4 mb-3">
                                         <div class="font-semibold text-indigo-900 dark:text-indigo-100 mb-3 text-sm flex items-center justify-between">
                                             <span>MAIN COSTS</span>
                                             <span class="text-lg">Rp {{ number_format($leg->mainCost->total, 0, ',', '.') }}</span>

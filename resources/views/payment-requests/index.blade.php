@@ -1,6 +1,10 @@
 @extends('layouts.app', ['title' => 'Payment Requests'])
 
 @section('content')
+    @php
+        $isSalesUser = Auth::check() && (Auth::user()->role ?? null) === \App\Models\User::ROLE_SALES;
+    @endphp
+
     <x-card>
         <x-slot:header>
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -267,7 +271,8 @@
     </x-card>
     @endif
 
-    {{-- Mobile Card View: Pengajuan Saya --}}
+    {{-- Mobile Card View: Pengajuan Saya (non-sales only, sales pakai card di bawah) --}}
+    @unless($isSalesUser)
     <div class="mt-6 space-y-3 md:hidden">
         @forelse($requests as $r)
             <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#111827] p-4 shadow-sm">
@@ -341,6 +346,7 @@
             </div>
         @endforelse
     </div>
+    @endunless
 
     {{-- Desktop Table View: Pengajuan Saya --}}
     <x-card :noPadding="true" class="mt-6 hidden md:block">

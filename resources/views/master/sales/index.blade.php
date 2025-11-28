@@ -5,11 +5,7 @@
     {{-- Header Section --}}
     <x-card>
         <x-slot:header>
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                    <div class="text-2xl font-bold text-slate-900 dark:text-slate-100">Sales</div>
-                    <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Kelola data tim sales</p>
-                </div>
+            <div class="flex flex-col md:flex-row md:items-center md:justify-end gap-4">
                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                     <form method="get" class="flex items-center gap-2">
                         <input

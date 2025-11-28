@@ -31,6 +31,15 @@
     }
 
     $preparedItems = $preparedItems->values();
+
+    // Untuk typeahead cargo type (equipment)
+    $equipmentOptions = $equipments->map(function ($e) {
+        return [
+            'id' => $e->id,
+            'name' => $e->name,
+            'category' => $e->category,
+        ];
+    })->values();
 @endphp
 <div class="max-w-4xl mx-auto space-y-6 w-full">
     {{-- Header Card --}}
@@ -269,11 +278,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const invoiceInput = document.getElementById('invoice_amount');
     const invoiceDisplayInput = document.getElementById('invoice_amount_display');
 
-    const equipmentList = @json($equipments->map(fn($e) => [
-        'id' => $e->id,
-        'name' => $e->name,
-        'category' => $e->category,
-    ])->values());
+    const equipmentList = @json($equipmentOptions);
 
     // Cargo Items Logic
     const cargoItemsContainer = document.getElementById('cargoItems');
