@@ -57,23 +57,26 @@ class JournalService
             throw new InvalidArgumentException('Total invoice 0');
         }
 
+        // Extract job_order_id from first item (for tracking)
+        $jobOrderId = $invoice->items->first()?->job_order_id;
+
         $ar = $this->map('ar');
         $vatOut = $this->map('vat_out');
 
         $lines = [];
 
         // Dr. Piutang Usaha (total yang akan diterima dari customer)
-        $lines[] = ['account_code' => $ar, 'debit' => $totalReceivable, 'credit' => 0, 'desc' => 'Piutang Invoice '.$invoice->invoice_number, 'customer_id' => $invoice->customer_id];
+        $lines[] = ['account_code' => $ar, 'debit' => $totalReceivable, 'credit' => 0, 'desc' => 'Piutang Invoice '.$invoice->invoice_number, 'customer_id' => $invoice->customer_id, 'job_order_id' => $jobOrderId];
 
         // Cek apakah ini invoice DP atau Normal
         if ($invoice->invoice_type === 'down_payment') {
             // INVOICE DP: Cr. Hutang Uang Muka (bukan pendapatan)
             $customerDeposit = $this->map('customer_deposit');
-            $lines[] = ['account_code' => $customerDeposit, 'debit' => 0, 'credit' => $dpp, 'desc' => 'Uang Muka Customer Invoice '.$invoice->invoice_number, 'customer_id' => $invoice->customer_id];
+            $lines[] = ['account_code' => $customerDeposit, 'debit' => 0, 'credit' => $dpp, 'desc' => 'Uang Muka Customer Invoice '.$invoice->invoice_number, 'customer_id' => $invoice->customer_id, 'job_order_id' => $jobOrderId];
         } else {
             // INVOICE NORMAL/FINAL: Cr. Pendapatan (DPP)
             $revenue = $this->map('revenue');
-            $lines[] = ['account_code' => $revenue, 'debit' => 0, 'credit' => $dpp, 'desc' => 'Pendapatan Invoice '.$invoice->invoice_number, 'customer_id' => $invoice->customer_id];
+            $lines[] = ['account_code' => $revenue, 'debit' => 0, 'credit' => $dpp, 'desc' => 'Pendapatan Invoice '.$invoice->invoice_number, 'customer_id' => $invoice->customer_id, 'job_order_id' => $jobOrderId];
             
             // Jika invoice final dengan DP, balik hutang uang muka
             if ($invoice->invoice_type === 'final' && $invoice->related_invoice_id) {
@@ -83,17 +86,17 @@ class JournalService
                     $customerDeposit = $this->map('customer_deposit');
                     
                     // Dr. Hutang Uang Muka (mengurangi hutang)
-                    $lines[] = ['account_code' => $customerDeposit, 'debit' => $dpAmount, 'credit' => 0, 'desc' => 'Pembalikan DP dari Invoice '.$relatedInvoice->invoice_number, 'customer_id' => $invoice->customer_id];
+                    $lines[] = ['account_code' => $customerDeposit, 'debit' => $dpAmount, 'credit' => 0, 'desc' => 'Pembalikan DP dari Invoice '.$relatedInvoice->invoice_number, 'customer_id' => $invoice->customer_id, 'job_order_id' => $jobOrderId];
                     
                     // Cr. Pendapatan (mengakui pendapatan DP)
-                    $lines[] = ['account_code' => $revenue, 'debit' => 0, 'credit' => $dpAmount, 'desc' => 'Pengakuan Pendapatan DP dari Invoice '.$relatedInvoice->invoice_number, 'customer_id' => $invoice->customer_id];
+                    $lines[] = ['account_code' => $revenue, 'debit' => 0, 'credit' => $dpAmount, 'desc' => 'Pengakuan Pendapatan DP dari Invoice '.$relatedInvoice->invoice_number, 'customer_id' => $invoice->customer_id, 'job_order_id' => $jobOrderId];
                 }
             }
         }
 
         // Cr. PPN Keluaran (jika ada PPN)
         if ($ppn > 0) {
-            $lines[] = ['account_code' => $vatOut, 'debit' => 0, 'credit' => $ppn, 'desc' => 'PPN Keluaran Invoice '.$invoice->invoice_number, 'customer_id' => $invoice->customer_id];
+            $lines[] = ['account_code' => $vatOut, 'debit' => 0, 'credit' => $ppn, 'desc' => 'PPN Keluaran Invoice '.$invoice->invoice_number, 'customer_id' => $invoice->customer_id, 'job_order_id' => $jobOrderId];
         }
 
         \Log::info('Invoice Journal Breakdown', [
@@ -120,6 +123,9 @@ class JournalService
         if ($invoice->invoice_type !== 'down_payment') {
             $this->reversePrepaidsForInvoice($invoice);
         }
+
+        // Save journal_id to invoice for tracking
+        $invoice->update(['journal_id' => $journal->id]);
 
         return $journal;
     }
@@ -171,7 +177,7 @@ class JournalService
         }
 
         // Load items untuk breakdown DPP, PPN, PPh 23
-        $bill->load('items');
+        $bill->load('items.shipmentLeg');
 
         $dpp = 0;
         $ppn = 0;
@@ -200,31 +206,40 @@ class JournalService
 
         // Cek apakah vendor bill terkait shipment leg (ada items dengan shipment_leg_id)
         $hasShipmentLeg = $bill->items()->whereNotNull('shipment_leg_id')->exists();
+        
+        // Extract job_order_id from first shipment leg item
+        $jobOrderId = null;
+        if ($hasShipmentLeg) {
+            $firstLegItem = $bill->items->whereNotNull('shipment_leg_id')->first();
+            if ($firstLegItem && $firstLegItem->shipmentLeg) {
+                $jobOrderId = $firstLegItem->shipmentLeg->job_order_id;
+            }
+        }
 
         if ($hasShipmentLeg) {
             // Untuk vendor bill shipment leg: Dr Biaya Dimuka
             $prepaid = $this->map('prepaid_expense');
-            $lines[] = ['account_code' => $prepaid, 'debit' => $dpp, 'credit' => 0, 'desc' => 'Biaya dimuka vendor bill '.$bill->vendor_bill_number, 'vendor_id' => $bill->vendor_id];
+            $lines[] = ['account_code' => $prepaid, 'debit' => $dpp, 'credit' => 0, 'desc' => 'Biaya dimuka vendor bill '.$bill->vendor_bill_number, 'vendor_id' => $bill->vendor_id, 'job_order_id' => $jobOrderId];
         } else {
             // Untuk vendor bill non-shipment: Dr Beban Vendor (langsung expense)
             $exp = $this->map('expense_vendor');
-            $lines[] = ['account_code' => $exp, 'debit' => $dpp, 'credit' => 0, 'desc' => 'Biaya vendor bill '.$bill->vendor_bill_number, 'vendor_id' => $bill->vendor_id];
+            $lines[] = ['account_code' => $exp, 'debit' => $dpp, 'credit' => 0, 'desc' => 'Biaya vendor bill '.$bill->vendor_bill_number, 'vendor_id' => $bill->vendor_id, 'job_order_id' => $jobOrderId];
         }
 
         // Dr PPN Masukan (jika ada PPN)
         if ($ppn > 0) {
             $vatIn = $this->map('vat_in');
-            $lines[] = ['account_code' => $vatIn, 'debit' => $ppn, 'credit' => 0, 'desc' => 'PPN Masukan vendor bill '.$bill->vendor_bill_number, 'vendor_id' => $bill->vendor_id];
+            $lines[] = ['account_code' => $vatIn, 'debit' => $ppn, 'credit' => 0, 'desc' => 'PPN Masukan vendor bill '.$bill->vendor_bill_number, 'vendor_id' => $bill->vendor_id, 'job_order_id' => $jobOrderId];
         }
 
         // Cr Hutang PPh 23 (jika ada potongan PPh 23)
         if ($pph23 > 0) {
             $pph23Payable = $this->map('pph23');
-            $lines[] = ['account_code' => $pph23Payable, 'debit' => 0, 'credit' => $pph23, 'desc' => 'PPh 23 dipotong vendor bill '.$bill->vendor_bill_number, 'vendor_id' => $bill->vendor_id];
+            $lines[] = ['account_code' => $pph23Payable, 'debit' => 0, 'credit' => $pph23, 'desc' => 'PPh 23 dipotong vendor bill '.$bill->vendor_bill_number, 'vendor_id' => $bill->vendor_id, 'job_order_id' => $jobOrderId];
         }
 
         // Cr Hutang Usaha (net payable)
-        $lines[] = ['account_code' => $ap, 'debit' => 0, 'credit' => $netPayable, 'desc' => 'Hutang vendor bill '.$bill->vendor_bill_number, 'vendor_id' => $bill->vendor_id];
+        $lines[] = ['account_code' => $ap, 'debit' => 0, 'credit' => $netPayable, 'desc' => 'Hutang vendor bill '.$bill->vendor_bill_number, 'vendor_id' => $bill->vendor_id, 'job_order_id' => $jobOrderId];
 
         \Log::info('Vendor Bill Journal Breakdown', [
             'vendor_bill_id' => $bill->id,
@@ -237,12 +252,17 @@ class JournalService
             'lines' => $lines
         ]);
 
-        return $this->posting->postGeneral([
+        $journal = $this->posting->postGeneral([
             'journal_date' => $bill->bill_date->toDateString(),
             'source_type' => 'vendor_bill',
             'source_id' => $bill->id,
             'memo' => 'Vendor bill '.$bill->vendor_bill_number,
         ], $lines);
+
+        // Save journal_id to vendor bill for tracking
+        $bill->update(['journal_id' => $journal->id]);
+
+        return $journal;
     }
 
     public function postVendorPayment(CashBankTransaction $trx): Journal
@@ -374,7 +394,7 @@ class JournalService
         }
         
         // Load relationships
-        $advance->load(['shipmentLeg.jobOrder', 'shipmentLeg.mainCost', 'driver']);
+        $advance->load(['shipmentLeg.jobOrder', 'shipmentLeg.mainCost', 'shipmentLeg.transport', 'driver']);
         
         $leg = $advance->shipmentLeg;
         $mainCost = $leg->mainCost;
@@ -396,18 +416,26 @@ class JournalService
         $prepaid = $this->map('prepaid_expense'); // 1500
         $driverPayable = $this->map('driver_payable'); // 2155
         
+        // Get transport_id and job_order_id for tracking
+        $transportId = $leg->transport_id;
+        $jobOrderId = $leg->job_order_id;
+        
         $lines = [
             [
                 'account_code' => $prepaid,
                 'debit' => $grossAmount,
                 'credit' => 0,
-                'desc' => 'Biaya dimuka uang jalan - ' . $leg->jobOrder->job_number
+                'desc' => 'Biaya dimuka uang jalan - ' . $leg->jobOrder->job_number,
+                'transport_id' => $transportId,
+                'job_order_id' => $jobOrderId
             ],
             [
                 'account_code' => $driverPayable,
                 'debit' => 0,
                 'credit' => $grossAmount,
-                'desc' => 'Hutang uang jalan supir - ' . ($advance->driver->name ?? 'N/A')
+                'desc' => 'Hutang uang jalan supir - ' . ($advance->driver->name ?? 'N/A'),
+                'transport_id' => $transportId,
+                'job_order_id' => $jobOrderId
             ],
         ];
         
@@ -455,6 +483,10 @@ class JournalService
         $guaranteeDeduction = 0;
         $isSettlement = false;
         
+        // Track transport_id and job_order_id from first advance
+        $transportId = null;
+        $jobOrderId = null;
+        
         // Load driver advance payment records
         $driverAdvancePayments = \App\Models\Operations\DriverAdvancePayment::where('cash_bank_transaction_id', $trx->id)
             ->with(['driverAdvance.shipmentLeg.mainCost'])
@@ -463,6 +495,12 @@ class JournalService
         foreach ($driverAdvancePayments as $payment) {
             $advance = $payment->driverAdvance;
             if ($advance) {
+                // Get transport_id and job_order_id from first advance
+                if (!$transportId && $advance->shipmentLeg) {
+                    $transportId = $advance->shipmentLeg->transport_id;
+                    $jobOrderId = $advance->shipmentLeg->job_order_id;
+                }
+                
                 // Check if this is settlement
                 if ($advance->dp_amount > 0 || $advance->status === 'dp_paid') {
                     $isSettlement = true;
@@ -490,7 +528,9 @@ class JournalService
             'account_code' => $driverPayable,
             'debit' => $grossPayable,
             'credit' => 0,
-            'desc' => 'Pembayaran hutang uang jalan - ' . ($isSettlement ? 'Pelunasan' : 'DP')
+            'desc' => 'Pembayaran hutang uang jalan - ' . ($isSettlement ? 'Pelunasan' : 'DP'),
+            'transport_id' => $transportId,
+            'job_order_id' => $jobOrderId
         ];
         
         // Cr. Kas/Bank
@@ -498,7 +538,9 @@ class JournalService
             'account_code' => $cash,
             'debit' => 0,
             'credit' => $netAmount,
-            'desc' => 'Pembayaran uang jalan driver'
+            'desc' => 'Pembayaran uang jalan driver',
+            'transport_id' => $transportId,
+            'job_order_id' => $jobOrderId
         ];
         
         // Settlement only: add deduction liabilities
@@ -509,7 +551,9 @@ class JournalService
                     'account_code' => $driverSavings,
                     'debit' => 0,
                     'credit' => $savingsDeduction,
-                    'desc' => 'Potongan tabungan supir'
+                    'desc' => 'Potongan tabungan supir',
+                    'transport_id' => $transportId,
+                    'job_order_id' => $jobOrderId
                 ];
             }
             
@@ -519,7 +563,9 @@ class JournalService
                     'account_code' => $driverGuarantee,
                     'debit' => 0,
                     'credit' => $guaranteeDeduction,
-                    'desc' => 'Potongan jaminan supir'
+                    'desc' => 'Potongan jaminan supir',
+                    'transport_id' => $transportId,
+                    'job_order_id' => $jobOrderId
                 ];
             }
         }
@@ -639,6 +685,9 @@ class JournalService
         
         // Delete journal
         $journal->delete();
+
+        // Clear journal_id from invoice
+        $invoice->update(['journal_id' => null]);
 
         return true;
     }
