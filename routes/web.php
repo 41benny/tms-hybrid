@@ -27,6 +27,7 @@ use App\Http\Controllers\Master\VendorController as MasterVendorController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Operations\JobOrderController;
 use App\Http\Controllers\Operations\ShipmentLegController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -55,6 +56,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::delete('additional-costs/{cost}', [ShipmentLegController::class, 'destroyAdditionalCost'])->name('additional-costs.destroy');
     Route::post('legs/{leg}/generate-vendor-bill', [ShipmentLegController::class, 'generateVendorBill'])->name('legs.generate-vendor-bill');
     Route::post('legs/{leg}/sales-quick-vendor-request', [ShipmentLegController::class, 'salesQuickVendorRequest'])->name('legs.sales-quick-vendor-request');
+    Route::get('legs/{leg}/print-trucking', [ShipmentLegController::class, 'printTrucking'])->name('legs.print-trucking');
     Route::get('api/truck-driver', [ShipmentLegController::class, 'getDriverByTruck'])->name('api.truck-driver');
 
     // Sales-friendly console (mobile first)
@@ -106,6 +108,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     });
 
     Route::resource('vendor-bills', VendorBillController::class)->only(['index', 'show']);
+    Route::get('vendor-bills/{vendor_bill}/print', [VendorBillController::class, 'print'])->name('vendor-bills.print');
     Route::post('vendor-bills/{vendor_bill}/mark-received', [VendorBillController::class, 'markAsReceived'])->name('vendor-bills.mark-received');
     Route::post('vendor-bills/{vendor_bill}/mark-paid', [VendorBillController::class, 'markAsPaid'])->name('vendor-bills.mark-paid');
     Route::get('vendor-bills/{vendor_bill}/leg-info', [VendorBillController::class, 'getLegInfo'])->name('vendor-bills.leg-info');
@@ -139,6 +142,20 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::delete('cash-banks/{cashBankTransaction}/cancel', [CashBankController::class, 'cancel'])->name('cash-banks.cancel');
 
     Route::resource('journals', JournalController::class)->except(['destroy']);
+    Route::get('journals-traditional', [JournalController::class, 'traditional'])->name('journals.traditional');
+
+    // User Profile
+    Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::post('profile', [ProfileController::class, 'update'])->name('profile.update');
+    
+    // API routes for pending journals
+    Route::prefix('api/pending-journals')->name('api.pending-journals.')->group(function () {
+        Route::get('invoices', [\App\Http\Controllers\Accounting\PendingJournalController::class, 'getPendingInvoices']);
+        Route::get('vendor-bills', [\App\Http\Controllers\Accounting\PendingJournalController::class, 'getPendingVendorBills']);
+        Route::get('driver-advances', [\App\Http\Controllers\Accounting\PendingJournalController::class, 'getPendingDriverAdvances']);
+        Route::get('summary', [\App\Http\Controllers\Accounting\PendingJournalController::class, 'getSummary']);
+    });
+    
     Route::resource('chart-of-accounts', ChartOfAccountController::class)->except(['show', 'destroy']);
 
     // Fixed Assets

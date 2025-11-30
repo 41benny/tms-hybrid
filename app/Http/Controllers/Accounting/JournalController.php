@@ -286,4 +286,86 @@ class JournalController extends Controller
 
         return null;
     }
+
+    /**
+     * Display traditional journal ledger view (all entries in one table)
+     */
+    public function traditional(Request $request)
+    {
+        $query = JournalLine::query()
+            ->with(['journal', 'account', 'customer', 'vendor', 'transport.driver', 'jobOrder'])
+            ->whereHas('journal', function ($q) {
+                $q->where('status', 'posted');
+            });
+
+        // Filter by date range
+        if ($from = $request->get('from')) {
+            $query->whereHas('journal', function ($q) use ($from) {
+                $q->whereDate('journal_date', '>=', $from);
+            });
+        }
+        if ($to = $request->get('to')) {
+            $query->whereHas('journal', function ($q) use ($to) {
+                $q->whereDate('journal_date', '<=', $to);
+            });
+        }
+
+        // Get all entries
+        $entries = $query->get();
+
+        // Define class order for sorting
+        $classOrder = [
+            'vendor_bill' => 1,
+            'vendor_payment' => 2,
+            'invoice' => 3,
+            'customer_payment' => 4,
+            'cash_in' => 5,
+            'cash_out' => 5,
+            'expense' => 5,
+            'part_purchase' => 6,
+            'part_usage' => 6,
+            'fixed_asset_depreciation' => 7,
+            'adjustment' => 8,
+        ];
+
+        // Sort entries by class order, then by date, then by journal number
+        $entries = $entries->sort(function ($a, $b) use ($classOrder) {
+            $classA = $classOrder[$a->journal->source_type] ?? 99;
+            $classB = $classOrder[$b->journal->source_type] ?? 99;
+
+            if ($classA !== $classB) {
+                return $classA <=> $classB;
+            }
+
+            // Then by date
+            $dateCompare = $a->journal->journal_date <=> $b->journal->journal_date;
+            if ($dateCompare !== 0) {
+                return $dateCompare;
+            }
+
+            // Then by journal number
+            return strcmp($a->journal->journal_no, $b->journal->journal_no);
+        });
+
+        // Calculate totals
+        $totalDebit = $entries->sum('debit');
+        $totalCredit = $entries->sum('credit');
+
+        // Class labels
+        $classLabels = [
+            'vendor_bill' => 'Pembelian',
+            'vendor_payment' => 'Pembayaran Pembelian',
+            'invoice' => 'Penjualan',
+            'customer_payment' => 'Pembayaran Penjualan',
+            'cash_in' => 'Kas/Bank Masuk',
+            'cash_out' => 'Kas/Bank Keluar',
+            'expense' => 'Kas/Bank',
+            'part_purchase' => 'Pembelian Part',
+            'part_usage' => 'Pemakaian Part (HPP)',
+            'fixed_asset_depreciation' => 'Depresiasi Aset',
+            'adjustment' => 'Adjustment Manual',
+        ];
+
+        return view('journals.traditional', compact('entries', 'totalDebit', 'totalCredit', 'classLabels'));
+    }
 }

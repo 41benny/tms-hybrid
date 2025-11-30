@@ -38,4 +38,14 @@ class JournalLine extends Model
     {
         return $this->belongsTo(\App\Models\Master\Vendor::class);
     }
+
+    public function transport(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Operations\Transport::class);
+    }
+
+    public function jobOrder(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Operations\JobOrder::class, 'job_order_id');
+    }
 }
