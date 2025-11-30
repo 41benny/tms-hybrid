@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Operations;
 
 use App\Http\Controllers\Controller;
+use Log;
 
 class DriverAdvanceController extends Controller
 {
@@ -14,16 +15,38 @@ class DriverAdvanceController extends Controller
                 return redirect()->back()->with('error', 'Driver advance already posted to journal');
             }
             
-            // Post to journal
-            if (class_exists('App\\Services\\Accounting\\JournalService')) {
-                $journalService = app('App\\Services\\Accounting\\JournalService');
-                $journalService->postDriverAdvance($driverAdvance);
+            // Load relationships for validation
+            $driverAdvance->load(['shipmentLeg.mainCost', 'driver']);
+            
+            // Validate required data
+            if (!$driverAdvance->shipmentLeg) {
+                return redirect()->back()->with('error', 'Driver advance tidak memiliki shipment leg. Tidak bisa di-post.');
             }
             
-            return redirect()->back()->with('success', 'Driver advance posted to journal successfully');
+            if (!$driverAdvance->shipmentLeg->mainCost) {
+                return redirect()->back()->with('error', 'Shipment leg tidak memiliki main cost. Tidak bisa di-post.');
+            }
+            
+            // Post to journal
+            $journalService = app(\App\Services\Accounting\JournalService::class);
+            $journal = $journalService->postDriverAdvance($driverAdvance);
+            
+            \Log::info('Driver advance posted successfully', [
+                'advance_id' => $driverAdvance->id,
+                'advance_number' => $driverAdvance->advance_number,
+                'journal_id' => $journal->id
+            ]);
+            
+            return redirect()->back()->with('success', 'Driver advance berhasil di-post ke jurnal');
             
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Failed to post: ' . $e->getMessage());
+            \Log::error('Failed to post driver advance', [
+                'advance_id' => $driverAdvance->id ?? null,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()->back()->with('error', 'Gagal post ke jurnal: ' . $e->getMessage());
         }
     }
 

@@ -16,6 +16,7 @@ class User extends Authenticatable
     public const ROLE_SUPER_ADMIN = 'super_admin';
     public const ROLE_ADMIN = 'admin';
     public const ROLE_SALES = 'sales';
+    public const ROLE_ACCOUNTING = 'accounting';
 
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
@@ -28,6 +29,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'avatar_path',
         'password',
         'role',
         'permissions',
@@ -59,6 +61,19 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'deactivated_at' => 'datetime',
         ];
+    }
+
+    public function avatarUrl(): string
+    {
+        // Baca langsung dari attributes agar aman meskipun kolom tidak di-select
+        $avatarPath = $this->attributes['avatar_path'] ?? null;
+
+        if (!empty($avatarPath)) {
+            return asset('storage/' . $avatarPath);
+        }
+
+        // Tidak ada avatar tersimpan -> kembalikan string kosong
+        return '';
     }
 
     /**
@@ -170,6 +185,7 @@ class User extends Authenticatable
             self::ROLE_SUPER_ADMIN => 'Super Admin',
             self::ROLE_ADMIN => 'Admin',
             self::ROLE_SALES => 'Sales',
+            self::ROLE_ACCOUNTING => 'Accounting',
         ];
     }
 }

@@ -16,6 +16,19 @@ use Illuminate\Validation\Rule;
 
 class ShipmentLegController extends Controller
 {
+    public function printTrucking(ShipmentLeg $leg)
+    {
+        $leg->load(['jobOrder.customer', 'mainCost', 'driver', 'truck']);
+
+        if ($leg->cost_category !== 'trucking' || $leg->executor_type !== 'own_fleet') {
+            return redirect()
+                ->back()
+                ->with('error', 'Print SPK Uang Jalan hanya untuk leg trucking own fleet.');
+        }
+
+        return view('job-orders.legs.print-trucking', compact('leg'));
+    }
+
     public function create(JobOrder $jobOrder)
     {
         $vendors = Vendor::where('is_active', true)->orderBy('name')->get();
@@ -146,6 +159,11 @@ class ShipmentLegController extends Controller
         // Auto-create Driver Advance for trucking (own fleet)
         if ($validated['cost_category'] === 'trucking' && $leg->driver_id) {
             $this->autoCreateDriverAdvance($leg);
+        }
+
+        // Auto-advance Job Order status from draft on first leg
+        if ($jobOrder->status === 'draft' && $jobOrder->shipmentLegs()->count() === 1) {
+            $jobOrder->update(['status' => 'in_progress']);
         }
 
         return redirect()->route('job-orders.show', $jobOrder)->with('success', 'Leg berhasil ditambahkan');
@@ -458,7 +476,8 @@ class ShipmentLegController extends Controller
             'vendor_bill_number' => $this->generateBillNo(now()->toDateString()),
             'bill_date' => now()->toDateString(),
             'due_date' => now()->addDays(30)->toDateString(),
-            'status' => 'draft',
+            // Set langsung ke 'received' agar muncul di Pending Journal (unposted)
+            'status' => 'received',
             'notes' => "Auto-generated (Gabung) from Leg {$leg->leg_code} - Job Order {$leg->jobOrder->job_number}",
         ]);
 
@@ -497,7 +516,8 @@ class ShipmentLegController extends Controller
             'vendor_bill_number' => $this->generateBillNo(now()->toDateString()),
             'bill_date' => now()->toDateString(),
             'due_date' => now()->addDays(30)->toDateString(),
-            'status' => 'draft',
+            // Set langsung ke 'received' agar muncul di Pending Journal (unposted)
+            'status' => 'received',
             'notes' => "Main Cost - Leg {$leg->leg_code} - Job Order {$leg->jobOrder->job_number}",
         ]);
 
@@ -515,7 +535,8 @@ class ShipmentLegController extends Controller
                 'vendor_bill_number' => $this->generateBillNo(now()->toDateString()),
                 'bill_date' => now()->toDateString(),
                 'due_date' => now()->addDays(30)->toDateString(),
-                'status' => 'draft',
+                // Set langsung ke 'received' agar muncul di Pending Journal (unposted)
+                'status' => 'received',
                 'notes' => "Additional Costs - Leg {$leg->leg_code} - Job Order {$leg->jobOrder->job_number}",
             ]);
 

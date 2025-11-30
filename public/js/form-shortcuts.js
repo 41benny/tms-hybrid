@@ -1,6 +1,7 @@
 /**
  * Global Form Keyboard Shortcuts
- * Adds Alt+S support for all forms with submit buttons
+ * Alt+S hanya untuk tombol Save/Simpan
+ * Rekomendasi: tandai tombol dengan data-shortcut="save"
  */
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -9,7 +10,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (forms.length === 0) return;
 
-    // Add keyboard shortcut listener
+    // Helper: cek apakah tombol adalah tombol "Save"
+    function isSaveButton(button) {
+        if (!button) return false;
+
+        // Prioritas: atribut eksplisit
+        if (button.dataset && button.dataset.shortcut === 'save') {
+            return true;
+        }
+
+        // Fallback: berdasarkan teks tombol
+        const text = (button.textContent || '').toLowerCase();
+        return text.includes('simpan') || text.includes('save');
+    }
+
+    // Add keyboard shortcut listener (Alt+S)
     document.addEventListener('keydown', function (e) {
         // Check for Alt+S
         if (e.altKey && e.key.toLowerCase() === 's') {
@@ -29,8 +44,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (!targetForm) return;
 
-            // Find submit button in the form
-            const submitButton = targetForm.querySelector('button[type="submit"]');
+            // Cari tombol submit yang benar‑benar "Save"
+            const submitButtons = targetForm.querySelectorAll('button[type="submit"]');
+            const submitButton = Array.from(submitButtons).find(isSaveButton);
 
             if (submitButton) {
                 // Check if button is disabled
@@ -80,28 +96,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 2000);
     }
 
-    // Add hint badge to submit buttons
-    forms.forEach(form => {
-        const submitButton = form.querySelector('button[type="submit"]');
-        if (submitButton) {
-            // Remove any existing hint (old Ctrl+S or duplicate)
-            const oldHint = submitButton.querySelector('.shortcut-hint');
-            if (oldHint) {
-                oldHint.remove();
-            }
-
-            // Check if button already has text content
-            const buttonText = submitButton.textContent.trim();
-
-            // Only add hint if button has text (not icon-only buttons)
-            if (buttonText.length > 0) {
-                const hint = document.createElement('span');
-                hint.className = 'shortcut-hint ml-2 text-[10px] opacity-60';
-                hint.textContent = '(Alt+S)';
-                submitButton.appendChild(hint);
-            }
-        }
-    });
 });
 
 // Add CSS for animation

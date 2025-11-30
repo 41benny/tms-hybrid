@@ -1,4 +1,17 @@
-@props(['label' => null, 'name' => null, 'error' => null, 'required' => false, 'helpText' => null, 'rows' => 3])
+@props(['label' => null, 'name' => null, 'error' => null, 'required' => false, 'helpText' => null, 'rows' => 3, 'size' => 'md'])
+
+@php
+    switch ($size) {
+        case 'sm':
+            $sizeClasses = ' px-3 py-1.5';
+            break;
+        case 'lg':
+            $sizeClasses = ' px-4 py-3';
+            break;
+        default:
+            $sizeClasses = ' px-4 py-2.5';
+    }
+@endphp
 
 <div {{ $attributes->only('class') }}>
     @if($label)
@@ -14,7 +27,7 @@
         {{ $attributes->except('class')->merge([
             'class' => 'w-full rounded-lg bg-white dark:bg-[#252525] border ' . 
                       ($error ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500' : 'border-slate-300 dark:border-[#3d3d3d] focus:border-indigo-500 focus:ring-indigo-500') . 
-                      ' px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors shadow-sm',
+                      $sizeClasses . ' text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors shadow-sm',
             'id' => $name,
             'name' => $name,
             'rows' => $rows,

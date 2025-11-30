@@ -7,13 +7,13 @@
         <x-slot:header>
             <div class="flex flex-col md:flex-row md:items-center md:justify-end gap-4">
                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-        <form method="get" class="flex items-center gap-2">
+                    <form method="get" class="flex items-center gap-2">
                         <input
                             type="text"
                             name="q"
                             value="{{ request('q') }}"
                             placeholder="Cari nama..."
-                            class="rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            class="rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-4 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                         >
                         <x-button variant="outline" type="submit">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -21,7 +21,7 @@
                             </svg>
                             Cari
                         </x-button>
-        </form>
+                    </form>
                     <x-button :href="route('vendors.create')" variant="primary">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -46,6 +46,9 @@
                             Telepon
                         </th>
                         <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                            NPWP
+                        </th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                             Tipe
                         </th>
                         <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
@@ -67,6 +70,9 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-slate-600 dark:text-slate-400">
                                 {{ $item->phone }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-slate-600 dark:text-slate-400 text-sm">
+                                {{ $item->npwp ?: '-' }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <x-badge variant="default">{{ $item->vendor_type }}</x-badge>
@@ -120,7 +126,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+                            <td colspan="7" class="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
                                 <div class="flex flex-col items-center gap-2">
                                     <span class="text-4xl">📭</span>
                                     <p class="text-sm">Belum ada data vendor</p>

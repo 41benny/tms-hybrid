@@ -65,6 +65,7 @@
                     :error="$errors->first('cost_category')"
                     :required="true"
                     id="cost_category"
+                    size="sm"
                 >
                     <option value="">-- Pilih Category --</option>
                     <option value="trucking" @selected(old('cost_category', $leg->cost_category)=='trucking')>Trucking (Own Fleet)</option>
@@ -86,7 +87,7 @@
                         id="vendor_search"
                         name="vendor_search"
                         placeholder="Ketik nama vendor dan pilih dari daftar..."
-                        class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                        class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
                         list="vendor_list_edit"
                         value="{{ old('vendor_search', $selectedVendorName) }}"
                         autocomplete="off"
@@ -110,6 +111,7 @@
                         label="Nopol Truck"
                         :error="$errors->first('truck_id')"
                         id="truck_id"
+                        size="sm"
                     >
                         <option value="">-- Pilih Nopol Truck --</option>
                         @foreach($trucks as $t)
@@ -123,6 +125,7 @@
                         :value="old('driver_name', $leg->driver?->name)"
                         placeholder="Supir akan terisi otomatis"
                         id="driver_name"
+                        size="sm"
                         readonly
                     />
                     <input type="hidden" name="driver_id" id="driver_id" value="{{ old('driver_id', $leg->driver_id) }}">
@@ -138,6 +141,7 @@
                         :value="old('vessel_name', $leg->vessel_name)"
                         :error="$errors->first('vessel_name')"
                         placeholder="e.g., KM Bahari"
+                        size="sm"
                     />
                 </div>
 
@@ -150,6 +154,7 @@
                     :value="old('load_date', $leg->load_date->format('Y-m-d'))"
                     :error="$errors->first('load_date')"
                     :required="true"
+                    size="sm"
                 />
 
                 <x-input
@@ -158,6 +163,7 @@
                     label="Unload Date"
                     :value="old('unload_date', optional($leg->unload_date)->format('Y-m-d'))"
                     :error="$errors->first('unload_date')"
+                    size="sm"
                 />
 
                 <x-input
@@ -168,6 +174,7 @@
                     :value="old('quantity', $leg->quantity)"
                     :error="$errors->first('quantity')"
                     :required="true"
+                    size="sm"
                 />
 
                 <x-input
@@ -176,6 +183,7 @@
                     :value="old('serial_numbers', $leg->serial_numbers)"
                     :error="$errors->first('serial_numbers')"
                     placeholder="e.g., SN-001, SN-002"
+                    size="sm"
                 />
 
                 <x-select
@@ -184,12 +192,24 @@
                     :error="$errors->first('status')"
                     :required="true"
                     class="md:col-span-2"
+                    size="sm"
                 >
                     <option value="pending" @selected(old('status', $leg->status)=='pending')>Pending</option>
                     <option value="in_transit" @selected(old('status', $leg->status)=='in_transit')>In Transit</option>
                     <option value="delivered" @selected(old('status', $leg->status)=='delivered')>Delivered</option>
                     <option value="cancelled" @selected(old('status', $leg->status)=='cancelled')>Cancelled</option>
                 </x-select>
+
+                <div class="md:col-span-2">
+                    <x-textarea
+                        name="notes"
+                        label="Catatan"
+                        :error="$errors->first('notes')"
+                        placeholder="Catatan tambahan untuk leg ini (opsional)..."
+                        :rows="3"
+                        size="sm"
+                    >{{ old('notes', $leg->notes) }}</x-textarea>
+                </div>
             </div>
         </x-card>
 
@@ -203,7 +223,7 @@
                         type="text"
                         id="uang_jalan_display"
                         placeholder="500.000"
-                        class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                        class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
                     >
                     <input type="hidden" name="uang_jalan" id="uang_jalan_input" value="{{ old('uang_jalan', $leg->mainCost?->uang_jalan ?? 0) }}">
                 </div>
@@ -214,7 +234,7 @@
                         type="text"
                         id="bbm_display"
                         placeholder="300.000"
-                        class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                        class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
                     >
                     <input type="hidden" name="bbm" id="bbm_input" value="{{ old('bbm', $leg->mainCost?->bbm ?? 0) }}">
                 </div>
@@ -225,7 +245,7 @@
                         type="text"
                         id="toll_display"
                         placeholder="150.000"
-                        class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                        class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
                     >
                     <input type="hidden" name="toll" id="toll_input" value="{{ old('toll', $leg->mainCost?->toll ?? 0) }}">
                 </div>
@@ -236,7 +256,7 @@
                         type="text"
                         id="other_costs_display"
                         placeholder="100.000"
-                        class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                        class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
                     >
                     <input type="hidden" name="other_costs" id="other_costs_input" value="{{ old('other_costs', $leg->mainCost?->other_costs ?? 0) }}">
                 </div>
@@ -247,7 +267,7 @@
                         type="text"
                         id="driver_savings_deduction_display"
                         placeholder="200.000"
-                        class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                        class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
                     >
                     <input type="hidden" name="driver_savings_deduction" id="driver_savings_deduction_input" value="{{ old('driver_savings_deduction', $leg->mainCost?->driver_savings_deduction ?? 0) }}">
                     <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">Potongan untuk tabungan supir</p>
@@ -259,7 +279,7 @@
                         type="text"
                         id="driver_guarantee_deduction_display"
                         placeholder="300.000"
-                        class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                        class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
                     >
                     <input type="hidden" name="driver_guarantee_deduction" id="driver_guarantee_deduction_input" value="{{ old('driver_guarantee_deduction', $leg->mainCost?->driver_guarantee_deduction ?? 0) }}">
                     <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">Potongan untuk jaminan supir</p>
@@ -267,7 +287,7 @@
 
                 {{-- Net Uang Jalan Display --}}
                 <div class="md:col-span-3">
-                    <div class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-lg p-4 border border-green-200 dark:border-green-800">
+                    <div class="bg-white dark:bg-slate-800/50 rounded-lg p-4 border border-green-200 dark:border-green-800">
                         <div class="flex items-center justify-between">
                             <div>
                                 <div class="text-xs font-semibold text-green-600 dark:text-green-400 mb-1">Uang Jalan Bersih (Diterima Supir)</div>
@@ -290,7 +310,7 @@
                             type="text"
                             id="vendor_cost_display"
                             placeholder="3.000.000"
-                            class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                            class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
                         >
                         <input type="hidden" name="vendor_cost" id="vendor_cost_input" value="{{ old('vendor_cost', $leg->mainCost?->vendor_cost ?? 0) }}">
                     </div>
@@ -301,7 +321,7 @@
                             type="text"
                             id="ppn_display"
                             placeholder="330.000"
-                            class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                            class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
                         >
                         <input type="hidden" name="ppn" id="ppn_input" value="{{ old('ppn', $leg->mainCost?->ppn ?? 0) }}">
                         <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">PPN 11% dari vendor cost (bisa diedit)</p>
@@ -313,14 +333,14 @@
                             type="text"
                             id="pph23_display"
                             placeholder="60.000"
-                            class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                            class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
                         >
                         <input type="hidden" name="pph23" id="pph23_input" value="{{ old('pph23', $leg->mainCost?->pph23 ?? 0) }}">
                         <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">PPH 23 2% dipotong dari vendor cost</p>
                     </div>
                 </div>
 
-                <div class="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 rounded-lg p-5 border border-indigo-200 dark:border-indigo-800">
+                <div class="bg-white dark:bg-slate-800/50 rounded-lg p-5 border border-indigo-200 dark:border-indigo-800">
                     <div class="flex items-center justify-between">
                         <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Jumlah Total:</span>
                         <div class="text-right">
@@ -347,7 +367,7 @@
                             type="text"
                             id="freight_cost_display"
                             placeholder="4.000.000"
-                            class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                            class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
                         >
                         <input type="hidden" name="freight_cost" id="freight_cost_input" value="{{ old('freight_cost', $leg->mainCost?->freight_cost ?? 0) }}">
                     </div>
@@ -358,7 +378,7 @@
                             type="text"
                             id="ppn_pelayaran_display"
                             placeholder="440.000"
-                            class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                            class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
                         >
                         <input type="hidden" name="ppn" id="ppn_pelayaran_input" value="{{ old('ppn', $leg->mainCost?->ppn ?? 0) }}">
                         <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">PPN 11% dari freight cost (bisa diedit)</p>
@@ -370,7 +390,7 @@
                             type="text"
                             id="pph23_pelayaran_display"
                             placeholder="80.000"
-                            class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                            class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
                         >
                         <input type="hidden" name="pph23" id="pph23_pelayaran_input" value="{{ old('pph23', $leg->mainCost?->pph23 ?? 0) }}">
                         <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">PPH 23 2% dipotong dari freight cost</p>
@@ -385,7 +405,7 @@
                     />
                 </div>
 
-                <div class="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 rounded-lg p-5 border border-indigo-200 dark:border-indigo-800">
+                <div class="bg-white dark:bg-slate-800/50 rounded-lg p-5 border border-indigo-200 dark:border-indigo-800">
                     <div class="flex items-center justify-between">
                         <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Jumlah Total:</span>
                         <div class="text-right">
@@ -418,7 +438,7 @@
                             type="text"
                             id="insured_value_display_edit"
                             placeholder="5.000.000.000"
-                            class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                            class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
                         >
                         <input type="hidden" name="insured_value" id="insured_value_edit" value="{{ old('insured_value', $leg->mainCost?->insured_value ?? 0) }}">
                     </div>
@@ -440,7 +460,7 @@
                             type="text"
                             id="admin_fee_display_edit"
                             placeholder="50.000"
-                            class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                            class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
                         >
                         <input type="hidden" name="admin_fee" id="admin_fee_edit" value="{{ old('admin_fee', $leg->mainCost?->admin_fee ?? 0) }}">
                     </div>
@@ -455,7 +475,7 @@
                             id="premium_cost_display_edit"
                             readonly
                             value="Rp {{ number_format($leg->mainCost?->premium_cost ?? 0, 0, ',', '.') }}"
-                            class="w-full rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 font-medium"
+                            class="w-full rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-slate-900 dark:text-slate-100 font-medium"
                         >
                         <input type="hidden" name="premium_cost" id="premium_cost_edit" value="{{ old('premium_cost', $leg->mainCost?->premium_cost ?? 0) }}">
                         <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">= (Nilai Pertanggungan × Rate%) + Biaya Admin</p>
@@ -480,14 +500,14 @@
                             id="premium_billable_display_edit"
                             readonly
                             value="Rp {{ number_format($leg->mainCost?->premium_billable ?? 0, 0, ',', '.') }}"
-                            class="w-full rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 font-medium"
+                            class="w-full rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-slate-900 dark:text-slate-100 font-medium"
                         >
                         <input type="hidden" name="premium_billable" id="premium_billable_edit" value="{{ old('premium_billable', $leg->mainCost?->premium_billable ?? 0) }}">
                         <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">= Nilai Pertanggungan × Rate Customer (tanpa by admin)</p>
                     </div>
                 </div>
 
-                <div class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-lg p-4 border border-green-200 dark:border-green-800">
+                <div class="bg-white dark:bg-slate-800/50 rounded-lg p-4 border border-green-200 dark:border-green-800">
                     <div class="flex items-center justify-between">
                         <div>
                             <div class="text-xs font-semibold text-green-600 dark:text-green-400 mb-1">Margin Premi</div>
@@ -508,6 +528,7 @@
                         name="cost_type"
                         label="Tipe Biaya"
                         :error="$errors->first('cost_type')"
+                        size="sm"
                     >
                         <option value="">-- Pilih Tipe --</option>
                         <option value="fee" @selected(old('cost_type', $leg->mainCost?->cost_type)=='fee')>Fee</option>
@@ -522,6 +543,7 @@
                         :value="old('pic_name', $leg->mainCost?->pic_name)"
                         :error="$errors->first('pic_name')"
                         placeholder="e.g., Budi Santoso"
+                        size="sm"
                     />
 
                     <x-input
@@ -530,6 +552,7 @@
                         :value="old('pic_phone', $leg->mainCost?->pic_phone)"
                         :error="$errors->first('pic_phone')"
                         placeholder="e.g., 08123456789"
+                        size="sm"
                     />
 
 
@@ -539,7 +562,7 @@
                             type="text"
                             id="pic_amount_display_edit"
                             placeholder="500.000"
-                            class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                            class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
                         >
                         <input type="hidden" name="pic_amount" id="pic_amount_input_edit" value="{{ old('pic_amount', $leg->mainCost?->pic_amount ?? 0) }}">
                         @if($errors->first('pic_amount'))
@@ -555,6 +578,7 @@
                             :error="$errors->first('pic_notes')"
                             placeholder="Catatan tambahan (opsional)..."
                             :rows="2"
+                            size="sm"
                         >{{ old('pic_notes', $leg->mainCost?->pic_notes) }}</x-textarea>
                     </div>
                 </div>

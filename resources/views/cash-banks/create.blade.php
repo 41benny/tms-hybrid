@@ -110,11 +110,21 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
                 <label class="block text-sm mb-1">Tanggal</label>
-                <input type="date" name="tanggal" value="{{ now()->format('Y-m-d') }}" class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2" required>
+                <input
+                    type="date"
+                    name="tanggal"
+                    value="{{ now()->format('Y-m-d') }}"
+                    class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    required
+                >
             </div>
             <div>
                 <label class="block text-sm mb-1">Akun Kas/Bank</label>
-                <select name="cash_bank_account_id" class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2" required>
+                <select
+                    name="cash_bank_account_id"
+                    class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    required
+                >
                     @foreach($accounts as $a)
                         <option value="{{ $a->id }}">{{ $a->name }}</option>
                     @endforeach
@@ -122,7 +132,12 @@
             </div>
             <div>
                 <label class="block text-sm mb-1">Jenis</label>
-                <select name="jenis" id="jenis" class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2" required>
+                <select
+                    name="jenis"
+                    id="jenis"
+                    class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    required
+                >
                     <option value="cash_in" {{ ($prefill['sumber'] ?? '')==='customer_payment' ? 'selected' : '' }}>Cash In</option>
                     <option value="cash_out" {{ in_array(($prefill['sumber'] ?? ''), ['vendor_payment','expense']) ? 'selected' : '' }}>Cash Out</option>
                 </select>
@@ -130,8 +145,14 @@
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
             <div>
-                <label class="block text-sm mb-1 text-white">Sumber <span class="text-red-500">*</span></label>
-                <select name="sumber" id="sumber" class="w-full rounded theme-panel border theme-border px-2 py-2 text-white" required onchange="toggleFields()">
+                <label class="block text-sm mb-1">Sumber <span class="text-red-500">*</span></label>
+                <select
+                    name="sumber"
+                    id="sumber"
+                    class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    required
+                    onchange="toggleFields()"
+                >
                             <option value="customer_payment" @selected(old('sumber', $prefill['sumber'] ?? '') == 'customer_payment')>Customer Payment</option>
                             <option value="vendor_payment" @selected(old('sumber', $prefill['sumber'] ?? '') == 'vendor_payment')>Vendor Payment</option>
                             <option value="expense" @selected(old('sumber', $prefill['sumber'] ?? '') == 'expense')>Expense</option>
@@ -141,11 +162,15 @@
                         </select>
                         @error('sumber')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
+                          @enderror
             </div>
             <div id="invoice_field" style="display: none;">
                 <label class="block text-sm mb-1">Invoices</label>
-                <button type="button" onclick="openInvoiceModal()" class="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center justify-center gap-2">
+                <button
+                    type="button"
+                    onclick="openInvoiceModal()"
+                    class="w-full btn-primary justify-center"
+                >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
@@ -154,7 +179,11 @@
             </div>
             <div id="vendor_bill_field" style="display: none;">
                 <label class="block text-sm mb-1">Vendor Bills</label>
-                <button type="button" onclick="openVendorBillModal()" class="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center justify-center gap-2">
+                <button
+                    type="button"
+                    onclick="openVendorBillModal()"
+                    class="w-full btn-primary justify-center"
+                >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
@@ -163,21 +192,28 @@
             </div>
             <div id="coa_field" style="display: none;">
                 <label class="block text-sm mb-1">Akun Biaya</label>
-                <select name="coa_id" class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2">
+                <select
+                    name="coa_id"
+                    class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                >
                     <option value="">- Pilih Akun -</option>
                     @foreach($coas as $c)
                         <option value="{{ $c->id }}">{{ $c->code }} - {{ $c->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div id="driver_advance_field" style="display: none;">
-                <label class="block text-sm mb-1">Driver Advance</label>
-                <button type="button" onclick="openDriverAdvanceModal()" class="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    Select Driver Advance
-                </button>
+                      @endforeach
+                  </select>
+              </div>
+              <div id="driver_advance_field" style="display: none;">
+                  <label class="block text-sm mb-1">Driver Advance</label>
+                  <button
+                      type="button"
+                      onclick="openDriverAdvanceModal()"
+                      class="w-full btn-primary justify-center"
+                  >
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                      </svg>
+                      Select Driver Advance
+                  </button>
             </div>
         </div>
         {{-- Selected Invoices Display (Full Width) --}}
@@ -191,14 +227,25 @@
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
             <div>
                 <label class="block text-sm mb-1">Nominal <span class="text-red-500">*</span></label>
-                <input type="text" id="amount_display" placeholder="1.000.000" class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2" required>
+                <input
+                    type="text"
+                    id="amount_display"
+                    placeholder="1.000.000"
+                    class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    required
+                >
                 <input type="hidden" name="amount" id="amount_input" value="{{ $prefill['amount'] ?? '' }}">
             </div>
             
             <div id="pph23_field" style="display: none;">
                 <label class="block text-sm mb-1">PPh 23</label>
                 <div class="relative">
-                    <input type="text" id="pph23_display" placeholder="0" class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2">
+                    <input
+                        type="text"
+                        id="pph23_display"
+                        placeholder="0"
+                        class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    >
                     <input type="hidden" name="withholding_pph23" id="pph23_input" value="{{ old('withholding_pph23', '0') }}">
                 </div>
                 <div class="flex items-center gap-1 mt-1">
@@ -213,7 +260,12 @@
             
             <div>
                 <label class="block text-sm mb-1">Biaya Admin</label>
-                <input type="text" id="admin_fee_display" placeholder="0" class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2">
+                <input
+                    type="text"
+                    id="admin_fee_display"
+                    placeholder="0"
+                    class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                >
                 <input type="hidden" name="admin_fee" id="admin_fee_input" value="0">
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Opsional</p>
             </div>
@@ -233,25 +285,47 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
             <div>
                 <label class="block text-sm mb-1" id="recipient_label">Nama Penerima/Pengirim</label>
-                <input type="text" name="recipient_name" id="recipient_name" value="{{ $prefill['recipient_name'] ?? '' }}" class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2" placeholder="Nama orang/perusahaan">
+                <input
+                    type="text"
+                    name="recipient_name"
+                    id="recipient_name"
+                    value="{{ $prefill['recipient_name'] ?? '' }}"
+                    placeholder="Nama orang/perusahaan"
+                    class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                >
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-1" id="recipient_hint">Nama yang menerima/mengirim</p>
             </div>
             <div>
                 <label class="block text-sm mb-1">No. Referensi</label>
-                <input type="text" name="reference_number" class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2" placeholder="Nomor transfer, cek, dll">
+                <input
+                    type="text"
+                    name="reference_number"
+                    placeholder="Nomor transfer, cek, dll"
+                    class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                >
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Nomor bukti transfer</p>
             </div>
             <div>
         </div>
         <div class="mt-4">
             <label class="block text-sm mb-1">Deskripsi</label>
-            <textarea id="description" name="description" class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2" rows="3" placeholder="Catatan tambahan...">{{ $prefill['description'] ?? '' }}</textarea>
+            <textarea
+                id="description"
+                name="description"
+                rows="3"
+                placeholder="Catatan tambahan..."
+                class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+            >{{ $prefill['description'] ?? '' }}</textarea>
         </div>
     </x-card>
 
     <div class="flex justify-end gap-2">
-        <a href="{{ route('cash-banks.index') }}" class="px-3 py-2 rounded border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800">Batal</a>
-        <button type="submit" class="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700">Simpan Transaksi</button>
+        <x-button :href="route('cash-banks.index')" variant="outline" size="sm">
+            Batal
+        </x-button>
+        <x-button type="submit" variant="primary" size="sm">
+            Simpan Transaksi
+        </x-button>
     </div>
 </form>
 
@@ -1927,11 +2001,12 @@ function confirmDriverAdvanceSelection() {
             paymentType: checkbox.getAttribute('data-payment-type')
         };
         selectedDriverAdvances.push(advance);
-        totalAmount += advance.amount; // Use net amount
-        
-        // Generate description for this advance
-        // Format: "Bayar [DP/Pelunasan] uang jalan [Driver] [Nopol] order [Customer] muat [Qty Unit Cargo] [Origin]-[Destination] [Job Number]"
-        const desc = `Bayar ${advance.paymentType} uang jalan ${advance.driver} ${advance.plate} order ${advance.customer} muat ${advance.cargoQty} ${advance.cargoUnit} ${advance.cargoDesc} ${advance.origin}-${advance.destination} ${advance.job}`;
+          totalAmount += advance.amount; // Use net amount
+          
+          // Generate description for this advance
+          // Format: "Bayar uang jalan [Driver] [Nopol] order [Customer] muat [Qty Unit Cargo] [Origin]-[Destination] [Job Number]"
+          // Tidak membedakan DP / pelunasan di teks agar tetap relevan untuk pembayaran penuh maupun sebagian.
+          const desc = `Bayar uang jalan ${advance.driver} ${advance.plate} order ${advance.customer} muat ${advance.cargoQty} ${advance.cargoUnit} ${advance.cargoDesc} ${advance.origin}-${advance.destination} ${advance.job}`;
         descriptions.push(desc);
     });
     

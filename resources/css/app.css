@@ -140,8 +140,9 @@
     /* Global Card Header Fix for Aurora */
     [data-theme="aurora"] .card-header,
     [data-theme="aurora"] div.theme-panel>div:first-child {
-        background: transparent !important;
-        border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+        background: linear-gradient(to right, rgba(139, 92, 246, 0.25), rgba(255, 255, 255, 0)) !important;
+        border-bottom: 3px solid rgba(139, 92, 246, 0.5) !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     }
 
     [data-theme="aurora"] .card-header h3,
@@ -186,8 +187,10 @@
         border-color: rgba(255, 255, 255, 0.3) !important;
     }
 
-    [data-theme="aurora"] header .font-mono span {
-        background: white !important;
+    /* System status dot - pink for Aurora theme */
+    [data-theme="aurora"] header .font-mono .system-status-dot {
+        background: #ec4899 !important;
+        box-shadow: 0 0 8px rgba(236, 72, 153, 0.8) !important;
     }
 
     /* Board Card Gradient for Aurora */
@@ -217,6 +220,34 @@
         text-shadow: 0 0 15px var(--glow-color);
     }
 
+    /* Aurora: Brand header (logo + title) - focus on fonts */
+    [data-theme="aurora"] .sidebar-brand-shell {
+        padding: 0;
+        border-radius: 0;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+    }
+
+    [data-theme="aurora"] .sidebar-brand-shell h1.text-white {
+        letter-spacing: 0.18em;
+        background-image: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%) !important;
+        background-size: 200% 200%;
+        -webkit-background-clip: text !important;
+        background-clip: text !important;
+        color: transparent !important;
+        animation: auroraBrand 8s ease-in-out infinite;
+        font-weight: 800;
+    }
+
+    [data-theme="aurora"] .sidebar-brand-shell .theme-text-primary {
+        background-image: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%) !important;
+        -webkit-background-clip: text !important;
+        background-clip: text !important;
+        color: transparent !important;
+        text-shadow: 0 0 20px rgba(168, 85, 247, 0.6);
+    }
+
     .text-contrast {
         color: white;
     }
@@ -239,6 +270,61 @@
         transform: translateY(-1px);
     }
 
+    /* Aurora: Global button polish */
+    [data-theme="aurora"] .tms-btn {
+        border-radius: 9999px;
+        border-width: 1px;
+        border-color: rgba(148, 163, 184, 0.25);
+        box-shadow: 0 8px 22px rgba(148, 163, 184, 0.35);
+        backdrop-filter: blur(10px);
+    }
+
+    /* Aurora: Sidebar-specific buttons (collapse & AI) */
+    [data-theme="aurora"] #sidebarToggle.tms-btn,
+    [data-theme="aurora"] .ai-assistant-btn.tms-btn {
+        border-radius: 9999px;
+        border-width: 1px;
+        border-color: rgba(255, 255, 255, 0.6);
+        box-shadow: 0 14px 30px rgba(139, 92, 246, 0.45);
+    }
+
+    [data-theme="aurora"] #sidebarToggle.tms-btn {
+        background: linear-gradient(90deg, #4f46e5 0%, #8b5cf6 40%, #ec4899 100%) !important;
+    }
+
+    [data-theme="aurora"] .ai-assistant-btn.tms-btn {
+        background: linear-gradient(135deg, rgba(226, 232, 255, 0.96), rgba(255, 255, 255, 0.96) 45%, rgba(248, 250, 252, 0.9) 100%) !important;
+    }
+
+    [data-theme="aurora"] #sidebarToggle.tms-btn svg {
+        color: white !important;
+    }
+
+    [data-theme="aurora"] .ai-assistant-btn .sidebar-text {
+        background-image: linear-gradient(120deg, #0ea5e9 0%, #6366f1 30%, #a855f7 60%, #ec4899 80%, #f97316 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent !important;
+        text-shadow: 0 0 6px rgba(255, 255, 255, 0.9);
+        font-weight: 700;
+        font-size: 0.9rem;
+    }
+
+    /* Gemini icon only for Aurora */
+    .ai-icon-gem {
+        display: none;
+    }
+
+    [data-theme="aurora"] .ai-assistant-btn .ai-icon-base {
+        display: none;
+    }
+
+    [data-theme="aurora"] .ai-assistant-btn .ai-icon-gem {
+        display: inline-block;
+        color: #6366f1 !important;
+        filter: drop-shadow(0 0 6px rgba(129, 140, 248, 0.75));
+    }
+
     /* Aurora Button Variant */
     [data-theme="aurora"] .btn-primary {
         background: var(--gradient-btn) !important;
@@ -256,6 +342,106 @@
         box-shadow: 0 4px 12px rgba(139, 92, 246, 0.5);
         filter: brightness(1.05);
         transform: none;
+    }
+
+    /* Aurora Success Button (Ajukan Pembayaran, etc) */
+    [data-theme="aurora"] .bg-emerald-600,
+    [data-theme="aurora"] .bg-emerald-800 {
+        background: linear-gradient(135deg, #ec4899 0%, #d946ef 50%, #a855f7 100%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.4) !important;
+        box-shadow: 0 4px 15px rgba(168, 85, 247, 0.35) !important;
+    }
+
+    [data-theme="aurora"] .bg-emerald-600:hover,
+    [data-theme="aurora"] .bg-emerald-800:hover {
+        background: linear-gradient(135deg, #db2777 0%, #c026d3 50%, #9333ea 100%) !important;
+        box-shadow: 0 6px 20px rgba(168, 85, 247, 0.5) !important;
+        transform: translateY(-1px);
+    }
+
+    [data-theme="aurora"] .bg-emerald-600 svg,
+    [data-theme="aurora"] .bg-emerald-800 svg {
+        color: white !important;
+    }
+
+    /* Aurora: Job Order Detail header buttons */
+    [data-theme="aurora"] .jo-header-actions .jo-action-btn {
+        border-radius: 9999px !important;
+        border-width: 1px;
+        border-color: rgba(255, 255, 255, 0.7);
+        box-shadow: 0 10px 24px rgba(148, 163, 184, 0.35);
+        transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+    }
+
+    [data-theme="aurora"] .jo-header-actions .jo-action-back {
+        background: linear-gradient(135deg, #eef2ff, #e0f2fe) !important;
+        color: #0f172a !important;
+    }
+
+    [data-theme="aurora"] .jo-header-actions .jo-action-edit {
+        background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
+        color: #ffffff !important;
+    }
+
+    [data-theme="aurora"] .jo-header-actions .jo-action-cancel {
+        background: linear-gradient(135deg, #fee2e2, #fecaca) !important;
+        color: #b91c1c !important;
+    }
+
+    [data-theme="aurora"] .jo-header-actions .jo-action-btn svg {
+        color: inherit !important;
+    }
+
+    [data-theme="aurora"] .jo-header-actions .jo-action-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 14px 30px rgba(148, 163, 184, 0.45);
+        filter: brightness(1.03);
+    }
+
+    /* Aurora: Invoice header buttons ("Request Faktur Pajak" & "Buat Invoice") */
+    [data-theme="aurora"] .invoice-header-actions .btn-tax-invoice,
+    [data-theme="aurora"] .invoice-header-actions .btn-create-invoice {
+        background: linear-gradient(135deg, #ffffff, #e0e7ff) !important;
+        color: #1e293b !important;
+        border-radius: 9999px !important;
+        border-color: rgba(255, 255, 255, 0.8) !important;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.18);
+    }
+
+    [data-theme="aurora"] .invoice-header-actions .btn-tax-invoice svg,
+    [data-theme="aurora"] .invoice-header-actions .btn-create-invoice svg {
+        color: #1e293b !important;
+    }
+
+    [data-theme="aurora"] .invoice-header-actions .btn-tax-invoice:hover,
+    [data-theme="aurora"] .invoice-header-actions .btn-create-invoice:hover {
+        filter: brightness(1.03);
+        box-shadow: 0 16px 30px rgba(15, 23, 42, 0.25);
+        transform: translateY(-1px);
+    }
+
+    /* Aurora: Notification bell button in header */
+    [data-theme="aurora"] header .notification-toggle {
+        background: rgba(255, 255, 255, 0.18) !important;
+        border-radius: 0.75rem !important;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.25);
+        color: rgba(15, 23, 42, 0.8) !important;
+    }
+
+    [data-theme="aurora"] header .notification-toggle svg {
+        color: inherit !important;
+    }
+
+    [data-theme="aurora"] header .notification-toggle:hover {
+        background: rgba(255, 255, 255, 0.3) !important;
+        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.3);
+    }
+
+    /* Base Glass Panels (Midnight & Gold) */
+    .glass-blue,
+    .glass-orange,
+    .glass-green {
+        border: 1px solid rgba(148, 163, 184, 0.35);
     }
 
     /* Aurora Glass Panels (Glossy & Gradient) */
@@ -292,13 +478,29 @@
 
     /* Fix Sidebar Group Headers in Aurora */
     /* Fix Sidebar Group Headers in Aurora (Light Mode) */
+    /* Aurora Sidebar Text & Nav Items */
+    [data-theme="aurora"] .sidebar-text {
+        color: #0F172A !important;
+    }
+
+    /* Aurora Sidebar Container */
+    [data-theme="aurora"] aside.theme-sidebar {
+        background:
+            radial-gradient(circle at top left, rgba(236, 72, 153, 0.25), transparent 55%),
+            radial-gradient(circle at bottom right, rgba(56, 189, 248, 0.18), transparent 55%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(237, 233, 254, 0.96) 50%, rgba(248, 250, 252, 0.96) 100%) !important;
+        box-shadow: 15px 0 40px rgba(148, 163, 184, 0.35);
+        border-right: 1px solid rgba(148, 163, 184, 0.3);
+    }
+
+    /* Aurora Sidebar Section Headers */
     [data-theme="aurora"] .theme-sidebar .group-header {
         background: transparent !important;
-        color: rgba(15, 23, 42, 0.6) !important;
+        color: rgba(15, 23, 42, 0.55) !important;
     }
 
     [data-theme="aurora"] .theme-sidebar .group-header:hover {
-        background: rgba(139, 92, 246, 0.1) !important;
+        background: rgba(139, 92, 246, 0.08) !important;
         color: var(--color-primary) !important;
     }
 
@@ -311,29 +513,45 @@
         color: inherit !important;
     }
 
-    /* Aurora Sidebar Text & Nav Items */
-    [data-theme="aurora"] .sidebar-text {
-        color: #0F172A !important;
+    /* Aurora Nav Items */
+    [data-theme="aurora"] .nav-item {
+        color: #64748B !important;
+        border-radius: 9999px;
+        border-color: transparent;
     }
 
-    [data-theme="aurora"] .nav-item {
-        color: #475569 !important;
+    /* Thin separators between nav items */
+    [data-theme="aurora"] .nav-item+.nav-item {
+        box-shadow: inset 0 1px 0 rgba(148, 163, 184, 0.18);
     }
 
     [data-theme="aurora"] .nav-item:hover {
-        background: rgba(139, 92, 246, 0.1) !important;
-        color: var(--color-primary) !important;
+        background: rgba(139, 92, 246, 0.08) !important;
+        color: #4C1D95 !important;
+        border-color: rgba(139, 92, 246, 0.25) !important;
+        box-shadow: 0 8px 18px rgba(148, 163, 184, 0.35);
     }
 
     [data-theme="aurora"] .nav-item.active {
-        background: linear-gradient(90deg, rgba(139, 92, 246, 0.15) 0%, transparent 100%) !important;
-        color: var(--color-primary) !important;
-        border-color: rgba(139, 92, 246, 0.3) !important;
+        background: linear-gradient(90deg, rgba(139, 92, 246, 0.25) 0%, rgba(236, 72, 153, 0.2) 100%) !important;
+        color: #4C1D95 !important;
+        border-color: rgba(139, 92, 246, 0.4) !important;
+        box-shadow: 0 12px 26px rgba(139, 92, 246, 0.4);
+    }
+
+    [data-theme="aurora"] .nav-item svg {
+        color: inherit !important;
+        transition: transform 0.15s ease, filter 0.15s ease;
+    }
+
+    [data-theme="aurora"] .nav-item:hover svg {
+        transform: translateX(1px);
+        filter: drop-shadow(0 2px 6px rgba(148, 163, 184, 0.45));
     }
 
     [data-theme="aurora"] .nav-item.active svg {
-        color: var(--color-primary) !important;
-        filter: drop-shadow(0 2px 4px rgba(139, 92, 246, 0.3));
+        transform: translateX(1px);
+        filter: drop-shadow(0 2px 8px rgba(139, 92, 246, 0.6));
     }
 
     /* Nav Item Logic */
@@ -384,6 +602,23 @@
     .custom-scrollbar::-webkit-scrollbar-thumb:hover {
         background: var(--color-primary) !important;
         box-shadow: 0 0 15px var(--glow-color) !important;
+    }
+
+    /* Aurora brand text animation */
+    @keyframes auroraBrand {
+        0% {
+            background-position: 0% 50%;
+        }
+
+        100% {
+            background-position: 200% 50%;
+        }
+    }
+
+    /* Aurora: Sidebar user name glow (text only) */
+    [data-theme="aurora"] .sidebar-user-name {
+        color: var(--color-text-main) !important;
+        text-shadow: none;
     }
 
     /* Table Styling */

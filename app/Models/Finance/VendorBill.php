@@ -49,6 +49,11 @@ class VendorBill extends Model
         return $this->hasMany(\App\Models\Operations\PaymentRequest::class, 'vendor_bill_id')
             ->orderBy('request_date', 'desc');
     }
+
+    public function journal(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Accounting\Journal::class, 'journal_id');
+    }
     
     // Computed Properties
     public function getOutstandingBalanceAttribute(): float
@@ -151,5 +156,13 @@ class VendorBill extends Model
         // Sudah diajukan penuh (sisa 0) tapi belum dibayar
         return $query->whereNotIn('status', ['paid', 'cancelled'])
             ->whereRaw('(total_amount - (SELECT COALESCE(SUM(amount),0) FROM payment_requests WHERE vendor_bill_id = vendor_bills.id)) = 0');
+    }
+
+    public function scopeUnposted($query)
+    {
+        // Consider all bills without journal_id as "unposted" (pending),
+        // regardless of current status. This makes Pending Journal more
+        // robust even jika status masih draft/received/partial/paid.
+        return $query->whereNull('journal_id');
     }
 }

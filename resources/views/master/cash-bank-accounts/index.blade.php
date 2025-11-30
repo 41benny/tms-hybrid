@@ -3,15 +3,12 @@
 @section('content')
 <div class="space-y-6">
     {{-- Header --}}
+
+
+    {{-- Filters --}}
     <x-card>
         <x-slot:header>
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <div class="text-2xl font-bold text-slate-900 dark:text-slate-100">Cash & Bank Accounts</div>
-                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                        Manage your cash and bank accounts
-                    </p>
-                </div>
+            <div class="flex flex-col md:flex-row md:items-center md:justify-end gap-4">
                 <x-button :href="route('master.cash-bank-accounts.create')" variant="primary">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -20,10 +17,6 @@
                 </x-button>
             </div>
         </x-slot:header>
-    </x-card>
-
-    {{-- Filters --}}
-    <x-card>
         <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
                 <label class="block text-sm mb-1">Type</label>
@@ -43,11 +36,11 @@
             </div>
             <div>
                 <label class="block text-sm mb-1">Search</label>
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Name, code, account number..." class="w-full rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2">
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Name, code, account number..." class="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
             </div>
             <div class="flex items-end gap-2">
-                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Filter</button>
-                <a href="{{ route('master.cash-bank-accounts.index') }}" class="px-4 py-2 border border-slate-300 dark:border-slate-700 rounded hover:bg-slate-50 dark:hover:bg-slate-800">Reset</a>
+                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium transition-colors">Filter</button>
+                <a href="{{ route('master.cash-bank-accounts.index') }}" class="px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-medium transition-colors">Reset</a>
             </div>
         </form>
     </x-card>

@@ -119,6 +119,11 @@ class Invoice extends Model
         return $this->hasMany(Invoice::class, 'original_invoice_id');
     }
 
+    public function journal(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Accounting\Journal::class, 'journal_id');
+    }
+
     // Scopes
     public function scopeOverdue($query)
     {
@@ -150,6 +155,12 @@ class Invoice extends Model
     public function scopeTaxCompleted($query)
     {
         return $query->where('tax_invoice_status', 'completed');
+    }
+
+    public function scopeUnposted($query)
+    {
+        return $query->whereIn('status', ['sent', 'partial', 'paid'])
+            ->whereNull('journal_id');
     }
     
     // Helper Methods

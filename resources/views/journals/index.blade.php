@@ -40,7 +40,7 @@
     <x-card>
         <x-slot:header>
             <div class="flex items-center justify-between">
-                <div class="flex gap-4 border-b border-[var(--border-color)]">
+                <div class="flex gap-4 border-b border-[var(--border-color)] text-sm">
                     <button 
                         @click="activeTab = 'all'; window.history.pushState({}, '', '{{ route('journals.index') }}?tab=all')"
                         :class="activeTab === 'all' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-[var(--color-text-muted)]'"
@@ -58,12 +58,16 @@
                     </button>
                 </div>
                 <div class="flex gap-2">
-                    <a href="{{ route('journals.traditional') }}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors">
+                    <x-button 
+                        :href="route('journals.traditional')" 
+                        variant="outline" 
+                        size="sm" 
+                        class="normal-case border-emerald-300 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
-                        Buku Besar (Traditional)
-                    </a>
+                        Excel view
+                    </x-button>
                     <x-button :href="route('journals.create')" variant="primary" size="sm" class="normal-case">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />

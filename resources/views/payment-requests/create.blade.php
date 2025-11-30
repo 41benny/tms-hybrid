@@ -1,25 +1,40 @@
 @extends('layouts.app', ['title' => 'Submit Payment'])
 
 @section('content')
-    <div class="mb-4">
-        <div class="text-2xl font-bold text-slate-900 dark:text-slate-100">
-            @if($vendorBill)
-                Submit Payment for Vendor Bill
-            @elseif($driverAdvance ?? false)
-                Submit Payment for Driver Advance
-            @else
-                Submit Manual Payment
-            @endif
-        </h1>
-        <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">
-            @if($vendorBill)
-                Create payment request for vendor bill
-            @elseif($driverAdvance ?? false)
-                Create payment request for driver advance down payment
-            @else
-                Create manual payment request outside vendor bill
-            @endif
-        </p>
+    <div class="mb-4 flex items-start gap-3">
+        @if($driverAdvance ?? false)
+            <x-button :href="route('driver-advances.show', $driverAdvance)" variant="ghost" size="sm" class="normal-case">
+                Back
+            </x-button>
+        @elseif($vendorBill ?? false)
+            <x-button :href="route('vendor-bills.show', $vendorBill)" variant="ghost" size="sm" class="normal-case">
+                Back
+            </x-button>
+        @else
+            <x-button :href="route('payment-requests.index')" variant="ghost" size="sm" class="normal-case">
+                Back
+            </x-button>
+        @endif
+        <div>
+            <div class="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                @if($vendorBill)
+                    Submit Payment for Vendor Bill
+                @elseif($driverAdvance ?? false)
+                    Submit Payment for Driver Advance
+                @else
+                    Submit Manual Payment
+                @endif
+            </div>
+            <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                @if($vendorBill)
+                    Create payment request for vendor bill
+                @elseif($driverAdvance ?? false)
+                    Create payment request for driver advance down payment
+                @else
+                    Create manual payment request outside vendor bill
+                @endif
+            </p>
+        </div>
     </div>
 
     @if($driverAdvance ?? false)
@@ -81,13 +96,13 @@
                         </div>
 
                         <div class="flex flex-col sm:flex-row items-center gap-3 pt-4">
-                            <x-button type="submit" variant="primary" class="w-full sm:w-auto justify-center">
+                            <x-button type="submit" variant="primary" size="sm" class="w-full sm:w-auto justify-center normal-case">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                                 Submit Payment
                             </x-button>
-                            <x-button :href="route('driver-advances.show', $driverAdvance)" variant="outline" class="w-full sm:w-auto justify-center">
+                            <x-button :href="route('driver-advances.show', $driverAdvance)" variant="outline" size="sm" class="w-full sm:w-auto justify-center normal-case">
                                 Cancel
                             </x-button>
                         </div>
@@ -219,13 +234,13 @@
                         </div>
 
                         <div class="flex flex-col sm:flex-row items-center gap-3 pt-4">
-                            <x-button type="submit" variant="primary" class="w-full sm:w-auto justify-center">
+                            <x-button type="submit" variant="primary" size="sm" class="w-full sm:w-auto justify-center normal-case">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                                 Submit Payment
                             </x-button>
-                            <x-button :href="route('vendor-bills.show', $vendorBill)" variant="outline" class="w-full sm:w-auto justify-center">
+                            <x-button :href="route('vendor-bills.show', $vendorBill)" variant="outline" size="sm" class="w-full sm:w-auto justify-center normal-case">
                                 Cancel
                             </x-button>
                         </div>
@@ -464,13 +479,13 @@
 
                     {{-- Action Buttons --}}
                     <div class="flex flex-col sm:flex-row items-center gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
-                        <x-button type="submit" variant="primary" class="w-full sm:w-auto justify-center">
+                        <x-button type="submit" variant="primary" size="sm" class="w-full sm:w-auto justify-center normal-case">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
                             Submit Payment
                         </x-button>
-                        <x-button :href="route('payment-requests.index')" variant="outline" class="w-full sm:w-auto justify-center">
+                        <x-button :href="route('payment-requests.index')" variant="outline" size="sm" class="w-full sm:w-auto justify-center normal-case">
                             Cancel
             </x-button>
         </div>
@@ -648,4 +663,3 @@
     @endif
     </script>
 @endsection
-

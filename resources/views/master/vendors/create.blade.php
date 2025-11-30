@@ -59,6 +59,15 @@
                     placeholder="email@example.com"
                 />
 
+                <x-input
+                    name="npwp"
+                    label="NPWP"
+                    :value="old('npwp', $vendor->npwp ?? '')"
+                    :error="$errors->first('npwp')"
+                    placeholder="00.000.000.0-000.000"
+                    helper="Nomor Pokok Wajib Pajak (untuk laporan PPh 23)"
+                />
+
                 <x-select
                     name="vendor_type"
                     label="Tipe Vendor"

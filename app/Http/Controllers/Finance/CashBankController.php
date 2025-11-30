@@ -77,18 +77,21 @@ class CashBankController extends Controller
         ->latest()
         ->get();
         
-        // Eager load driver advances with outstanding balance
+        // Eager load driver advances that are ready to be paid via Kas/Bank.
+        // Payment Request is OPTIONAL - only as approval helper, not mandatory
+        // Rule: Status pending / dp_paid (belum settled)
         $driverAdvances = \App\Models\Operations\DriverAdvance::with([
             'driver:id,name',
             'shipmentLeg.jobOrder:id,job_number,origin,destination,customer_id',
             'shipmentLeg.jobOrder.customer:id,name',
             'shipmentLeg.jobOrder.items:id,job_order_id,quantity,cargo_type',
             'shipmentLeg.truck:id,plate_number',
-            'shipmentLeg.mainCost:id,shipment_leg_id,uang_jalan,driver_savings_deduction,driver_guarantee_deduction'
+            'shipmentLeg.mainCost:id,shipment_leg_id,uang_jalan,driver_savings_deduction,driver_guarantee_deduction',
+            'paymentRequests:id,driver_advance_id,amount,status'
         ])
         ->select('id', 'advance_number', 'driver_id', 'shipment_leg_id', 'amount', 'dp_amount', 'advance_date', 'status', 'notes',
                  'deduction_savings', 'deduction_guarantee')
-        ->outstanding() // Only with remaining balance
+        ->whereIn('status', ['pending', 'dp_paid'])
         ->latest()
         ->get();
         
@@ -470,7 +473,7 @@ class CashBankController extends Controller
                         $newDpAmount = $advance->dp_amount + $netAmount;
                         $advance->update([
                             'dp_amount' => $newDpAmount,
-                            'status' => ($newDpAmount >= $advance->amount) ? 'paid' : 'dp_paid'
+                            'status' => ($newDpAmount >= $advance->amount) ? 'settled' : 'dp_paid'
                         ]);
                     }
                     
@@ -480,7 +483,7 @@ class CashBankController extends Controller
                 // Post journal
                 if (class_exists('App\Services\Accounting\JournalService')) {
                     $svc = app('App\Services\Accounting\JournalService');
-                    $svc->postOtherExpense($trx);
+                    $svc->postDriverAdvancePayment($trx);
                 }
             }
 
@@ -721,7 +724,35 @@ class CashBankController extends Controller
                 }
             }
             
-            // 6. VOID the transaction (SOFT DELETE - keeps record for audit)
+            // 6. Rollback driver advance payments if uang_jalan
+            if ($cashBankTransaction->sumber === 'uang_jalan') {
+                $driverAdvancePayments = \App\Models\Operations\DriverAdvancePayment::where('cash_bank_transaction_id', $cashBankTransaction->id)->get();
+                
+                foreach ($driverAdvancePayments as $payment) {
+                    $advance = $payment->driverAdvance;
+                    if ($advance) {
+                        // Rollback dp_amount
+                        $newDpAmount = $advance->dp_amount - $payment->amount_paid;
+                        
+                        // Determine new status
+                        $newStatus = 'pending';
+                        if ($newDpAmount > 0) {
+                            $newStatus = 'dp_paid';
+                        }
+                        
+                        $advance->update([
+                            'dp_amount' => max(0, $newDpAmount),
+                            'status' => $newStatus,
+                            'dp_paid_date' => $newStatus === 'pending' ? null : $advance->dp_paid_date
+                        ]);
+                    }
+                }
+                
+                // Delete payment records
+                \App\Models\Operations\DriverAdvancePayment::where('cash_bank_transaction_id', $cashBankTransaction->id)->delete();
+            }
+            
+            // 7. VOID the transaction (SOFT DELETE - keeps record for audit)
             $cashBankTransaction->update([
                 'voided_at' => now(),
                 'voided_by' => auth()->id() ?? null,
@@ -755,6 +786,7 @@ class CashBankController extends Controller
             'expense' => 'expense',
             'other_in' => 'other_in',
             'other_out' => 'other_out',
+            'uang_jalan' => 'uang_jalan', // Driver advance payment
         ];
         
         return $map[$sumber] ?? $sumber;

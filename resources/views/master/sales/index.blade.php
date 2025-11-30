@@ -13,7 +13,7 @@
                             name="q"
                             value="{{ request('q') }}"
                             placeholder="Cari nama..."
-                            class="rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            class="rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-4 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                         >
                         <x-button variant="outline" type="submit">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

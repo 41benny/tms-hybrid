@@ -168,7 +168,9 @@ class PaymentRequestController extends Controller
                 $user->notify(new PaymentRequestCreated($paymentRequest));
             }
 
-            return redirect()->route('payment-requests.show', $paymentRequest)
+            // Kembali ke halaman detail payment request (behavior awal)
+            return redirect()
+                ->route('payment-requests.show', $paymentRequest)
                 ->with('success', 'Payment request created successfully. Number: '.$paymentRequest->request_number);
         } catch (\Exception $e) {
             Log::error('Payment Request Store Error', [

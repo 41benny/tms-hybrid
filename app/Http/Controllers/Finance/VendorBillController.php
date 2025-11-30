@@ -246,6 +246,16 @@ class VendorBillController extends Controller
         return back()->with('success', 'Vendor bill ditandai lunas.');
     }
 
+    /**
+     * Print Vendor Bill as Purchase Order / SPK Vendor.
+     */
+    public function print(VendorBill $vendor_bill)
+    {
+        $vendor_bill->load(['vendor', 'items.shipmentLeg.jobOrder.customer']);
+
+        return view('vendor-bills.print', ['bill' => $vendor_bill]);
+    }
+
     protected function generateBillNo(string $date): string
     {
         $d = new \DateTimeImmutable($date);

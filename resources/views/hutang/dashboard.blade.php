@@ -2,11 +2,7 @@
 
 @section('content')
 <div class="space-y-6">
-    {{-- Header --}}
-    <div>
-        <div class="text-2xl font-bold text-slate-900 dark:text-slate-100">Dashboard Hutang</div>
-        <p class="text-sm text-slate-600 dark:text-slate-400">Monitoring semua hutang vendor (Trucking, Vendor, Pelayaran, Asuransi) dan uang jalan driver</p>
-    </div>
+
 
     {{-- Consolidated Info Panel --}}
     <x-card>
@@ -39,54 +35,54 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
                 {{-- Pending Order Legs --}}
                 <a href="javascript:void(0)" onclick="showTab('pending-legs')" class="block group">
-                    <div class="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-900/20 dark:to-orange-800/10 border border-orange-200 dark:border-orange-800/30 hover:shadow-lg transition-all">
-                        <div class="w-12 h-12 rounded-xl bg-orange-500 dark:bg-orange-600 flex items-center justify-center flex-shrink-0 shadow-lg">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="flex items-start gap-4 p-4 rounded-xl bg-[var(--bg-panel)] border border-[var(--border-color)] hover:shadow-lg transition-all">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm" style="background-color: rgba(249, 115, 22, 0.1); color: #ea580c;">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                             </svg>
                         </div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-xs font-semibold text-orange-700 dark:text-orange-400 uppercase tracking-wide">Pending Order Legs</p>
-                            <h3 class="text-xl font-bold text-orange-900 dark:text-orange-300 mt-1">
+                            <p class="text-xs font-semibold uppercase tracking-wide" style="color: var(--color-text-muted);">Pending Order Legs</p>
+                            <h3 class="text-xl font-bold mt-1" style="color: var(--color-text-main);">
                                 Rp {{ number_format($totalPendingVendorLegs, 0, ',', '.') }}
                             </h3>
-                            <p class="text-[10px] text-orange-600 dark:text-orange-500 mt-1">{{ $pendingVendorLegs->count() }} legs belum dibuat bill</p>
+                            <p class="text-[10px] mt-1" style="color: var(--color-text-muted);">{{ $pendingVendorLegs->count() }} legs belum dibuat bill</p>
                         </div>
                     </div>
                 </a>
 
                 {{-- Unpaid Vendor Bills --}}
                 <a href="javascript:void(0)" onclick="showTab('unpaid-bills')" class="block group">
-                    <div class="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-900/20 dark:to-red-800/10 border border-red-200 dark:border-red-800/30 hover:shadow-lg transition-all">
-                        <div class="w-12 h-12 rounded-xl bg-red-500 dark:bg-red-600 flex items-center justify-center flex-shrink-0 shadow-lg">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="flex items-start gap-4 p-4 rounded-xl bg-[var(--bg-panel)] border border-[var(--border-color)] hover:shadow-lg transition-all">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm" style="background-color: rgba(239, 68, 68, 0.1); color: #dc2626;">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                             </svg>
                         </div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-xs font-semibold text-red-700 dark:text-red-400 uppercase tracking-wide">Unpaid Vendor Bills</p>
-                            <h3 class="text-xl font-bold text-red-900 dark:text-red-300 mt-1">
+                            <p class="text-xs font-semibold uppercase tracking-wide" style="color: var(--color-text-muted);">Unpaid Vendor Bills</p>
+                            <h3 class="text-xl font-bold mt-1" style="color: var(--color-text-main);">
                                 Rp {{ number_format($totalUnpaidVendorBills, 0, ',', '.') }}
                             </h3>
-                            <p class="text-[10px] text-red-600 dark:text-red-500 mt-1">{{ $unpaidVendorBills->count() }} bills outstanding</p>
+                            <p class="text-[10px] mt-1" style="color: var(--color-text-muted);">{{ $unpaidVendorBills->count() }} bills outstanding</p>
                         </div>
                     </div>
                 </a>
 
                 {{-- Pending Driver Advances --}}
                 <a href="javascript:void(0)" onclick="showTab('driver-advances')" class="block group">
-                    <div class="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10 border border-blue-200 dark:border-blue-800/30 hover:shadow-lg transition-all">
-                        <div class="w-12 h-12 rounded-xl bg-blue-500 dark:bg-blue-600 flex items-center justify-center flex-shrink-0 shadow-lg">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="flex items-start gap-4 p-4 rounded-xl bg-[var(--bg-panel)] border border-[var(--border-color)] hover:shadow-lg transition-all">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm" style="background-color: rgba(59, 130, 246, 0.1); color: #2563eb;">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                             </svg>
                         </div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide">Pending Driver Advances</p>
-                            <h3 class="text-xl font-bold text-blue-900 dark:text-blue-300 mt-1">
+                            <p class="text-xs font-semibold uppercase tracking-wide" style="color: var(--color-text-muted);">Pending Driver Advances</p>
+                            <h3 class="text-xl font-bold mt-1" style="color: var(--color-text-main);">
                                 Rp {{ number_format($totalPendingDriverAdvances, 0, ',', '.') }}
                             </h3>
-                            <p class="text-[10px] text-blue-600 dark:text-blue-500 mt-1">{{ $pendingDriverAdvances->count() }} advances pending</p>
+                            <p class="text-[10px] mt-1" style="color: var(--color-text-muted);">{{ $pendingDriverAdvances->count() }} advances pending</p>
                         </div>
                     </div>
                 </a>
@@ -156,7 +152,7 @@
                             </td>
                             <td class="px-4 py-3 whitespace-nowrap text-sm text-center">
                                 @php
-                                    $daysDiff = $leg->unload_date ? $leg->unload_date->diffInDays(now()) : null;
+                                    $daysDiff = $leg->unload_date ? round($leg->unload_date->diffInDays(now())) : null;
                                 @endphp
                                 <span class="px-2 py-1 text-xs font-semibold rounded-full {{ $daysDiff !== null && $daysDiff > 30 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300' }}">
                                     {{ $daysDiff !== null ? $daysDiff . ' hari' : '-' }}
@@ -246,8 +242,11 @@
                                 }">{{ strtoupper(str_replace('_', ' ', $bill->status)) }}</x-badge>
                             </td>
                             <td class="px-4 py-3 whitespace-nowrap text-sm text-center">
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full {{ $bill->bill_date->diffInDays(now()) > 30 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300' }}">
-                                    {{ $bill->bill_date->diffInDays(now()) }} hari
+                                @php
+                                    $billDays = round($bill->bill_date->diffInDays(now()));
+                                @endphp
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full {{ $billDays > 30 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300' }}">
+                                    {{ $billDays }} hari
                                 </span>
                             </td>
                             <td class="px-4 py-3 whitespace-nowrap text-sm text-right">
@@ -332,8 +331,11 @@
                                 Rp {{ number_format($advance->amount, 0, ',', '.') }}
                             </td>
                             <td class="px-4 py-3 whitespace-nowrap text-sm text-center">
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full {{ $advance->advance_date->diffInDays(now()) > 14 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300' }}">
-                                    {{ $advance->advance_date->diffInDays(now()) }} hari
+                                @php
+                                    $advanceDays = round($advance->advance_date->diffInDays(now()));
+                                @endphp
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full {{ $advanceDays > 14 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300' }}">
+                                    {{ $advanceDays }} hari
                                 </span>
                             </td>
                             <td class="px-4 py-3 whitespace-nowrap text-sm text-right">
@@ -430,4 +432,3 @@ function showTab(tabName) {
 }
 </script>
 @endsection
-

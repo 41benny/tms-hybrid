@@ -2,11 +2,7 @@
 
 @section('content')
 <div class="space-y-6">
-    {{-- Header --}}
-    <div>
-        <div class="text-2xl font-bold text-slate-900 dark:text-slate-100">Dashboard Keuangan</div>
-        <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Overview keuangan dan performa bisnis</p>
-    </div>
+
 
     {{-- Alerts --}}
     @if($alerts['overdue_invoices'] > 0 || $alerts['bills_due_this_week'] > 0 || $alerts['low_cash'])

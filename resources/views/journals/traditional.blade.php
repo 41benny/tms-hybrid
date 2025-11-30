@@ -111,9 +111,9 @@
     </x-card>
 
     <!-- Traditional Ledger Table -->
-    <x-card :noPadding="true" class="mt-6">
+    <x-card :noPadding="true" class="mt-6 text-xs">
         <div class="overflow-x-auto">
-            <table class="min-w-full text-xs">
+            <table class="min-w-full">
                 <thead class="sticky top-0 bg-[var(--bg-surface)] border-b-2 border-[var(--border-color)]">
                     <!-- Header Row -->
                     <tr class="text-[var(--color-text-muted)]">

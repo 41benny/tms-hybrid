@@ -3,33 +3,30 @@
 @section('content')
     <x-card>
         <x-slot:header>
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                    <div class="text-2xl font-bold text-slate-900 dark:text-slate-100">Vendor Bills</div>
-                    <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Vendor bills dibuat otomatis dari <a href="{{ route('hutang.dashboard') }}" class="text-indigo-600 dark:text-indigo-400 hover:underline font-medium">Dashboard Hutang</a></p>
-                    <div class="mt-3 inline-flex rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
-                        <a href="{{ request()->fullUrlWithQuery(['scope'=>null]) }}" class="px-3 py-1.5 text-xs font-medium {{ ($scope ?? 'outstanding')==='outstanding' ? 'bg-indigo-600 text-white' : 'text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400' }}">Outstanding</a>
-                        <a href="{{ request()->fullUrlWithQuery(['scope'=>'all']) }}" class="px-3 py-1.5 text-xs font-medium {{ ($scope ?? 'outstanding')==='all' ? 'bg-indigo-600 text-white' : 'text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400' }}">Semua</a>
-                    </div>
+        <x-slot:header>
+            <div class="flex flex-col md:flex-row md:items-center md:justify-end gap-4">
+                <div class="inline-flex rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
+                    <a href="{{ request()->fullUrlWithQuery(['scope'=>null]) }}" class="px-3 py-1.5 text-xs font-medium {{ ($scope ?? 'outstanding')==='outstanding' ? 'bg-indigo-600 text-white' : 'text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400' }}">Outstanding</a>
+                    <a href="{{ request()->fullUrlWithQuery(['scope'=>'all']) }}" class="px-3 py-1.5 text-xs font-medium {{ ($scope ?? 'outstanding')==='all' ? 'bg-indigo-600 text-white' : 'text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400' }}">Semua</a>
                 </div>
             </div>
         </x-slot:header>
 
         <form method="get" class="grid grid-cols-1 md:grid-cols-6 gap-3">
-            <select name="status" class="rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <select name="status" class="rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
                 <option value="">Status</option>
                 @foreach(['draft','received','partially_paid','paid','cancelled'] as $st)
                     <option value="{{ $st }}" @selected(request('status')===$st)>{{ ucfirst(str_replace('_',' ', $st)) }}</option>
                 @endforeach
             </select>
-            <select name="vendor_id" class="rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <select name="vendor_id" class="rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
                 <option value="">Vendor</option>
                 @foreach($vendors as $v)
                     <option value="{{ $v->id }}" @selected(request('vendor_id')==$v->id)>{{ $v->name }}</option>
                 @endforeach
             </select>
-            <input type="date" name="from" value="{{ request('from') }}" class="rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-            <input type="date" name="to" value="{{ request('to') }}" class="rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <input type="date" name="from" value="{{ request('from') }}" class="rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+            <input type="date" name="to" value="{{ request('to') }}" class="rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
             <div></div>
             <x-button type="submit" variant="outline">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Vendor extends Model
 {
     protected $fillable = [
-        'name', 'address', 'phone', 'email', 'vendor_type', 'pic_name', 'pic_phone', 'pic_email', 'is_active',
+        'name', 'address', 'phone', 'email', 'npwp', 'vendor_type', 'pic_name', 'pic_phone', 'pic_email', 'is_active',
     ];
 
     public function trucks(): HasMany

@@ -120,7 +120,9 @@
     @empty
         <div class="col-span-full">
             <div class="flex flex-col items-center justify-center py-12 text-slate-500 dark:text-slate-400">
-                <span class="text-4xl mb-2">dY"<</span>
+                <svg class="w-12 h-12 mb-3 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M9 8h.01M7 20h10a2 2 0 002-2V6a2 2 0 00-2-2H9.5L7 6.5V18a2 2 0 002 2z" />
+                </svg>
                 <p class="text-sm font-medium">Belum ada job order</p>
             </div>
         </div>

@@ -5,14 +5,11 @@
     {{-- Header Section --}}
     <x-card>
         <x-slot:header>
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                    <div class="text-2xl font-bold text-slate-900 dark:text-slate-100">Driver Advances</div>
-                    <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Manage trip money & driver settlement</p>
-                </div>
+        <x-slot:header>
+            <div class="flex flex-col md:flex-row md:items-center md:justify-end gap-4">
                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                     <form method="get" class="flex items-center gap-2">
-                        <select name="status" class="rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-4 py-2 text-sm text-slate-900 dark:text-slate-100">
+                        <select name="status" class="rounded-lg bg-[var(--bg-surface-secondary)] border border-[var(--border-color)] px-4 py-2 text-sm text-[var(--color-text-main)] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
                             <option value="">All Status</option>
                             <option value="pending" @selected(request('status')=='pending')>Pending (Awaiting DP)</option>
                             <option value="dp_paid" @selected(request('status')=='dp_paid')>DP Paid</option>
@@ -41,7 +38,7 @@
             <div class="p-6">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm text-slate-500 dark:text-slate-400">Pending (Awaiting DP)</p>
+                        <p class="text-sm text-[var(--color-text-muted)]">Pending (Awaiting DP)</p>
                         <p class="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">
                             Rp {{ number_format($totalPending, 0, ',', '.') }}
                         </p>
@@ -207,7 +204,7 @@
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center gap-2">
                                     @if($adv->journal_status === 'unposted')
-                                        <form method="POST" action="{{ route('driver-advances.post', $adv) }}" class="inline">
+                                        <form method="POST" action="{{ route('driver-advances.post', $adv) }}" class="inline" onsubmit="return confirm('Post driver advance ini ke jurnal?')">
                                             @csrf
                                             <x-button type="submit" variant="primary" size="sm" title="Post to Journal">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -3,15 +3,7 @@
 
 @section('content')
     <div class="space-y-4 md:space-y-6">
-        {{-- Header --}}
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <div>
-                <h2 class="text-xl font-semibold text-slate-900 dark:text-slate-100">Sales Console</h2>
-                <p class="text-sm text-slate-500 dark:text-slate-400">
-                    Akses cepat untuk Sales: buat Job Order, kelola pengiriman, dan ajukan payment request dengan tampilan yang ramah mobile.
-                </p>
-            </div>
-        </div>
+
 
         {{-- Grid cards - mobile first --}}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

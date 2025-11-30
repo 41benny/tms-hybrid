@@ -8,6 +8,20 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     
+    {{-- Apply saved theme as early as possible to avoid flicker / unexpected theme changes after redirects --}}
+    <script>
+        (function () {
+            try {
+                var savedTheme = localStorage.getItem('tms-theme');
+                if (savedTheme && savedTheme !== 'default') {
+                    document.documentElement.setAttribute('data-theme', savedTheme);
+                }
+            } catch (e) {
+                // Ignore errors (e.g. disabled localStorage)
+            }
+        })();
+    </script>
+
     @vite(['resources/css/app.css','resources/js/app.js'])
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
@@ -23,7 +37,7 @@
             {{-- Logo / Brand --}}
             <div class="p-6 pb-3 relative">
                 <div class="absolute top-0 left-0 w-full h-1" style="background: linear-gradient(90deg, var(--color-primary), transparent);"></div>
-                <div class="flex items-center gap-3 relative">
+                <div class="sidebar-brand-shell flex items-center gap-3 relative">
                     <div class="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg border theme-border shrink-0" style="background: rgba(255,255,255,0.05); color: var(--color-primary);">
                         <span class="font-bold text-xl">T</span>
                     </div>
@@ -36,7 +50,7 @@
             
             {{-- Toggle Button --}}
             <div class="px-4 pb-4">
-                <button id="sidebarToggle" class="w-full py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg hover:shadow-indigo-500/50 transition-all border border-indigo-400/30 flex items-center justify-center gap-2">
+                <button id="sidebarToggle" class="tms-btn w-full py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg hover:shadow-indigo-500/50 transition-all border border-indigo-400/30 flex items-center justify-center gap-2">
                     <svg class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
                     </svg>
@@ -279,9 +293,16 @@
 
                 {{-- AI Assistant --}}
                 <div class="pt-6 pb-2">
-                    <a href="{{ route('ai-assistant.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg hover:shadow-indigo-500/50 transition-all border border-indigo-400/30">
-                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                        <span class="font-bold text-sm sidebar-text">AI Assistant</span>
+                    <a href="{{ route('ai-assistant.index') }}" class="tms-btn ai-assistant-btn w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg hover:shadow-indigo-500/50 transition-all border border-indigo-400/30">
+                        {{-- Base icon (all themes) --}}
+                        <svg class="ai-icon-base w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        {{-- Gemini-style icon (Aurora only, via CSS) --}}
+                        <svg class="ai-icon-gem w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2.5c-.3 0-.6.16-.76.44L9.03 7.18 4.1 8.02a.85.85 0 0 0-.48 1.42l3.55 3.46-.84 4.98a.86.86 0 0 0 1.25.9L12 16.98l4.42 2.3a.86.86 0 0 0 1.25-.9l-.84-4.98 3.55-3.46a.85.85 0 0 0-.48-1.42l-4.93-.84-2.21-4.24A.86.86 0 0 0 12 2.5Z" />
+                        </svg>
+                        <span class="font-bold text-xs sidebar-text">AI Assistant</span>
                     </a>
                 </div>
 
@@ -297,14 +318,23 @@
 
             {{-- Footer Sidebar --}}
             <div class="p-4 mt-auto border-t theme-border">
-                <div class="flex items-center gap-3 px-3 py-2 rounded-xl bg-black/20 border theme-border">
-                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-black" style="background: var(--color-primary);">
-                        {{ substr(auth()->user()->name ?? 'U', 0, 1) }}
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-xs font-medium text-white truncate">{{ auth()->user()->name ?? 'Guest' }}</p>
-                        <p class="text-[10px] theme-text-primary truncate">Online</p>
-                    </div>
+                <div class="sidebar-user-card flex items-center gap-3 px-3 py-2 rounded-xl bg-white/10 dark:bg-black/30 border theme-border">
+                    <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 flex-1 min-w-0">
+                        @php $avatarUrl = auth()->user()?->avatarUrl(); @endphp
+                        @if($avatarUrl)
+                            <div class="w-8 h-8 rounded-full overflow-hidden border border-slate-300/40 bg-slate-900/60">
+                                <img src="{{ $avatarUrl }}" alt="Avatar" class="w-full h-full object-cover">
+                            </div>
+                        @else
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-black border border-slate-300/40" style="background: var(--color-primary);">
+                                {{ substr(auth()->user()->name ?? 'U', 0, 1) }}
+                            </div>
+                        @endif
+                        <div class="flex-1 min-w-0">
+                            <p class="sidebar-user-name text-xs font-medium text-white truncate">{{ auth()->user()->name ?? 'Guest' }}</p>
+                            <p class="text-[10px] theme-text-primary truncate">Profil &amp; akun</p>
+                        </div>
+                    </a>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit" class="text-xs text-red-400 hover:text-white" title="Logout">
@@ -329,7 +359,7 @@
                     <h2 class="text-lg font-semibold tracking-wide text-contrast">{{ $header ?? ($title ?? 'Dashboard') }}</h2>
                     <div class="h-4 w-[1px] bg-slate-700 hidden sm:block"></div>
                     <span class="hidden sm:flex items-center gap-2 text-xs font-mono px-2 py-1 rounded border theme-border" style="background: rgba(0,0,0,0.2); color: var(--color-primary);">
-                        <span class="w-1.5 h-1.5 rounded-full animate-pulse" style="background: var(--color-primary);"></span>
+                        <span class="system-status-dot w-1.5 h-1.5 rounded-full animate-pulse"></span>
                         SYSTEM: OPTIMAL
                     </span>
                 </div>
@@ -394,14 +424,14 @@
                             setInterval(() => this.fetchNotifications(), 60000);
                         }
                      }">
-                        <button @click="open = !open" class="relative p-2 rounded-lg hover:bg-white/10 transition-colors theme-text-muted hover:text-contrast">
+                        <button @click="open = !open" class="relative p-2 rounded-lg hover:bg-white/10 transition-colors theme-text-muted hover:text-contrast notification-toggle">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                             <span x-show="unreadCount > 0" class="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 shadow-[0_0_8px_red]" style="display: none;"></span>
                         </button>
-                        <div x-show="open" @click.away="open = false" style="display: none; background-color: #0f172a !important; border: 1px solid #334155 !important;" class="absolute right-0 mt-2 w-96 rounded-xl shadow-2xl z-50 overflow-hidden">
-                            <div class="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-800/50">
-                                <span class="text-sm font-bold text-white">Notifications</span>
-                                <span x-text="unreadCount > 0 ? `${unreadCount} new` : 'No new'" class="text-xs text-slate-400"></span>
+                        <div x-show="open" @click.away="open = false" style="display: none;" class="absolute right-0 mt-2 w-96 rounded-xl shadow-2xl z-50 overflow-hidden bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl border border-slate-200 dark:border-slate-700">
+                            <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
+                                <span class="text-sm font-bold text-slate-900 dark:text-white">Notifications</span>
+                                <span x-text="unreadCount > 0 ? `${unreadCount} new` : 'No new'" class="text-xs text-slate-600 dark:text-slate-400"></span>
                             </div>
                             <div class="max-h-96 overflow-y-auto">
                                 <template x-if="loading && notifications.length === 0">
@@ -439,8 +469,8 @@
                                                 }
                                             }
                                         }"
-                                        class="block p-4 border-b border-slate-700 hover:bg-slate-800 transition-colors cursor-pointer" 
-                                        :class="notification.read_at ? 'bg-slate-900/50' : 'bg-slate-900'"
+                                        class="block p-4 border-b border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer" 
+                                        :class="notification.read_at ? 'bg-slate-50 dark:bg-slate-800/50' : 'bg-white dark:bg-slate-800'"
                                     >
                                         <div class="flex items-start gap-3">
                                             <div class="flex-shrink-0 mt-1" :class="notification.read_at ? 'opacity-40' : ''">
@@ -449,7 +479,7 @@
                                                 </svg>
                                             </div>
                                             <div class="flex-1 min-w-0">
-                                                <p class="text-sm font-medium text-white leading-relaxed" x-text="notification.message"></p>
+                                                <p class="text-sm font-medium text-slate-900 dark:text-white leading-relaxed" x-text="notification.message"></p>
                                                 <div class="flex items-center gap-2 mt-2">
                                                     <p class="text-xs text-slate-400" x-text="notification.created_at"></p>
                                                     <template x-if="!notification.read_at">
@@ -548,6 +578,17 @@
                 if (isCollapsed) {
                     sidebar.classList.add('collapsed');
                 }
+
+                // Add simple tooltips for nav items (using their text labels)
+                const navItems = document.querySelectorAll('#sidebar .nav-item');
+                navItems.forEach(function (item) {
+                    if (!item.getAttribute('title')) {
+                        const labelEl = item.querySelector('.sidebar-text');
+                        if (labelEl && labelEl.textContent.trim().length > 0) {
+                            item.setAttribute('title', labelEl.textContent.trim());
+                        }
+                    }
+                });
                 
                 // Toggle sidebar collapse/expand
                 toggleBtn.addEventListener('click', function() {
@@ -689,11 +730,28 @@
                 max-height: none !important;
                 overflow: visible !important;
             }
+            
+            /* System status dot - Default theme (Midnight Cyan) */
+            .system-status-dot {
+                background: #22D3EE !important; /* Cyan-400 */
+                box-shadow: 0 0 8px rgba(34, 211, 238, 0.6) !important;
+            }
+            
+            /* Gold theme */
+            html[data-theme="gold"] .system-status-dot {
+                background: #FBBF24 !important; /* Amber-400 */
+                box-shadow: 0 0 8px rgba(251, 191, 36, 0.6) !important;
+            }
+            
+            /* Aurora theme - Pink breathing dot */
+            html[data-theme="aurora"] .system-status-dot {
+                background: #ec4899 !important; /* Pink-500 */
+                box-shadow: 0 0 8px rgba(236, 72, 153, 0.6) !important;
+            }
         </style>
         
-        {{-- FORM KEYBOARD SHORTCUTS (Ctrl+S to Save) --}}
+        {{-- FORM KEYBOARD SHORTCUTS (Alt+S untuk tombol Simpan/Save saja) --}}
         <script src="{{ asset('js/form-shortcuts.js') }}"></script>
-        
         @stack('scripts')
     </div>
 </body>

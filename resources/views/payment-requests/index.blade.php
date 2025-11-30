@@ -7,48 +7,41 @@
 
     <x-card>
         <x-slot:header>
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                    <div class="text-2xl font-bold text-slate-900 dark:text-slate-100">Payment Requests</div>
-                    <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                        @if(Auth::check() && (Auth::user()->role ?? 'admin') === 'super_admin')
-                            All vendor payment requests
-                        @else
-                            Your payment requests
-                        @endif
-                    </p>
-                    <div class="mt-2">
+        <x-slot:header>
+            <div class="flex flex-col md:flex-row md:items-center md:justify-end gap-4">
+                <div class="flex items-center gap-4">
+                    <div>
                         @if(($show ?? null) === 'all')
                             <a href="{{ request()->fullUrlWithQuery(['show'=>null]) }}" class="inline-flex items-center gap-1.5 text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
                                 Including paid • Click for outstanding only
                             </a>
                         @else
-                            <a href="{{ request()->fullUrlWithQuery(['show'=>'all']) }}" class="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400">
+                            <a href="{{ request()->fullUrlWithQuery(['show'=>'all']) }}" class="inline-flex items-center gap-1.5 text-[11px] font-medium hover:text-indigo-600 dark:hover:text-indigo-400" style="color: var(--color-text-muted);">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
                                 Outstanding only • Click to show including paid
                             </a>
                         @endif
                     </div>
+                    <x-button :href="route('payment-requests.create')" variant="primary" size="sm" class="normal-case">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        New request
+                    </x-button>
                 </div>
-                <x-button :href="route('payment-requests.create')" variant="primary">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Create Manual Request
-                </x-button>
             </div>
         </x-slot:header>
 
         <form method="get" class="grid grid-cols-1 md:grid-cols-5 gap-3">
-            <select name="status" class="rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <select name="status" class="rounded-lg bg-[var(--bg-surface-secondary)] border border-[var(--border-color)] px-3 py-2 text-sm text-[var(--color-text-main)] focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <option value="">All Status</option>
                 @foreach(['pending' => 'Pending', 'approved' => 'Approved', 'rejected' => 'Rejected', 'paid' => 'Paid'] as $val => $label)
                     <option value="{{ $val }}" @selected(request('status')===$val)>{{ $label }}</option>
                 @endforeach
             </select>
-            <input type="date" name="from" value="{{ request('from') }}" placeholder="From Date" class="rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-            <input type="date" name="to" value="{{ request('to') }}" placeholder="To Date" class="rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <input type="date" name="from" value="{{ request('from') }}" placeholder="From Date" class="rounded-lg bg-[var(--bg-surface-secondary)] border border-[var(--border-color)] px-3 py-2 text-sm text-[var(--color-text-main)] focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <input type="date" name="to" value="{{ request('to') }}" placeholder="To Date" class="rounded-lg bg-[var(--bg-surface-secondary)] border border-[var(--border-color)] px-3 py-2 text-sm text-[var(--color-text-main)] focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             <div></div>
             <x-button type="submit" variant="outline">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -65,8 +58,8 @@
         <x-slot:header>
             <div class="flex items-center justify-between">
                 <div>
-                    <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Vendor Bills Not Fully Requested</h2>
-                    <p class="text-sm text-slate-600 dark:text-slate-400 mt-0.5">Vendor bills that haven't been fully requested (total requested < total bill) - prevent double requests!</p>
+                    <h2 class="text-lg font-semibold text-[var(--color-text-main)]">Vendor Bills Not Fully Requested</h2>
+                    <p class="text-sm text-[var(--color-text-muted)] mt-0.5">Vendor bills that haven't been fully requested (total requested < total bill) - prevent double requests!</p>
                 </div>
                 <x-badge variant="warning" class="text-sm">{{ $unpaidBills->count() }} Bills</x-badge>
             </div>
@@ -74,7 +67,7 @@
 
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-slate-200 dark:divide-[#2d2d2d]">
-                <thead class="bg-slate-50 dark:bg-[#252525]">
+                <thead class="bg-[var(--bg-surface-secondary)]">
                     <tr>
                         <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Vendor Bill</th>
                         <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Vendor</th>
@@ -83,8 +76,7 @@
                         <th scope="col" class="px-4 py-3 text-right text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
                             <div class="flex flex-col items-end">
                                 <span>Already Requested</span>
-                                <span class="text-[10px] font-normal normal-case">(Payment Requests)</span>
-                            </div>
+                             </div>
                         </th>
                         <th scope="col" class="px-4 py-3 text-right text-xs font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-wider">
                             <div class="flex flex-col items-end">
@@ -95,7 +87,7 @@
                         <th scope="col" class="px-4 py-3 text-center text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Action</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white dark:bg-[#1e1e1e] divide-y divide-slate-200 dark:divide-[#2d2d2d]">
+                <tbody class="bg-[var(--bg-panel)] divide-y divide-[var(--border-color)]">
                 @foreach($unpaidBills as $bill)
                     <tr class="hover:bg-slate-50 dark:hover:bg-[#252525] transition-colors">
                         <td class="px-4 py-3 whitespace-nowrap">
@@ -136,7 +128,8 @@
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-center">
                             <a href="{{ route('payment-requests.create', ['vendor_bill_id' => $bill->id]) }}"
-                               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition-colors shadow-sm">
+                               class="inline-flex items-center justify-center gap-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white border border-white/20 shadow-sm hover:shadow-md focus:ring-indigo-600"
+                               style="background-color: #4f46e5; color: white;">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                                 </svg>
@@ -176,13 +169,11 @@
                         <th scope="col" class="px-4 py-3 text-right text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
                             <div class="flex flex-col items-end">
                                 <span>Already Requested</span>
-                                <span class="text-[10px] font-normal normal-case">(Payment Requests)</span>
                             </div>
                         </th>
                         <th scope="col" class="px-4 py-3 text-right text-xs font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-wider">
                             <div class="flex flex-col items-end">
                                 <span>Not Requested</span>
-                                <span class="text-[10px] font-normal normal-case">(Remaining)</span>
                             </div>
                         </th>
                         <th scope="col" class="px-4 py-3 text-center text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Status</th>
@@ -245,8 +236,9 @@
                         <td class="px-4 py-3 whitespace-nowrap text-center">
                             @if($advance->status === 'pending')
                                 <a href="{{ route('payment-requests.create', ['driver_advance_id' => $advance->id]) }}"
-                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium transition-colors shadow-sm"
-                                   title="Request DP Payment">
+                                   class="inline-flex items-center justify-center gap-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium px-3 py-1.5 text-xs bg-amber-600 hover:bg-amber-700 text-white shadow-sm hover:shadow-md focus:ring-amber-500"
+                                   title="Request DP Payment"
+                                   style="background-color: #d97706 !important; color: white !important;">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                                     </svg>
@@ -254,8 +246,9 @@
                                 </a>
                             @elseif($advance->status === 'dp_paid')
                                 <a href="{{ route('payment-requests.create', ['driver_advance_id' => $advance->id, 'type' => 'settlement']) }}"
-                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-medium transition-colors shadow-sm"
-                                   title="Request Settlement">
+                                   class="inline-flex items-center justify-center gap-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium px-3 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm hover:shadow-md focus:ring-emerald-500"
+                                   title="Request Settlement"
+                                   style="background-color: #059669 !important; color: white !important;">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
@@ -428,37 +421,64 @@
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap">
                             <div class="flex items-center gap-1">
-                                <button type="button" onclick="showJobInfoPopup({{ $r->id }})" class="p-1.5 text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-950/30 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed" title="Job Order Info" @if(!in_array($r->payment_type, ['vendor_bill', 'trucking'])) disabled aria-disabled="true" @endif>
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                <button
+                                    type="button"
+                                    onclick="showJobInfoPopup({{ $r->id }})"
+                                    class="p-1 text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-950/30 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                    title="Job Order Info"
+                                    @if(!in_array($r->payment_type, ['vendor_bill', 'trucking'])) disabled aria-disabled="true" @endif
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
                                 </button>
-                                <x-button :href="route('payment-requests.show', $r)" variant="ghost" size="sm" title="View">
+
+                                <a
+                                    href="{{ route('payment-requests.show', $r) }}"
+                                    class="p-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                                    title="View"
+                                >
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                     </svg>
-                                </x-button>
+                                </a>
 
                                 @if($r->status === 'pending' && Auth::check() && (Auth::user()->role ?? 'admin') === 'super_admin')
-                                <form method="POST" action="{{ route('payment-requests.approve', $r) }}" class="inline">
-                                    @csrf
-                                    <button type="submit" onclick="return confirm('Approve this request?')" class="p-1.5 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded transition-colors" title="Approve">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                        </svg>
-                                    </button>
-                                </form>
+                                    <form method="POST" action="{{ route('payment-requests.approve', $r) }}" class="inline">
+                                        @csrf
+                                        <button
+                                            type="submit"
+                                            onclick="return confirm('Approve this request?')"
+                                            class="p-1 text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300 transition-colors"
+                                            title="Approve"
+                                        >
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </button>
+                                    </form>
                                 @endif
 
                                 @if($r->status === 'pending' && Auth::check() && (Auth::user()->id === $r->requested_by || (Auth::user()->role ?? 'admin') === 'super_admin'))
-                                <form method="POST" action="{{ route('payment-requests.destroy', $r) }}" onsubmit="return confirm('Are you sure you want to delete this request?')" class="inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded transition-colors" title="Delete">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
-                                    </button>
-                                </form>
+                                    <form
+                                        method="POST"
+                                        action="{{ route('payment-requests.destroy', $r) }}"
+                                        onsubmit="return confirm('Are you sure you want to delete this request?')"
+                                        class="inline"
+                                    >
+                                        @csrf
+                                        @method('DELETE')
+                                        <button
+                                            type="submit"
+                                            class="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+                                            title="Delete"
+                                        >
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </form>
                                 @endif
                             </div>
                         </td>

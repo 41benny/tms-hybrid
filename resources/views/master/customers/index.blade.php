@@ -7,7 +7,7 @@
         <x-slot:header>
             <div class="flex flex-col md:flex-row md:items-center md:justify-end gap-4">
                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-        <form method="get" class="flex items-center gap-2">
+                    <form method="get" class="flex items-center gap-2">
                         <input
                             type="text"
                             name="q"
@@ -21,7 +21,7 @@
                             </svg>
                             Cari
                         </x-button>
-        </form>
+                    </form>
                     <x-button :href="route('customers.create')" variant="primary">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />

@@ -1,14 +1,14 @@
 @extends('layouts.app', ['title' => 'Buat Jurnal Adjustment'])
 
 @section('content')
-<div class="space-y-6" x-data="journalForm()">
+<div class="space-y-6 text-xs" x-data="journalForm()">
     {{-- Header Card --}}
     <x-card>
         <x-slot:header>
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <div class="text-2xl font-bold text-slate-900 dark:text-slate-100">Buat Jurnal Adjustment</div>
-                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Input jurnal penyesuaian manual</p>
+                    <div class="text-base font-bold text-slate-900 dark:text-slate-100">Buat Jurnal Adjustment</div>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Input jurnal penyesuaian manual</p>
                 </div>
                 <x-button :href="route('journals.index')" variant="ghost" size="sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -26,14 +26,14 @@
         <x-card title="Header Jurnal">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                    <label class="block text-sm mb-1">Tanggal Jurnal <span class="text-red-500">*</span></label>
+                    <label class="block text-[11px] mb-1">Tanggal Jurnal <span class="text-red-500">*</span></label>
                     <input type="date" name="journal_date" x-model="formData.journal_date" class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2" required>
                     @error('journal_date')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
                 </div>
                 <div>
-                    <label class="block text-sm mb-1">Mata Uang</label>
+                    <label class="block text-[11px] mb-1">Mata Uang</label>
                     <input type="text" name="currency" x-model="formData.currency" value="IDR" maxlength="3" class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2">
                     @error('currency')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
@@ -42,7 +42,7 @@
                 <div></div>
             </div>
             <div class="mt-4">
-                <label class="block text-sm mb-1">Memo/Keterangan</label>
+                <label class="block text-[11px] mb-1">Memo/Keterangan</label>
                 <textarea name="memo" x-model="formData.memo" class="w-full rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2" rows="2"></textarea>
                 @error('memo')
                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
@@ -50,7 +50,7 @@
             </div>
         </x-card>
 
-        <x-card title="Detail Jurnal">
+        <x-card title="Detail Jurnal" class="text-xs">
             <div class="mb-4 flex items-center justify-between">
                 <div>
                     <p class="text-sm text-slate-600 dark:text-slate-400">Total Debit: <span class="font-semibold" x-text="formatNumber(totalDebit)"></span></p>
@@ -63,7 +63,7 @@
             </div>
 
             <div class="overflow-x-auto">
-                <table class="min-w-full text-sm border border-slate-200 dark:border-slate-800">
+                <table class="min-w-full border border-slate-200 dark:border-slate-800">
                     <thead class="bg-slate-50 dark:bg-slate-800">
                         <tr>
                             <th class="px-3 py-2 text-left border-b">Akun</th>
@@ -205,4 +205,3 @@ function journalForm() {
 }
 </script>
 @endsection
-

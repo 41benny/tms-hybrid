@@ -24,32 +24,40 @@
         </div>
     @endif
 
-    <div class="mb-4 flex items-center justify-between">
-        <div>
-            <div class="text-xl font-semibold">Kas/Bank</div>
-            <p class="text-sm text-slate-500 dark:text-slate-400">Transaksi kas masuk/keluar</p>
-        </div>
-        <a href="{{ route('cash-banks.create') }}" class="px-3 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-500">+ Transaksi</a>
-    </div>
-
     <x-card>
+        <x-slot:header>
+            <div class="flex flex-col md:flex-row md:items-center md:justify-end gap-4">
+                <x-button :href="route('cash-banks.create')" variant="primary">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Transaksi Baru
+                </x-button>
+            </div>
+        </x-slot:header>
+
         <form method="get" class="grid grid-cols-1 md:grid-cols-6 gap-3">
-            <select name="cash_bank_account_id" class="rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2">
+            <select name="cash_bank_account_id" class="rounded-lg bg-[var(--bg-surface-secondary)] border border-[var(--border-color)] px-3 py-2 text-sm text-[var(--color-text-main)] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
                 <option value="">Semua Akun</option>
                 @foreach($accounts as $a)
                     <option value="{{ $a->id }}" @selected(request('cash_bank_account_id')==$a->id)>{{ $a->name }}</option>
                 @endforeach
             </select>
-            <select name="sumber" class="rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2">
+            <select name="sumber" class="rounded-lg bg-[var(--bg-surface-secondary)] border border-[var(--border-color)] px-3 py-2 text-sm text-[var(--color-text-main)] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
                 <option value="">Semua Sumber</option>
                 @foreach(['customer_payment','vendor_payment','expense','other_in','other_out'] as $s)
                     <option value="{{ $s }}" @selected(request('sumber')==$s)>{{ ucwords(str_replace('_',' ', $s)) }}</option>
                 @endforeach
             </select>
-            <input type="date" name="from" value="{{ request('from') }}" placeholder="Dari Tanggal" class="rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2" />
-            <input type="date" name="to" value="{{ request('to') }}" placeholder="Sampai Tanggal" class="rounded bg-transparent border border-slate-300/50 dark:border-slate-700 px-2 py-2" />
+            <input type="date" name="from" value="{{ request('from') }}" placeholder="Dari Tanggal" class="rounded-lg bg-[var(--bg-surface-secondary)] border border-[var(--border-color)] px-3 py-2 text-sm text-[var(--color-text-main)] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+            <input type="date" name="to" value="{{ request('to') }}" placeholder="Sampai Tanggal" class="rounded-lg bg-[var(--bg-surface-secondary)] border border-[var(--border-color)] px-3 py-2 text-sm text-[var(--color-text-main)] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
             <div></div>
-            <button class="px-3 py-2 rounded bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700">Filter</button>
+            <x-button type="submit" variant="outline">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                Filter
+            </x-button>
         </form>
     </x-card>
 
@@ -72,7 +80,8 @@
         </x-card>
     </div>
 
-    <div class="mt-4 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80">
+    <x-card :noPadding="true" class="mt-4">
+        <div class="overflow-x-auto">
         <table class="min-w-full text-sm">
             <thead class="text-left border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
                 <tr class="text-slate-600 dark:text-slate-400 text-xs uppercase">
@@ -198,7 +207,8 @@
             @endforelse
             </tbody>
         </table>
-    </div>
+        </div>
+    </x-card>
 
     <div class="mt-4">{{ $transactions->links() }}</div>
 @endsection

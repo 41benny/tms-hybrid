@@ -9,8 +9,8 @@
     <x-card>
         <x-slot:header>
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div class="flex items-center gap-3">
-                    <x-button :href="route('job-orders.index')" variant="ghost" size="sm">
+                <div class="flex items-center gap-3 jo-header-actions">
+                    <x-button :href="route('job-orders.index')" variant="ghost" size="sm" class="jo-action-btn jo-action-back">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
@@ -21,9 +21,9 @@
                         <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">{{ $job->customer->name }} • {{ strtoupper($job->service_type) }}</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 jo-header-actions">
                     @if(!$job->isLocked())
-                        <x-button :href="route('job-orders.edit', $job)" variant="outline" size="sm" class="transition-all duration-200 border-transparent hover:shadow-md hover:shadow-indigo-500/20 hover:border-indigo-500">
+                        <x-button :href="route('job-orders.edit', $job)" variant="outline" size="sm" class="jo-action-btn jo-action-edit transition-all duration-200 border-transparent hover:shadow-md hover:shadow-indigo-500/20 hover:border-indigo-500">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
@@ -38,7 +38,7 @@
                             onclick="openCancelModal()"
                             variant="danger"
                             size="sm"
-                            class="transition-all duration-200 hover:shadow-md hover:shadow-red-500/25 hover:border-red-600"
+                            class="jo-action-btn jo-action-cancel transition-all duration-200 hover:shadow-md hover:shadow-red-500/25 hover:border-red-600"
                         >
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -332,8 +332,10 @@
                                             <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
                                         </svg>
                                     </button>
-                                    <div class="px-2.5 py-1 rounded-md bg-indigo-100 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 shrink-0">
-                                        <span class="text-xs font-semibold text-indigo-700 dark:text-indigo-300">#{{ $leg->leg_number }}</span>
+                                    <div class="shrink-0 rounded-md p-[1px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+                                        <div class="px-2.5 py-1 rounded-[5px] bg-white dark:bg-slate-900">
+                                            <span class="text-xs font-bold text-purple-600 dark:text-purple-400">#{{ $leg->leg_number }}</span>
+                                        </div>
                                     </div>
                                     <div class="flex-1 min-w-0">
                                         <div class="font-semibold text-slate-900 dark:text-slate-100 text-sm">Leg #{{ $leg->leg_number }}</div>
@@ -369,16 +371,31 @@
                                             Rp {{ number_format($leg->mainCost ? $leg->mainCost->total : 0, 0, ',', '.') }}
                                         </div>
                                         <div class="text-xs text-slate-500 dark:text-slate-400">Total</div>
-                                        <div class="mt-1">
-                                            <x-badge :variant="match($leg->status) {
-                                                'pending' => 'default',
-                                                'in_transit' => 'warning',
-                                                'delivered' => 'success',
-                                                'cancelled' => 'danger',
-                                            }" class="text-xs">
-                                                {{ strtoupper(str_replace('_', ' ', $leg->status)) }}
-                                            </x-badge>
-                                        </div>
+                                          <div class="mt-1">
+                                              <x-badge :variant="match($leg->status) {
+                                                  'pending' => 'default',
+                                                  'in_transit' => 'warning',
+                                                  'delivered' => 'success',
+                                                  'cancelled' => 'danger',
+                                              }" class="text-xs">
+                                                  {{ strtoupper(str_replace('_', ' ', $leg->status)) }}
+                                              </x-badge>
+                                          </div>
+
+                                          @if($leg->cost_category === 'trucking' && $leg->executor_type === 'own_fleet')
+                                              <div class="mt-2 flex justify-end">
+                                                  <a
+                                                      href="{{ route('legs.print-trucking', $leg) }}"
+                                                      target="_blank"
+                                                      class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-medium bg-white dark:bg-slate-900 border border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 hover:border-indigo-400 dark:hover:border-indigo-500 shadow-sm hover:shadow-md transition-all"
+                                                  >
+                                                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                                      </svg>
+                                                      Print SPK Uang Jalan
+                                                  </a>
+                                              </div>
+                                          @endif
 
                                         @php
                                             $driverAdvance = $leg->driverAdvance;
@@ -481,9 +498,26 @@
                                     {{-- Main Costs --}}
                                     @if($leg->mainCost)
                                     <div class="glass-panel rounded-lg p-4 mb-3">
-                                        <div class="font-semibold text-indigo-900 dark:text-indigo-100 mb-3 text-sm flex items-center justify-between">
-                                            <span>MAIN COSTS</span>
-                                            <span class="text-lg">Rp {{ number_format($leg->mainCost->total, 0, ',', '.') }}</span>
+                                        <div class="font-semibold text-indigo-900 dark:text-indigo-100 mb-3 text-sm flex items-center justify-between gap-2">
+                                            <div>
+                                                <span>MAIN COSTS</span>
+                                                <span class="ml-2 text-xs text-slate-500 dark:text-slate-400">Leg #{{ $leg->leg_number }}</span>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-lg">Rp {{ number_format($leg->mainCost->total, 0, ',', '.') }}</span>
+                                                @if($leg->cost_category === 'trucking' && $leg->executor_type === 'own_fleet')
+                                                    <a
+                                                        href="{{ route('legs.print-trucking', $leg) }}"
+                                                        target="_blank"
+                                                        class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-medium bg-white dark:bg-slate-900 border border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 hover:border-indigo-400 dark:hover:border-indigo-500 shadow-sm hover:shadow-md transition-all"
+                                                    >
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                                        </svg>
+                                                        Print SPK
+                                                    </a>
+                                                @endif
+                                            </div>
                                         </div>
                                         <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
                                             @if($leg->mainCost->vendor_cost > 0)

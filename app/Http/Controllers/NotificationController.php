@@ -22,7 +22,11 @@ class NotificationController extends Controller
         $notifications = $user->notifications()
             ->latest()
             ->limit(20)
-            ->get();
+            ->get()
+            ->filter(function ($notification) {
+                // Validate that the referenced data still exists
+                return $this->isNotificationValid($notification);
+            });
 
         return response()->json([
             'notifications' => $notifications->map(function ($notification) {
@@ -34,9 +38,34 @@ class NotificationController extends Controller
                     'created_at' => $notification->created_at->diffForHumans(),
                     'message' => $this->getNotificationMessage($notification),
                 ];
-            }),
-            'unread_count' => $user->unreadNotifications()->count(),
+            })->values(),
+            'unread_count' => $user->unreadNotifications()
+                ->get()
+                ->filter(fn($n) => $this->isNotificationValid($n))
+                ->count(),
         ]);
+    }
+    
+    /**
+     * Check if the notification's referenced data still exists.
+     */
+    private function isNotificationValid($notification): bool
+    {
+        $data = $notification->data;
+        
+        // Check based on notification type
+        return match ($notification->type) {
+            'App\\Notifications\\InvoiceSubmittedForApproval' => 
+                \App\Models\Finance\Invoice::where('invoice_number', $data['invoice_number'] ?? '')->exists(),
+            
+            'App\\Notifications\\TaxInvoiceRequestedNotification' => 
+                \App\Models\Accounting\TaxInvoiceRequest::where('request_number', $data['request_number'] ?? '')->exists(),
+            
+            'App\\Notifications\\PaymentRequestCreated' => 
+                \App\Models\Operations\PaymentRequest::where('request_number', $data['request_number'] ?? '')->exists(),
+            
+            default => true, // Keep unknown notification types
+        };
     }
 
     /**
