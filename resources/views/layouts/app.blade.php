@@ -581,12 +581,6 @@
             document.addEventListener('DOMContentLoaded', function() {
                 const sidebar = document.getElementById('sidebar');
                 const toggleBtn = document.getElementById('sidebarToggle');
-                
-                // Load saved sidebar state
-                const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
-                if (isCollapsed) {
-                    sidebar.classList.add('collapsed');
-                }
 
                 // Add simple tooltips for nav items (using their text labels)
                 const navItems = document.querySelectorAll('#sidebar .nav-item');
@@ -602,8 +596,6 @@
                 // Toggle sidebar collapse/expand
                 toggleBtn.addEventListener('click', function() {
                     sidebar.classList.toggle('collapsed');
-                    const collapsed = sidebar.classList.contains('collapsed');
-                    localStorage.setItem('sidebar-collapsed', collapsed);
                 });
                 
                 // Menu group collapse/expand functionality
