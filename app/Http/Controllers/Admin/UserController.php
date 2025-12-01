@@ -54,7 +54,8 @@ class UserController extends Controller
         $user->permissions = $data['permissions'];
         $user->save();
 
-        $this->syncMenus($user, $data['menu_ids']);
+        $menuIds = $request->input('menu_ids', []);
+        $this->syncMenus($user, is_array($menuIds) ? $menuIds : []);
 
         return redirect()
             ->route('admin.users.index')
@@ -121,7 +122,8 @@ class UserController extends Controller
             $user->save();
         }
 
-        $this->syncMenus($user, $data['menu_ids']);
+        $menuIds = $request->input('menu_ids', []);
+        $this->syncMenus($user, is_array($menuIds) ? $menuIds : []);
 
         if (! $user->is_active && $user->is(Auth::user())) {
             Auth::logout();

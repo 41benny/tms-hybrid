@@ -42,9 +42,12 @@ class UpdateUserRequest extends FormRequest
         $data = $this->validated();
 
         $data['is_active'] = filter_var($data['is_active'], FILTER_VALIDATE_BOOLEAN);
-        $data['permissions'] = $this->has('permissions')
-            ? array_values(array_unique($data['permissions'] ?? []))
-            : null;
+        if (! $this->has('permissions') || empty($data['permissions'] ?? [])) {
+            // Null artinya: pakai default permissions berdasarkan role
+            $data['permissions'] = null;
+        } else {
+            $data['permissions'] = array_values(array_unique($data['permissions'] ?? []));
+        }
 
         return $data;
     }
