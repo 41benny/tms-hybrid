@@ -394,7 +394,7 @@ class JournalService
         }
         
         // Load relationships
-        $advance->load(['shipmentLeg.jobOrder', 'shipmentLeg.mainCost', 'shipmentLeg.transport', 'driver']);
+        $advance->load(['shipmentLeg.jobOrder', 'shipmentLeg.mainCost', 'driver']);
         
         $leg = $advance->shipmentLeg;
         $mainCost = $leg->mainCost;
@@ -416,8 +416,7 @@ class JournalService
         $prepaid = $this->map('prepaid_expense'); // 1500
         $driverPayable = $this->map('driver_payable'); // 2155
         
-        // Get transport_id and job_order_id for tracking
-        $transportId = $leg->transport_id;
+        // Get job_order_id for tracking
         $jobOrderId = $leg->job_order_id;
         
         $lines = [
@@ -426,7 +425,6 @@ class JournalService
                 'debit' => $grossAmount,
                 'credit' => 0,
                 'desc' => 'Biaya dimuka uang jalan - ' . $leg->jobOrder->job_number,
-                'transport_id' => $transportId,
                 'job_order_id' => $jobOrderId
             ],
             [
@@ -434,7 +432,6 @@ class JournalService
                 'debit' => 0,
                 'credit' => $grossAmount,
                 'desc' => 'Hutang uang jalan supir - ' . ($advance->driver->name ?? 'N/A'),
-                'transport_id' => $transportId,
                 'job_order_id' => $jobOrderId
             ],
         ];
@@ -483,8 +480,7 @@ class JournalService
         $guaranteeDeduction = 0;
         $isSettlement = false;
         
-        // Track transport_id and job_order_id from first advance
-        $transportId = null;
+        // Track job_order_id from first advance
         $jobOrderId = null;
         
         // Load driver advance payment records
@@ -495,9 +491,8 @@ class JournalService
         foreach ($driverAdvancePayments as $payment) {
             $advance = $payment->driverAdvance;
             if ($advance) {
-                // Get transport_id and job_order_id from first advance
-                if (!$transportId && $advance->shipmentLeg) {
-                    $transportId = $advance->shipmentLeg->transport_id;
+                // Get job_order_id from first advance
+                if (!$jobOrderId && $advance->shipmentLeg) {
                     $jobOrderId = $advance->shipmentLeg->job_order_id;
                 }
                 
@@ -529,7 +524,6 @@ class JournalService
             'debit' => $grossPayable,
             'credit' => 0,
             'desc' => 'Pembayaran hutang uang jalan - ' . ($isSettlement ? 'Pelunasan' : 'DP'),
-            'transport_id' => $transportId,
             'job_order_id' => $jobOrderId
         ];
         
@@ -539,7 +533,6 @@ class JournalService
             'debit' => 0,
             'credit' => $netAmount,
             'desc' => 'Pembayaran uang jalan driver',
-            'transport_id' => $transportId,
             'job_order_id' => $jobOrderId
         ];
         
@@ -552,7 +545,6 @@ class JournalService
                     'debit' => 0,
                     'credit' => $savingsDeduction,
                     'desc' => 'Potongan tabungan supir',
-                    'transport_id' => $transportId,
                     'job_order_id' => $jobOrderId
                 ];
             }
@@ -564,7 +556,6 @@ class JournalService
                     'debit' => 0,
                     'credit' => $guaranteeDeduction,
                     'desc' => 'Potongan jaminan supir',
-                    'transport_id' => $transportId,
                     'job_order_id' => $jobOrderId
                 ];
             }

@@ -32,7 +32,7 @@
     <div class="h-screen flex overflow-hidden">
         
         {{-- SIDEBAR --}}
-        <aside id="sidebar" class="hidden md:flex flex-col w-72 shrink-0 theme-sidebar backdrop-blur-xl relative z-20 transition-all duration-300 fixed md:relative inset-y-0 left-0 h-full overflow-y-auto md:overflow-visible">
+        <aside id="sidebar" class="hidden lg:flex flex-col w-72 shrink-0 theme-sidebar backdrop-blur-xl relative z-20 transition-all duration-300 fixed lg:relative inset-y-0 left-0 h-full overflow-y-auto lg:overflow-visible">
             
             {{-- Logo / Brand --}}
             <div class="p-6 pb-3 relative">
@@ -352,7 +352,7 @@
             <header class="h-16 theme-panel flex items-center justify-between px-6 sticky top-0 z-30 transition-colors duration-500" style="border-width: 0 0 1px 0;">
                 <div class="flex items-center gap-4">
                     @if($role !== 'sales')
-                        <button class="md:hidden text-contrast" onclick="document.querySelector('aside').classList.toggle('hidden')">
+                        <button class="lg:hidden text-contrast" onclick="document.querySelector('aside').classList.toggle('hidden')">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                         </button>
                     @endif
@@ -545,6 +545,15 @@
                         </svg>
                         <span>Invoice</span>
                     </a>
+                    <form method="POST" action="{{ route('logout') }}" class="flex-1 flex flex-col items-center justify-center py-2 text-[11px]">
+                        @csrf
+                        <button type="submit" class="flex flex-col items-center justify-center text-[11px] text-slate-400">
+                            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            <span>Logout</span>
+                        </button>
+                    </form>
                 </div>
             </nav>
         @endif

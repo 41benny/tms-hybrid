@@ -103,6 +103,17 @@ class JobOrderController extends Controller
         ]);
 
         $itemDataList = $request->input('items', null);
+
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+        if ($user && $user->role === User::ROLE_SALES) {
+            $salesProfile = $user->salesProfile;
+            if ($salesProfile) {
+                // Paksa JO yang dibuat sales selalu terikat ke profil sales-nya sendiri
+                $data['sales_id'] = $salesProfile->id;
+            }
+        }
+
         unset($data['items']);
 
         $job = new JobOrder;
@@ -195,6 +206,17 @@ class JobOrderController extends Controller
         // Prevent change status dari cancelled/completed ke status lain
         if (in_array($job_order->status, ['completed', 'cancelled'])) {
             $data['status'] = $job_order->status; // Lock status
+        }
+
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+        if ($user && $user->role === User::ROLE_SALES) {
+            $salesProfile = $user->salesProfile;
+            if ($salesProfile) {
+                // Sales hanya boleh meng-edit JO yang menjadi miliknya,
+                // dan sales_id selalu dikunci ke profil sales tersebut.
+                $data['sales_id'] = $salesProfile->id;
+            }
         }
 
         $itemDataList = $data['items'] ?? [];
@@ -349,6 +371,11 @@ class JobOrderController extends Controller
         $user = Auth::user();
 
         if (! $user || $user->role !== User::ROLE_SALES) {
+            return;
+        }
+
+        // Jika JO belum di-assign ke sales manapun, izinkan sales melihatnya
+        if ($jobOrder->sales_id === null) {
             return;
         }
 
