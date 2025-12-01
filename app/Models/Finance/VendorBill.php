@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class VendorBill extends Model
 {
     protected $fillable = [
-        'vendor_id', 'vendor_bill_number', 'bill_date', 'due_date', 'total_amount', 'amount_paid', 'status', 'notes', 'journal_id',
+        'vendor_id', 'vendor_bill_number', 'bill_date', 'due_date', 'total_amount', 'amount_paid', 'status', 'notes', 'journal_id', 'ppn_noncreditable',
     ];
 
     protected $casts = [
@@ -17,6 +17,7 @@ class VendorBill extends Model
         'due_date' => 'date',
         'total_amount' => 'decimal:2',
         'amount_paid' => 'decimal:2',
+        'ppn_noncreditable' => 'boolean',
     ];
     
     protected $appends = ['outstanding_balance'];

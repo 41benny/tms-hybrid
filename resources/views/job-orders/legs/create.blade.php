@@ -291,6 +291,19 @@
                             <div class="text-xs text-slate-500 dark:text-slate-400">Vendor Cost + PPN - PPH 23</div>
                         </div>
                     </div>
+                    <div class="mt-4 flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            id="ppn_noncreditable_vendor"
+                            name="ppn_noncreditable"
+                            value="1"
+                            class="w-4 h-4 rounded border-slate-400 text-indigo-600 focus:ring-indigo-500"
+                            @checked(old('ppn_noncreditable'))
+                        >
+                        <label for="ppn_noncreditable_vendor" class="text-sm text-slate-700 dark:text-slate-300">
+                            PPN tidak dikreditkan (dibebankan ke biaya)
+                        </label>
+                    </div>
                 </div>
             </div>
 
@@ -357,6 +370,19 @@
                             <div class="text-2xl font-bold text-indigo-600 dark:text-indigo-400" id="pelayaran_total_display">Rp 0</div>
                             <div class="text-xs text-slate-500 dark:text-slate-400">Freight Cost + PPN - PPH 23</div>
                         </div>
+                    </div>
+                    <div class="mt-4 flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            id="ppn_noncreditable_pelayaran"
+                            name="ppn_noncreditable"
+                            value="1"
+                            class="w-4 h-4 rounded border-slate-400 text-indigo-600 focus:ring-indigo-500"
+                            @checked(old('ppn_noncreditable'))
+                        >
+                        <label for="ppn_noncreditable_pelayaran" class="text-sm text-slate-700 dark:text-slate-300">
+                            PPN tidak dikreditkan (dibebankan ke biaya)
+                        </label>
                     </div>
                 </div>
             </div>
@@ -697,6 +723,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const driverName = document.getElementById('driver_name');
     const driverId = document.getElementById('driver_id');
 
+    function setSectionEnabled(sectionEl, enabled) {
+        if (!sectionEl) return;
+        sectionEl.querySelectorAll('input, select, textarea').forEach(el => {
+            el.disabled = !enabled;
+        });
+    }
+
     // Handle cost category change
     function updateFields() {
         // Hide all fields first
@@ -710,6 +743,13 @@ document.addEventListener('DOMContentLoaded', function() {
         asuransiCosts.classList.add('hidden');
         picCosts.classList.add('hidden');
 
+        // Disable all cost inputs by default to avoid double-posting (ppn/pph23 duplicate names)
+        setSectionEnabled(truckingCosts, false);
+        setSectionEnabled(vendorCosts, false);
+        setSectionEnabled(pelayaranCosts, false);
+        setSectionEnabled(asuransiCosts, false);
+        setSectionEnabled(picCosts, false);
+
         // Show relevant fields based on selection
         const value = costCategory.value;
 
@@ -718,6 +758,7 @@ document.addEventListener('DOMContentLoaded', function() {
             truckingFields.classList.remove('hidden');
             truckingFields.classList.add('grid');
             truckingCosts.classList.remove('hidden');
+            setSectionEnabled(truckingCosts, true);
             // Clear vendor selection when trucking is selected
             if (vendorIdInput) vendorIdInput.value = '';
             if (vendorSearchInput) vendorSearchInput.value = '';
@@ -725,19 +766,23 @@ document.addEventListener('DOMContentLoaded', function() {
             // Vendor - show vendor field, vendor cost, PPN, PPH23
             vendorField.classList.remove('hidden');
             vendorCosts.classList.remove('hidden');
+            setSectionEnabled(vendorCosts, true);
         } else if (value === 'pelayaran') {
             // Sea Freight - show vendor field, vessel, shipping line, freight cost, container
             vendorField.classList.remove('hidden');
             vesselField.classList.remove('hidden');
             pelayaranCosts.classList.remove('hidden');
+            setSectionEnabled(pelayaranCosts, true);
         } else if (value === 'asuransi') {
             // Insurance - show vendor field, insurance form
             vendorField.classList.remove('hidden');
             asuransiCosts.classList.remove('hidden');
+            setSectionEnabled(asuransiCosts, true);
         } else if (value === 'pic') {
             // PIC - show vendor field, PIC form
             vendorField.classList.remove('hidden');
             picCosts.classList.remove('hidden');
+            setSectionEnabled(picCosts, true);
         }
     }
 

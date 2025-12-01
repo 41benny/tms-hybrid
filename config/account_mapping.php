@@ -15,6 +15,8 @@ return [
     'ap' => env('ACC_AP_CODE', '2100'),            // Hutang Usaha
     'vat_out' => env('ACC_VAT_OUT_CODE', '2210'),  // PPN Keluaran
     'vat_in' => env('ACC_VAT_IN_CODE', '2220'),    // PPN Masukan
+    // PPN non kreditabel (dibebankan langsung)
+    'vat_in_noncreditable' => env('ACC_VAT_IN_NONCREDIT_CODE', '5220'),
     'pph21' => env('ACC_PPH21_CODE', '2230'),      // PPh 21
     'pph23' => env('ACC_PPH23_CODE', '2240'),      // PPh 23
     'accrued_salary' => env('ACC_ACCRUED_SALARY_CODE', '2310'), // BYMH - Gaji

@@ -81,6 +81,32 @@ class JobOrder extends Model
         });
     }
 
+    /**
+     * Total biaya berbasis DPP (tanpa PPN, tanpa pengurangan PPh 23).
+     */
+    public function getTotalCostDppAttribute(): float
+    {
+        return $this->shipmentLegs->sum(function ($leg) {
+            $mainCost = $leg->mainCost;
+            $category = $leg->cost_category;
+
+            $mainDpp = match ($category) {
+                'vendor' => (float) ($mainCost->vendor_cost ?? 0),
+                'pelayaran' => (float) ($mainCost->freight_cost ?? 0),
+                'trucking' => (float) (($mainCost->uang_jalan ?? 0) + ($mainCost->bbm ?? 0) + ($mainCost->toll ?? 0) + ($mainCost->other_costs ?? 0)),
+                'asuransi' => (float) (($mainCost->premium_cost ?? 0) + ($mainCost->admin_fee ?? 0)),
+                'pic' => (float) ($mainCost->pic_amount ?? 0),
+                default => (float) ($mainCost->vendor_cost ?? 0),
+            };
+
+            // Jika PPN tidak dikreditkan, bebankan ke biaya
+            $ppnExpense = ($mainCost && $mainCost->ppn_noncreditable) ? (float) ($mainCost->ppn ?? 0) : 0;
+
+            $additional = $leg->additionalCosts->sum('amount');
+            return $mainDpp + $ppnExpense + $additional;
+        });
+    }
+
     public function getTotalBillableAttribute(): float
     {
         return $this->shipmentLegs->sum(function ($leg) {
@@ -105,7 +131,7 @@ class JobOrder extends Model
 
     public function getMarginAttribute(): float
     {
-        return $this->total_revenue - $this->total_cost;
+        return $this->total_revenue - $this->total_cost_dpp;
     }
 
     public function getMarginPercentageAttribute(): float

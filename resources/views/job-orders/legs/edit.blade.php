@@ -348,6 +348,19 @@
                             <div class="text-xs text-slate-500 dark:text-slate-400">Vendor Cost + PPN - PPH 23</div>
                         </div>
                     </div>
+                    <div class="mt-4 flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            id="ppn_noncreditable_vendor"
+                            name="ppn_noncreditable"
+                            value="1"
+                            class="w-4 h-4 rounded border-slate-400 text-indigo-600 focus:ring-indigo-500"
+                            @checked(old('ppn_noncreditable', $leg->mainCost?->ppn_noncreditable))
+                        >
+                        <label for="ppn_noncreditable_vendor" class="text-sm text-slate-700 dark:text-slate-300">
+                            PPN tidak dikreditkan (dibebankan ke biaya)
+                        </label>
+                    </div>
                 </div>
             </div>
 
@@ -412,6 +425,19 @@
                             <div class="text-2xl font-bold text-indigo-600 dark:text-indigo-400" id="pelayaran_total_display">Rp 0</div>
                             <div class="text-xs text-slate-500 dark:text-slate-400">Freight Cost + PPN - PPH 23</div>
                         </div>
+                    </div>
+                    <div class="mt-4 flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            id="ppn_noncreditable_pelayaran"
+                            name="ppn_noncreditable"
+                            value="1"
+                            class="w-4 h-4 rounded border-slate-400 text-indigo-600 focus:ring-indigo-500"
+                            @checked(old('ppn_noncreditable', $leg->mainCost?->ppn_noncreditable))
+                        >
+                        <label for="ppn_noncreditable_pelayaran" class="text-sm text-slate-700 dark:text-slate-300">
+                            PPN tidak dikreditkan (dibebankan ke biaya)
+                        </label>
                     </div>
                 </div>
             </div>

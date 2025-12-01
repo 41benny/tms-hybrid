@@ -81,6 +81,7 @@ class ShipmentLegController extends Controller
             'pic_phone' => ['nullable', 'string', 'max:50'],
             'pic_amount' => ['nullable', 'numeric', 'min:0'],
             'pic_notes' => ['nullable', 'string'],
+            'ppn_noncreditable' => ['nullable', 'boolean'],
         ]);
 
         // Determine executor_type based on cost_category
@@ -130,11 +131,13 @@ class ShipmentLegController extends Controller
             $costData['vendor_cost'] = $validated['vendor_cost'] ?? 0;
             $costData['ppn'] = $validated['ppn'] ?? 0;
             $costData['pph23'] = $validated['pph23'] ?? 0;
+            $costData['ppn_noncreditable'] = $request->boolean('ppn_noncreditable');
         } elseif ($validated['cost_category'] == 'pelayaran') {
             $costData['shipping_line'] = $validated['shipping_line'] ?? null;
             $costData['freight_cost'] = $validated['freight_cost'] ?? 0;
             $costData['ppn'] = $validated['ppn'] ?? 0;
             $costData['pph23'] = $validated['pph23'] ?? 0;
+            $costData['ppn_noncreditable'] = $request->boolean('ppn_noncreditable');
             $costData['container_no'] = $validated['container_no'] ?? null;
         } elseif ($validated['cost_category'] == 'asuransi') {
             $costData['insurance_provider'] = $validated['insurance_provider'] ?? null;
@@ -223,6 +226,7 @@ class ShipmentLegController extends Controller
             'pic_phone' => ['nullable', 'string', 'max:50'],
             'pic_amount' => ['nullable', 'numeric', 'min:0'],
             'pic_notes' => ['nullable', 'string'],
+            'ppn_noncreditable' => ['nullable', 'boolean'],
         ]);
 
           // Determine executor_type based on cost_category
@@ -279,6 +283,7 @@ class ShipmentLegController extends Controller
                 'pic_phone' => $validated['pic_phone'] ?? null,
                 'pic_amount' => $validated['pic_amount'] ?? 0,
                 'pic_notes' => $validated['pic_notes'] ?? null,
+                'ppn_noncreditable' => $request->boolean('ppn_noncreditable'),
             ]
         );
 
@@ -478,6 +483,7 @@ class ShipmentLegController extends Controller
             'due_date' => now()->addDays(30)->toDateString(),
             // Set langsung ke 'received' agar muncul di Pending Journal (unposted)
             'status' => 'received',
+            'ppn_noncreditable' => (bool) ($mainCost->ppn_noncreditable ?? false),
             'notes' => "Auto-generated (Gabung) from Leg {$leg->leg_code} - Job Order {$leg->jobOrder->job_number}",
         ]);
 
@@ -518,6 +524,7 @@ class ShipmentLegController extends Controller
             'due_date' => now()->addDays(30)->toDateString(),
             // Set langsung ke 'received' agar muncul di Pending Journal (unposted)
             'status' => 'received',
+            'ppn_noncreditable' => (bool) ($mainCost->ppn_noncreditable ?? false),
             'notes' => "Main Cost - Leg {$leg->leg_code} - Job Order {$leg->jobOrder->job_number}",
         ]);
 
@@ -563,9 +570,6 @@ class ShipmentLegController extends Controller
     {
         $totalAmount = 0;
 
-        // Tentukan base cost untuk PPN & PPH23 calculation
-        $baseCost = max($mainCost->vendor_cost ?? 0, $mainCost->freight_cost ?? 0);
-
         // Add Main Cost Items - Vendor
         if ($mainCost->vendor_cost > 0) {
             $bill->items()->create([
@@ -590,15 +594,8 @@ class ShipmentLegController extends Controller
             $totalAmount += $mainCost->freight_cost;
         }
 
-        // PPN - SELALU gunakan nilai yang sudah disimpan dulu, baru auto-calculate jika tidak ada
-        $ppnAmount = 0;
-        if (isset($mainCost->ppn) && $mainCost->ppn > 0) {
-            // Gunakan PPN yang sudah diinput user
-            $ppnAmount = $mainCost->ppn;
-        } elseif ($baseCost > 0) {
-            // Auto-calculate 11% dari base cost
-            $ppnAmount = $baseCost * 0.11;
-        }
+        // PPN - gunakan nilai yang sudah disimpan; jika 0, jangan auto-calc
+        $ppnAmount = (float) ($mainCost->ppn ?? 0);
 
         if ($ppnAmount > 0) {
             $bill->items()->create([
@@ -652,18 +649,8 @@ class ShipmentLegController extends Controller
 
     protected function addPph23Item($bill, ShipmentLeg $leg, LegMainCost $mainCost): float
     {
-        // Tentukan base cost untuk PPH23 calculation
-        $baseCost = max($mainCost->vendor_cost ?? 0, $mainCost->freight_cost ?? 0);
-
-        // PPH23 - SELALU gunakan nilai yang sudah disimpan dulu, baru auto-calculate jika tidak ada
-        $pph23Amount = 0;
-        if (isset($mainCost->pph23) && $mainCost->pph23 > 0) {
-            // Gunakan PPH23 yang sudah diinput user
-            $pph23Amount = $mainCost->pph23;
-        } elseif ($baseCost > 0) {
-            // Auto-calculate 2% dari base cost
-            $pph23Amount = $baseCost * 0.02;
-        }
+        // PPH23 - gunakan nilai yang sudah disimpan; jika 0, jangan auto-calc
+        $pph23Amount = (float) ($mainCost->pph23 ?? 0);
 
         if ($pph23Amount > 0) {
             $bill->items()->create([

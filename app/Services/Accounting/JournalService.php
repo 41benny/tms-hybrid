@@ -228,8 +228,18 @@ class JournalService
 
         // Dr PPN Masukan (jika ada PPN)
         if ($ppn > 0) {
-            $vatIn = $this->map('vat_in');
-            $lines[] = ['account_code' => $vatIn, 'debit' => $ppn, 'credit' => 0, 'desc' => 'PPN Masukan vendor bill '.$bill->vendor_bill_number, 'vendor_id' => $bill->vendor_id, 'job_order_id' => $jobOrderId];
+            $useNonCredit = (bool) ($bill->ppn_noncreditable ?? false);
+            if ($useNonCredit) {
+                try {
+                    $vatAccount = $this->map('vat_in_noncreditable');
+                } catch (\InvalidArgumentException $e) {
+                    $vatAccount = $this->map('expense_vendor');
+                }
+            } else {
+                $vatAccount = $this->map('vat_in');
+            }
+
+            $lines[] = ['account_code' => $vatAccount, 'debit' => $ppn, 'credit' => 0, 'desc' => 'PPN Masukan vendor bill '.$bill->vendor_bill_number, 'vendor_id' => $bill->vendor_id, 'job_order_id' => $jobOrderId];
         }
 
         // Cr Hutang PPh 23 (jika ada potongan PPh 23)

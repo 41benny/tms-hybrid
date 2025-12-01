@@ -35,6 +35,7 @@ class LegMainCost extends Model
         'cost_type',
         'pic_amount',
         'pic_notes',
+        'ppn_noncreditable',
     ];
 
     protected function casts(): array
@@ -57,6 +58,7 @@ class LegMainCost extends Model
             'billable_rate' => 'decimal:2',
             'premium_billable' => 'decimal:2',
             'pic_amount' => 'decimal:2',
+            'ppn_noncreditable' => 'boolean',
         ];
     }
 
@@ -83,6 +85,26 @@ class LegMainCost extends Model
                $this->premium_cost +  // Insurance premium
                $this->admin_fee +  // Insurance admin fee
                $this->pic_amount;  // PIC payment
+    }
+
+    /**
+     * Base cost (DPP) per leg category, tanpa PPN dan tanpa pengurangan PPh 23.
+     */
+    public function getDppAttribute(): float
+    {
+        // Hindari lazy loading: pakai cost_category hanya jika relasi sudah diload
+        $category = $this->relationLoaded('shipmentLeg')
+            ? $this->shipmentLeg?->cost_category
+            : null;
+
+        return match ($category) {
+            'vendor' => (float) $this->vendor_cost,
+            'pelayaran' => (float) $this->freight_cost,
+            'trucking' => (float) ($this->uang_jalan + $this->bbm + $this->toll + $this->other_costs),
+            'asuransi' => (float) ($this->premium_cost + $this->admin_fee),
+            'pic' => (float) $this->pic_amount,
+            default => (float) $this->vendor_cost,
+        };
     }
 
     /**

@@ -191,6 +191,25 @@
 
                     {{-- Financial Summary --}}
                     <div class="pt-4 border-t border-slate-200 dark:border-slate-800">
+                        @php
+                            $mainDppSum = $job->shipmentLegs->sum(function ($leg) {
+                                $main = $leg->mainCost;
+                                $cat = $leg->cost_category;
+                                return match ($cat) {
+                                    'vendor' => (float) ($main->vendor_cost ?? 0),
+                                    'pelayaran' => (float) ($main->freight_cost ?? 0),
+                                    'trucking' => (float) (($main->uang_jalan ?? 0) + ($main->bbm ?? 0) + ($main->toll ?? 0) + ($main->other_costs ?? 0)),
+                                    'asuransi' => (float) (($main->premium_cost ?? 0) + ($main->admin_fee ?? 0)),
+                                    'pic' => (float) ($main->pic_amount ?? 0),
+                                    default => (float) ($main->vendor_cost ?? 0),
+                                };
+                            });
+                            $ppnNonCredSum = $job->shipmentLegs->sum(function ($leg) {
+                                $main = $leg->mainCost;
+                                return ($main && $main->ppn_noncreditable) ? (float) ($main->ppn ?? 0) : 0;
+                            });
+                            $additionalSum = $job->shipmentLegs->sum(fn($leg) => $leg->additionalCosts->sum('amount'));
+                        @endphp
                         <div class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">Financial Summary</div>
 
                         {{-- Nilai Tagihan & Total Biaya (side by side) --}}
@@ -211,11 +230,14 @@
                             <div class="glass-orange rounded-lg p-4">
                                 <div class="text-xs font-medium text-orange-600 dark:text-orange-400 mb-2">Total Biaya</div>
                                 <div class="font-bold text-lg text-orange-700 dark:text-orange-300 break-words">
-                                    Rp {{ number_format($job->total_cost, 0, ',', '.') }}
+                                    Rp {{ number_format($job->total_cost_dpp, 0, ',', '.') }}
                                 </div>
                                 <div class="text-[10px] text-orange-600/70 dark:text-orange-400/70 mt-1.5 leading-tight">
-                                    <div>Main: Rp {{ number_format($job->shipmentLegs->sum(fn($leg) => $leg->mainCost?->total ?? 0), 0, ',', '.') }}</div>
-                                    <div>Add: Rp {{ number_format($job->shipmentLegs->sum(fn($leg) => $leg->additionalCosts->sum('amount')), 0, ',', '.') }}</div>
+                                    <div>Main: Rp {{ number_format($mainDppSum + $ppnNonCredSum, 0, ',', '.') }}</div>
+                                    @if($ppnNonCredSum > 0)
+                                        <div>PPN non kredit: Rp {{ number_format($ppnNonCredSum, 0, ',', '.') }}</div>
+                                    @endif
+                                    <div>Add: Rp {{ number_format($additionalSum, 0, ',', '.') }}</div>
                                 </div>
                             </div>
                         </div>
