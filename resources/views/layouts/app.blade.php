@@ -32,7 +32,7 @@
     <div class="h-screen flex overflow-hidden">
         
         {{-- SIDEBAR --}}
-        <aside id="sidebar" class="hidden lg:flex flex-col w-72 shrink-0 theme-sidebar backdrop-blur-xl relative z-20 transition-all duration-300 fixed lg:relative inset-y-0 left-0 h-full overflow-y-auto lg:overflow-visible">
+        <aside id="sidebar" class="flex flex-col w-72 shrink-0 theme-sidebar backdrop-blur-xl relative z-20 transition-all duration-300 fixed lg:relative inset-y-0 left-0 h-full overflow-y-auto lg:overflow-visible">
             
             {{-- Logo / Brand --}}
             <div class="p-6 pb-3 relative">
