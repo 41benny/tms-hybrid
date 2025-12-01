@@ -351,11 +351,6 @@
             {{-- HEADER --}}
             <header class="h-16 theme-panel flex items-center justify-between px-6 sticky top-0 z-30 transition-colors duration-500" style="border-width: 0 0 1px 0;">
                 <div class="flex items-center gap-4">
-                    @if($role !== 'sales')
-                        <button class="lg:hidden text-contrast" onclick="document.querySelector('aside').classList.toggle('hidden')">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-                        </button>
-                    @endif
                     <h2 class="text-lg font-semibold tracking-wide text-contrast">{{ $header ?? ($title ?? 'Dashboard') }}</h2>
                     <div class="h-4 w-[1px] bg-slate-700 hidden sm:block"></div>
                     <span class="hidden sm:flex items-center gap-2 text-xs font-mono px-2 py-1 rounded border theme-border" style="background: rgba(0,0,0,0.2); color: var(--color-primary);">
