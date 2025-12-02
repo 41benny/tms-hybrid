@@ -1,5 +1,5 @@
 {{-- Shipment Legs – tampilan ringkas khusus Sales (mobile-first) --}}
-<x-card>
+<x-card class="lg:hidden">
     <x-slot:header>
         <div class="flex items-center justify-between">
             <div>

@@ -503,13 +503,11 @@
                      </div>
 
                     {{-- Theme Switcher (macOS Style - Right Aligned) --}}
-                    @if($role !== 'sales')
                     <div class="hidden md:flex items-center gap-2 pl-4 border-l border-white/10">
                         <button onclick="setTheme('default')" class="w-2.5 h-2.5 rounded-full bg-[#22D3EE] hover:brightness-110 transition-all shadow-[0_0_5px_rgba(34,211,238,0.5)] hover:scale-125" title="Midnight Cyan"></button>
                         <button onclick="setTheme('gold')" class="w-2.5 h-2.5 rounded-full bg-[#FBBF24] hover:brightness-110 transition-all shadow-[0_0_5px_rgba(251,191,36,0.5)] hover:scale-125" title="Royal Gold"></button>
                         <button onclick="setTheme('aurora')" class="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-violet-500 via-fuchsia-500 to-pink-500 hover:brightness-110 transition-all shadow-[0_0_8px_rgba(168,85,247,0.6)] hover:scale-125" title="Aurora Nebula"></button>
                     </div>
-                    @endif
                 </div>
             </header>
 

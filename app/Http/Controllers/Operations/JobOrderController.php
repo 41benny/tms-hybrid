@@ -145,6 +145,7 @@ class JobOrderController extends Controller
             'sales',
             'items.equipment',
             'shipmentLegs.vendor',
+            'shipmentLegs.vendor.activeBankAccounts',
             'shipmentLegs.truck',
             'shipmentLegs.driver',
             'shipmentLegs.mainCost',

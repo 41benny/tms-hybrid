@@ -497,6 +497,22 @@
                                             </div>
                                         </div>
                                         <div>
+                                            <div class="text-xs text-slate-500 dark:text-slate-400">Rekening Vendor</div>
+                                            @if($leg->vendor)
+                                                @php
+                                                    $primaryAccount = $leg->vendor->activeBankAccounts->firstWhere('is_primary', true) ?? $leg->vendor->activeBankAccounts->first();
+                                                @endphp
+                                                @if($primaryAccount)
+                                                    <div class="font-medium text-slate-900 dark:text-slate-100 text-sm">{{ $primaryAccount->bank_name }} - {{ $primaryAccount->account_number }}</div>
+                                                    <div class="text-[11px] text-slate-500 dark:text-slate-400">a.n. {{ $primaryAccount->account_holder_name }}</div>
+                                                @else
+                                                    <div class="text-sm text-slate-500 dark:text-slate-400">Belum ada rekening</div>
+                                                @endif
+                                            @else
+                                                <div class="text-sm text-slate-500 dark:text-slate-400">-</div>
+                                            @endif
+                                        </div>
+                                        <div>
                                             <div class="text-xs text-slate-500 dark:text-slate-400">Vehicle/Vessel</div>
                                             <div class="font-medium text-slate-900 dark:text-slate-100 text-sm">
                                                 {{ $leg->truck?->plate_number ?? $leg->vessel_name ?? '-' }}
