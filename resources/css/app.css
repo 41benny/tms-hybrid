@@ -20,6 +20,7 @@
         --border-color: rgba(34, 211, 238, 0.2);
         --glow-color: rgba(34, 211, 238, 0.5);
         --gradient-bg: radial-gradient(ellipse at top right, rgba(8, 145, 178, 0.15), transparent 70%);
+        --gradient-table: linear-gradient(135deg, #020617 0%, #0e7490 100%);
         --bg-surface-secondary: rgba(0, 0, 0, 0.3);
     }
 
@@ -42,6 +43,7 @@
         --border-color: rgba(251, 191, 36, 0.15);
         --glow-color: rgba(251, 191, 36, 0.3);
         --gradient-bg: radial-gradient(ellipse at top right, rgba(180, 83, 9, 0.1), transparent 70%);
+        --gradient-table: linear-gradient(135deg, #020617 0%, #b45309 100%);
         --bg-surface-secondary: rgba(0, 0, 0, 0.3);
     }
 
@@ -437,6 +439,19 @@
         box-shadow: 0 12px 24px rgba(15, 23, 42, 0.3);
     }
 
+    /* Aurora: Fix Indigo Buttons (Submit Payment, etc) */
+    [data-theme="aurora"] .bg-indigo-600 {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+        color: white !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+
+    [data-theme="aurora"] .bg-indigo-600:hover {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%) !important;
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    }
+
     /* Base Glass Panels (Midnight & Gold) */
     .glass-blue,
     .glass-orange,
@@ -628,7 +643,7 @@
     }
 
     table thead {
-        background: linear-gradient(135deg, var(--color-secondary), var(--color-primary)) !important;
+        background: var(--gradient-table) !important;
         border-bottom: 2px solid var(--border-color) !important;
     }
 
@@ -683,7 +698,7 @@
     }
 
     .bg-white table thead {
-        background: linear-gradient(135deg, var(--color-secondary), var(--color-primary)) !important;
+        background: var(--gradient-table) !important;
     }
 
     .bg-white table tbody {

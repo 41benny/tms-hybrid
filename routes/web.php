@@ -119,6 +119,11 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('payment-requests/{payment_request}/reject', [PaymentRequestController::class, 'reject'])->name('payment-requests.reject');
     Route::get('payment-requests/{payment_request}/job-info', [PaymentRequestController::class, 'getJobInfo'])->name('payment-requests.job-info');
 
+    // Payment recipients API (manual payment helpers)
+    Route::get('api/payment-recipients', [PaymentRequestController::class, 'searchRecipients'])->name('payment-recipients.search');
+    Route::patch('api/payment-recipients/{payment_recipient}', [PaymentRequestController::class, 'updateRecipient'])->name('payment-recipients.update');
+    Route::delete('api/payment-recipients/{payment_recipient}', [PaymentRequestController::class, 'destroyRecipient'])->name('payment-recipients.destroy');
+
     Route::resource('payment-receipts', PaymentReceiptController::class)->except(['edit', 'update']);
     Route::post('payment-receipts/{payment_receipt}/allocate', [PaymentReceiptController::class, 'allocate'])->name('payment-receipts.allocate');
     Route::delete('payment-receipts/{payment_receipt}/deallocate', [PaymentReceiptController::class, 'deallocate'])->name('payment-receipts.deallocate');

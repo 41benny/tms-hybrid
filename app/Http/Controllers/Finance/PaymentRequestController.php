@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Finance\VendorBill;
 use App\Models\Master\Vendor;
 use App\Models\Operations\PaymentRequest;
+use App\Models\Finance\PaymentRecipient;
 use App\Models\User;
 use App\Notifications\PaymentRequestCreated;
 use Illuminate\Http\Request;
@@ -171,6 +172,11 @@ class PaymentRequestController extends Controller
             return back()->withErrors(['vendor_id' => 'Isi nama penerima atau pilih vendor untuk pembayaran manual.'])->withInput();
         }
 
+        // Store recipient master (if requested) before we unset helper fields
+        if ($validated['payment_type'] === 'manual') {
+            $this->storeManualRecipientIfNeeded($request, $validated);
+        }
+
         try {
             // Append manual payee/bank info into notes so finance can see the free-text data
             if ($validated['payment_type'] === 'manual') {
@@ -334,6 +340,34 @@ class PaymentRequestController extends Controller
     }
 
     /**
+     * Optionally store/update master recipient for manual payment requests.
+     */
+    protected function storeManualRecipientIfNeeded(Request $request, array $validated): void
+    {
+        if (
+            ! $request->boolean('save_recipient') ||
+            empty($validated['manual_payee_name']) ||
+            empty($validated['manual_bank_account'])
+        ) {
+            return;
+        }
+
+        PaymentRecipient::updateOrCreate(
+            [
+                'name' => $validated['manual_payee_name'],
+                'account_number' => $validated['manual_bank_account'],
+            ],
+            [
+                'bank_name' => $validated['manual_bank_name'] ?? null,
+                'account_holder' => $validated['manual_bank_holder'] ?? null,
+                'vendor_id' => $validated['vendor_id'] ?? null,
+                'is_active' => true,
+                'created_by' => Auth::id() ?? ($validated['requested_by'] ?? null),
+            ]
+        );
+    }
+
+    /**
      * Return related job order info for a payment request (vendor_bill type).
      */
     public function getJobInfo(PaymentRequest $payment_request)
@@ -384,5 +418,65 @@ class PaymentRequestController extends Controller
         });
 
         return response()->json(['job_orders' => $formatted]);
+    }
+
+    /**
+     * Search saved payment recipients for manual payment requests.
+     */
+    public function searchRecipients(Request $request)
+    {
+        $q = trim((string) $request->get('q', ''));
+        $vendorId = $request->get('vendor_id');
+
+        $query = PaymentRecipient::query()->where('is_active', true);
+
+        if ($vendorId) {
+            $query->where('vendor_id', $vendorId);
+        }
+
+        if ($q !== '') {
+            $query->where(function ($sub) use ($q) {
+                $sub->where('name', 'like', '%'.$q.'%')
+                    ->orWhere('account_number', 'like', '%'.$q.'%')
+                    ->orWhere('bank_name', 'like', '%'.$q.'%');
+            });
+        }
+
+        $recipients = $query
+            ->orderBy('name')
+            ->limit(10)
+            ->get()
+            ->map(function (PaymentRecipient $r) {
+                return [
+                    'id' => $r->id,
+                    'name' => $r->name,
+                    'bank_name' => $r->bank_name,
+                    'account_number' => $r->account_number,
+                    'account_holder' => $r->account_holder,
+                ];
+            });
+
+        return response()->json(['data' => $recipients]);
+    }
+
+    public function updateRecipient(Request $request, PaymentRecipient $payment_recipient)
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:150'],
+            'bank_name' => ['nullable', 'string', 'max:100'],
+            'account_number' => ['nullable', 'string', 'max:100'],
+            'account_holder' => ['nullable', 'string', 'max:150'],
+        ]);
+
+        $payment_recipient->update($data);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function destroyRecipient(PaymentRecipient $payment_recipient)
+    {
+        $payment_recipient->update(['is_active' => false]);
+
+        return response()->json(['success' => true]);
     }
 }

@@ -62,8 +62,9 @@
                                     >
                                     <button
                                         type="button"
+                                        id="recipient_search_btn"
                                         class="inline-flex items-center gap-1 px-3 text-xs font-medium text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/20 hover:bg-sky-100 dark:hover:bg-sky-900/40 border-l border-slate-300 dark:border-[#3d3d3d]"
-                                        title="Cari penerima tersimpan (coming soon)"
+                                        title="Cari penerima tersimpan"
                                     >
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 5a6 6 0 100 12 6 6 0 000-12z" />
@@ -112,18 +113,19 @@
 
                             <div class="flex items-center justify-between gap-3">
                                 <div class="flex items-center gap-2">
-                                    <button
-                                        type="button"
-                                        onclick="const cb = document.getElementById('save_recipient_toggle'); if (!cb) return; cb.checked = !cb.checked; const knob = document.getElementById('save_recipient_knob'); if (knob) knob.style.transform = cb.checked ? 'translateX(1.25rem)' : 'translateX(0)'; this.classList.toggle('bg-indigo-500', cb.checked); this.classList.toggle('bg-slate-200', !cb.checked);"
-                                        class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out bg-slate-200 dark:bg-slate-700"
+                                    <input
+                                        type="checkbox"
+                                        name="save_recipient"
+                                        id="save_recipient_toggle"
+                                        class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                        {{ old('save_recipient') ? 'checked' : '' }}
                                     >
-                                        <span id="save_recipient_knob" class="inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-0"></span>
-                                    </button>
-                                    <input type="checkbox" name="save_recipient" id="save_recipient_toggle" class="hidden">
-                                    <span class="text-sm text-slate-700 dark:text-slate-300">Simpan data penerima</span>
+                                    <label for="save_recipient_toggle" class="text-sm text-slate-700 dark:text-slate-300">
+                                        Simpan data penerima
+                                    </label>
                                 </div>
                                 <p class="text-xs text-slate-500 dark:text-slate-400">
-                                    Jika aktif, data nama &amp; rekening dapat disimpan ke master (konfigurasi backend menyusul).
+                                    Jika aktif, data nama &amp; rekening akan disimpan ke master penerima.
                                 </p>
                             </div>
                         </div>
@@ -189,6 +191,71 @@
                 </form>
             </x-card>
         </div>
+
+        {{-- Modal: Master Penerima --}}
+        <div id="recipient_modal" class="fixed inset-0 z-40 hidden items-center justify-center">
+            <div class="absolute inset-0 bg-slate-900/60" data-recipient-modal-close></div>
+            <div class="relative bg-white dark:bg-[#1f1f1f] rounded-xl shadow-xl max-w-3xl w-full mx-4 max-h-[80vh] flex flex-col">
+                <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Pilih Penerima Tersimpan</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Pilih nama penerima untuk mengisi otomatis data rekening.</p>
+                    </div>
+                    <button type="button" id="recipient_modal_close_btn" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
+                    <input
+                        type="text"
+                        id="recipient_modal_search"
+                        placeholder="Cari nama / bank / nomor rekening"
+                        class="flex-1 rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-3 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                    <button
+                        type="button"
+                        id="recipient_modal_search_btn"
+                        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium"
+                    >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 5a6 6 0 100 12 6 6 0 000-12z" />
+                        </svg>
+                        Cari
+                    </button>
+                </div>
+                <div class="flex-1 overflow-y-auto">
+                    <table class="min-w-full text-xs">
+                        <thead class="bg-slate-50 dark:bg-[#252525] border-b border-slate-200 dark:border-slate-700">
+                            <tr>
+                                <th class="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-400">Nama Penerima</th>
+                                <th class="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-400">Bank</th>
+                                <th class="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-400">No Rekening</th>
+                                <th class="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-400">Atas Nama</th>
+                                <th class="px-3 py-2 text-center font-semibold text-slate-600 dark:text-slate-400">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recipient_modal_tbody" class="divide-y divide-slate-100 dark:divide-slate-800">
+                            <tr>
+                                <td colspan="5" class="px-3 py-4 text-center text-slate-500 dark:text-slate-400 text-xs">
+                                    Klik tombol cari untuk menampilkan daftar penerima.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="px-4 py-3 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                    <button
+                        type="button"
+                        data-recipient-modal-close
+                        class="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 text-xs text-slate-700 dark:text-slate-200 bg-white dark:bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800"
+                    >
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
     @endif
 
     <script>
@@ -216,6 +283,202 @@
             amountDisplayManual.value = formatNumber(amountInputManual.value);
         }
     }
+
+    // Recipient search (manual payment) via modal
+    const recipientsApiBase = "{{ url('api/payment-recipients') }}";
+    const recipientSearchBtn = document.getElementById('recipient_search_btn');
+    const recipientNameInput = document.querySelector('input[name="manual_payee_name"]');
+    const recipientBankInput = document.querySelector('input[name="manual_bank_name"]');
+    const recipientAccountInput = document.querySelector('input[name="manual_bank_account"]');
+    const recipientHolderInput = document.querySelector('input[name="manual_bank_holder"]');
+    const recipientModal = document.getElementById('recipient_modal');
+    const recipientModalSearchInput = document.getElementById('recipient_modal_search');
+    const recipientModalSearchBtn = document.getElementById('recipient_modal_search_btn');
+    const recipientModalTbody = document.getElementById('recipient_modal_tbody');
+
+    function openRecipientModal() {
+        if (!recipientModal) return;
+        recipientModal.classList.remove('hidden');
+        recipientModal.classList.add('flex');
+    }
+
+    function closeRecipientModal() {
+        if (!recipientModal) return;
+        recipientModal.classList.add('hidden');
+        recipientModal.classList.remove('flex');
+    }
+
+    function applyRecipientFromRow(row) {
+        if (!row) return;
+        if (recipientNameInput) recipientNameInput.value = row.getAttribute('data-name') || '';
+        if (recipientBankInput) recipientBankInput.value = row.getAttribute('data-bank') || '';
+        if (recipientAccountInput) recipientAccountInput.value = row.getAttribute('data-account') || '';
+        if (recipientHolderInput) recipientHolderInput.value = row.getAttribute('data-holder') || '';
+
+        const saveToggle = document.getElementById('save_recipient_toggle');
+        if (saveToggle) saveToggle.checked = false;
+
+        closeRecipientModal();
+    }
+
+    function fetchRecipients(query) {
+        if (!recipientModalTbody) return;
+        const url = recipientsApiBase + (query ? ('?q=' + encodeURIComponent(query)) : '');
+        recipientModalTbody.innerHTML = '<tr><td colspan="5" class="px-3 py-4 text-center text-xs text-slate-500 dark:text-slate-400">Mencari...</td></tr>';
+
+        fetch(url, { headers: { 'Accept': 'application/json' } })
+            .then(resp => {
+                if (!resp.ok) throw new Error('Network error');
+                return resp.json();
+            })
+            .then(data => {
+                const items = (data && data.data) ? data.data : [];
+                if (!items.length) {
+                    recipientModalTbody.innerHTML = '<tr><td colspan="5" class="px-3 py-4 text-center text-xs text-slate-500 dark:text-slate-400">Tidak ada data penerima.</td></tr>';
+                    return;
+                }
+
+                let rowsHtml = '';
+                items.forEach(rec => {
+                    const bank = rec.bank_name || '';
+                    const acc = rec.account_number || '';
+                    const holder = rec.account_holder || '';
+                    rowsHtml +=
+                        '<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60" ' +
+                        'data-id="' + (rec.id || '') + '" ' +
+                        'data-name="' + (rec.name || '') + '" ' +
+                        'data-bank="' + (bank || '') + '" ' +
+                        'data-account="' + (acc || '') + '" ' +
+                        'data-holder="' + (holder || '') + '">' +
+                        '<td class="px-3 py-2 align-top text-xs text-slate-900 dark:text-slate-100">' + (rec.name || '-') + '</td>' +
+                        '<td class="px-3 py-2 align-top text-xs text-slate-700 dark:text-slate-300">' + (bank || '-') + '</td>' +
+                        '<td class="px-3 py-2 align-top text-xs text-slate-700 dark:text-slate-300 font-mono">' + (acc || '-') + '</td>' +
+                        '<td class="px-3 py-2 align-top text-xs text-slate-700 dark:text-slate-300">' + (holder || '-') + '</td>' +
+                        '<td class="px-3 py-2 align-top text-center text-xs space-x-1">' +
+                        '<button type="button" data-action="pick" class="inline-flex items-center px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-700 text-white">Pilih</button>' +
+                        '<button type="button" data-action="edit" class="inline-flex items-center px-2 py-1 rounded border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200">Edit</button>' +
+                        '<button type="button" data-action="delete" class="inline-flex items-center px-2 py-1 rounded border border-rose-300 text-rose-600">Hapus</button>' +
+                        '</td>' +
+                        '</tr>';
+                });
+
+                recipientModalTbody.innerHTML = rowsHtml;
+
+                Array.from(recipientModalTbody.querySelectorAll('tr')).forEach(row => {
+                    const pickBtn = row.querySelector('button[data-action="pick"]');
+                    const editBtn = row.querySelector('button[data-action="edit"]');
+                    const deleteBtn = row.querySelector('button[data-action="delete"]');
+
+                    if (pickBtn) {
+                        pickBtn.addEventListener('click', () => applyRecipientFromRow(row));
+                    }
+                    if (editBtn) {
+                        editBtn.addEventListener('click', () => editRecipientRow(row));
+                    }
+                    if (deleteBtn) {
+                        deleteBtn.addEventListener('click', () => deleteRecipientRow(row));
+                    }
+                });
+            })
+            .catch(() => {
+                recipientModalTbody.innerHTML = '<tr><td colspan="5" class="px-3 py-4 text-center text-xs text-rose-500">Gagal mengambil data penerima.</td></tr>';
+            });
+    }
+
+    function editRecipientRow(row) {
+        const id = row.getAttribute('data-id');
+        if (!id) return;
+
+        const currentName = row.getAttribute('data-name') || '';
+        const currentBank = row.getAttribute('data-bank') || '';
+        const currentAccount = row.getAttribute('data-account') || '';
+        const currentHolder = row.getAttribute('data-holder') || '';
+
+        const name = prompt('Nama penerima', currentName);
+        if (name === null || name.trim() === '') return;
+        const bank = prompt('Bank tujuan (opsional)', currentBank) || '';
+        const account = prompt('Nomor rekening (opsional)', currentAccount) || '';
+        const holder = prompt('Atas nama (opsional)', currentHolder) || '';
+
+        const payload = {
+            name: name.trim(),
+            bank_name: bank.trim() || null,
+            account_number: account.trim() || null,
+            account_holder: holder.trim() || null,
+        };
+
+        fetch(recipientsApiBase + '/' + id, {
+            method: 'PATCH',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            },
+            body: JSON.stringify(payload),
+        })
+            .then(resp => {
+                if (!resp.ok) throw new Error('Failed');
+                return resp.json();
+            })
+            .then(() => {
+                const q = recipientModalSearchInput ? (recipientModalSearchInput.value || '') : '';
+                fetchRecipients(q);
+            })
+            .catch(() => {
+                alert('Gagal menyimpan perubahan penerima.');
+            });
+    }
+
+    function deleteRecipientRow(row) {
+        const id = row.getAttribute('data-id');
+        if (!id) return;
+        if (!confirm('Hapus penerima ini dari master?')) return;
+
+        fetch(recipientsApiBase + '/' + id, {
+            method: 'DELETE',
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            },
+        })
+            .then(resp => {
+                if (!resp.ok) throw new Error('Failed');
+                return resp.json();
+            })
+            .then(() => {
+                const q = recipientModalSearchInput ? (recipientModalSearchInput.value || '') : '';
+                fetchRecipients(q);
+            })
+            .catch(() => {
+                alert('Gagal menghapus penerima.');
+            });
+    }
+
+    if (recipientSearchBtn) {
+        recipientSearchBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            openRecipientModal();
+            fetchRecipients('');
+        });
+    }
+
+    if (recipientModalSearchBtn && recipientModalSearchInput) {
+        recipientModalSearchBtn.addEventListener('click', function () {
+            fetchRecipients(recipientModalSearchInput.value || '');
+        });
+        recipientModalSearchInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                fetchRecipients(recipientModalSearchInput.value || '');
+            }
+        });
+    }
+
+    document.querySelectorAll('[data-recipient-modal-close]').forEach(el => {
+        el.addEventListener('click', function () {
+            closeRecipientModal();
+        });
+    });
     @endif    // Script for DRIVER ADVANCE payment request
     @if($driverAdvance ?? false)
     // Setup formatted input for amount
