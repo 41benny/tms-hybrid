@@ -128,12 +128,11 @@
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-center">
                             <a href="{{ route('payment-requests.create', ['vendor_bill_id' => $bill->id]) }}"
-                               class="inline-flex items-center justify-center gap-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white border border-white/20 shadow-sm hover:shadow-md focus:ring-indigo-600"
-                               style="background-color: #4f46e5; color: white;">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                               class="inline-flex items-center justify-center p-2 text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                               title="Submit Payment Request">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
-                                Submit
                             </a>
                         </td>
                     </tr>
