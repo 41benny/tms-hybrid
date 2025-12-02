@@ -27,12 +27,18 @@
 </head>
 <body class="h-full font-sans antialiased selection:bg-cyan-500 selection:text-white">
 
+@php
+    $role = auth()->user()->role ?? null;
+    // Sales: sembunyikan sidebar di mobile/tablet, tampil di desktop (lg+). Role lain: selalu tampil.
+    $sidebarClass = $role === \App\Models\User::ROLE_SALES ? 'hidden lg:flex lg:w-72' : 'flex w-72';
+@endphp
+
     <div class="fixed inset-0 z-[-1] theme-bg-gradient transition-all duration-700"></div>
 
     <div class="h-screen flex overflow-hidden">
         
         {{-- SIDEBAR --}}
-        <aside id="sidebar" class="flex flex-col w-72 shrink-0 theme-sidebar backdrop-blur-xl relative z-20 transition-all duration-300 fixed lg:relative inset-y-0 left-0 h-full overflow-y-auto lg:overflow-visible">
+        <aside id="sidebar" class="{{ $sidebarClass }} flex-col shrink-0 theme-sidebar backdrop-blur-xl relative z-20 transition-all duration-300 fixed lg:relative inset-y-0 left-0 h-full overflow-y-auto lg:overflow-visible">
             
             {{-- Logo / Brand --}}
             <div class="p-6 pb-3 relative">
@@ -61,7 +67,6 @@
             {{-- Navigation --}}
             @php
                 $canAccessMenu = static fn (string $slug): bool => auth()->user()?->canAccessMenu($slug) ?? false;
-                $role = auth()->user()->role ?? null;
             @endphp
 
             <nav class="flex-1 px-4 space-y-1 pb-4 overflow-y-auto md:overflow-y-auto">
@@ -244,6 +249,10 @@
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                             <span class="sidebar-text">Balance Sheet</span>
                         </a>
+                        <a href="{{ route('reports.cash-flow') }}" class="nav-item {{ request()->routeIs('reports.cash-flow') ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span class="sidebar-text">Cash Flow</span>
+                        </a>
                         <a href="{{ route('fixed-assets.index') }}" class="nav-item {{ request()->routeIs('fixed-assets.*') ? 'active' : '' }}">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7l9-4 9 4-9 4-9-4zm0 6l9 4 9-4m-9 4v6"></path></svg>
                             <span class="sidebar-text">Fixed Assets</span>
@@ -423,7 +432,11 @@
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                             <span x-show="unreadCount > 0" class="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 shadow-[0_0_8px_red]" style="display: none;"></span>
                         </button>
-                        <div x-show="open" @click.away="open = false" style="display: none;" class="absolute right-0 mt-2 w-96 rounded-xl shadow-2xl z-50 overflow-hidden bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl border border-slate-200 dark:border-slate-700">
+                        <div
+                            x-show="open"
+                            @click.away="open = false"
+                            style="display: none;"
+                            class="absolute mt-2 right-2 left-2 sm:left-auto sm:right-0 sm:w-96 w-auto max-w-[calc(100vw-1rem)] rounded-xl shadow-2xl z-50 overflow-hidden bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl border border-slate-200 dark:border-slate-700">
                             <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
                                 <span class="text-sm font-bold text-slate-900 dark:text-white">Notifications</span>
                                 <span x-text="unreadCount > 0 ? `${unreadCount} new` : 'No new'" class="text-xs text-slate-600 dark:text-slate-400"></span>

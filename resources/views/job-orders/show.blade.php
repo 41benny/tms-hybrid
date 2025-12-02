@@ -65,9 +65,14 @@
         </x-slot:header>
     </x-card>
 
+    @php
+        $leftColumnClass = $isSalesUser ? 'hidden lg:block lg:col-span-1' : 'lg:col-span-1';
+        $rightColumnClass = $isSalesUser ? 'col-span-1 lg:col-span-2' : 'lg:col-span-2';
+    @endphp
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {{-- Left: Job Details --}}
-        <div class="lg:col-span-1 space-y-6">
+        <div class="{{ $leftColumnClass }} space-y-6">
             <x-card title="Job Details">
                 <div class="space-y-4">
                     <div>
@@ -325,9 +330,15 @@
         </div>
 
         {{-- Right: Shipment Legs --}}
-        <div class="lg:col-span-2 space-y-6">
+        <div class="{{ $rightColumnClass }} space-y-6">
+            @if($isSalesUser)
+                @include('job-orders.partials.legs-sales-mobile', ['job' => $job])
+            @endif
+
+            {{-- Tampilkan layout lama hanya di desktop (sales) atau semua role non-sales --}}
+            <div class="@if($isSalesUser) hidden lg:block @endif">
             <x-card>
-                <x-slot:header>
+        <x-slot:header>
                     <div class="flex items-center justify-between">
                         <div>
                             <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Shipment Legs</h3>
@@ -895,8 +906,8 @@
                         </div>
                     @endforelse
             </div>
-        </x-card>
-        </div>
+            </x-card>
+            </div>
     </div>
 </div>
 
