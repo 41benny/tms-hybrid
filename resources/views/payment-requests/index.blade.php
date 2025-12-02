@@ -293,6 +293,11 @@
                                 {{ $r->vendorBill?->vendor->name ?? $r->vendor?->name ?? '-' }}
                             @endif
                         </div>
+                        @if($r->vendorBankAccount)
+                        <div class="text-[11px] text-slate-500 dark:text-slate-400">
+                            Rek: {{ $r->vendorBankAccount->bank_name }} - {{ $r->vendorBankAccount->account_number }}
+                        </div>
+                        @endif
                     </div>
                     <div class="text-right">
                         <x-badge :variant="match($r->status) {
@@ -355,6 +360,7 @@
                         <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Type</th>
                         <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Vendor Bill / Description</th>
                         <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Vendor</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Rekening</th>
                         @if(Auth::check() && (Auth::user()->role ?? 'admin') === 'super_admin')
                         <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Requested By</th>
                         @endif
@@ -397,6 +403,15 @@
                                 {{ $r->driverAdvance->driver->name ?? '-' }}
                             @else
                                 {{ $r->vendorBill?->vendor->name ?? $r->vendor?->name ?? '-' }}
+                            @endif
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-slate-600 dark:text-slate-400 text-sm">
+                            @if($r->vendorBankAccount)
+                                <div class="font-medium text-slate-900 dark:text-slate-100 text-sm">{{ $r->vendorBankAccount->bank_name }}</div>
+                                <div class="text-[11px] text-slate-500 dark:text-slate-400 font-mono">{{ $r->vendorBankAccount->account_number }}</div>
+                                <div class="text-[11px] text-slate-500 dark:text-slate-400">a.n. {{ $r->vendorBankAccount->account_holder_name }}</div>
+                            @else
+                                <span class="text-xs text-slate-400 dark:text-slate-600">-</span>
                             @endif
                         </td>
                         @if(Auth::check() && (Auth::user()->role ?? 'admin') === 'super_admin')

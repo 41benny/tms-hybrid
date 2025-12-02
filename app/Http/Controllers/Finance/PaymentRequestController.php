@@ -20,7 +20,13 @@ class PaymentRequestController extends Controller
      */
     public function index(Request $request)
     {
-        $query = PaymentRequest::query()->with(['vendorBill.vendor', 'vendor', 'requestedBy', 'driverAdvance.driver']);
+        $query = PaymentRequest::query()->with([
+            'vendorBill.vendor',
+            'vendor',
+            'vendorBankAccount',
+            'requestedBy',
+            'driverAdvance.driver',
+        ]);
 
         // Skip role filter for development
         // TODO: Implement proper authentication and role-based filtering
@@ -104,8 +110,12 @@ class PaymentRequestController extends Controller
                 'payment_type' => ['required', 'in:vendor_bill,manual,trucking'],
                 'vendor_bill_id' => ['required_if:payment_type,vendor_bill', 'nullable', 'exists:vendor_bills,id'],
                 'driver_advance_id' => ['required_if:payment_type,trucking', 'nullable', 'exists:driver_advances,id'],
-                'vendor_id' => ['required_if:payment_type,manual', 'nullable', 'exists:vendors,id'],
+                'vendor_id' => ['nullable', 'exists:vendors,id'],
                 'vendor_bank_account_id' => ['nullable', 'exists:vendor_bank_accounts,id'],
+                'manual_payee_name' => ['nullable', 'string', 'max:150'],
+                'manual_bank_name' => ['nullable', 'string', 'max:100'],
+                'manual_bank_account' => ['nullable', 'string', 'max:100'],
+                'manual_bank_holder' => ['nullable', 'string', 'max:150'],
                 'description' => ['nullable', 'string', 'max:255'],
                 'amount' => ['required', 'numeric', 'min:1'],
                 'notes' => ['nullable', 'string'],
@@ -152,11 +162,38 @@ class PaymentRequestController extends Controller
         }
 
         // Validate manual payment requires vendor_id or driver_advance_id
-        if ($validated['payment_type'] === 'manual' && empty($validated['vendor_id']) && empty($validated['driver_advance_id'])) {
-            return back()->withErrors(['vendor_id' => 'Pilih vendor untuk pembayaran manual.'])->withInput();
+        if (
+            $validated['payment_type'] === 'manual'
+            && empty($validated['vendor_id'])
+            && empty($validated['manual_payee_name'])
+            && empty($validated['driver_advance_id'])
+        ) {
+            return back()->withErrors(['vendor_id' => 'Isi nama penerima atau pilih vendor untuk pembayaran manual.'])->withInput();
         }
 
         try {
+            // Append manual payee/bank info into notes so finance can see the free-text data
+            if ($validated['payment_type'] === 'manual') {
+                $manualDetails = [];
+                if (!empty($validated['manual_payee_name'])) {
+                    $manualDetails[] = 'Payee: '.$validated['manual_payee_name'];
+                }
+                if (!empty($validated['manual_bank_name'])) {
+                    $manualDetails[] = 'Bank: '.$validated['manual_bank_name'];
+                }
+                if (!empty($validated['manual_bank_account'])) {
+                    $manualDetails[] = 'No Rek: '.$validated['manual_bank_account'];
+                }
+                if (!empty($validated['manual_bank_holder'])) {
+                    $manualDetails[] = 'a.n: '.$validated['manual_bank_holder'];
+                }
+
+                if (!empty($manualDetails)) {
+                    $extra = 'Manual payee info — '.implode(' | ', $manualDetails);
+                    $validated['notes'] = trim(($validated['notes'] ?? '')."\n".$extra);
+                }
+            }
+
             $paymentRequest = PaymentRequest::create($validated);
 
             // Load requestedBy relationship for notification
