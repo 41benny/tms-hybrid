@@ -186,23 +186,72 @@
             </x-card>
             @else
             {{-- Manual Payment Request Info --}}
+            @php
+                $manualPayee = $manualBank = $manualAccount = $manualHolder = null;
+                if ($request->notes) {
+                    foreach (preg_split("/\r\n|\n|\r/", $request->notes) as $line) {
+                        if (strpos($line, 'Manual payee info') !== false) {
+                            if (preg_match('/Payee:\s*([^|]+)/', $line, $m)) {
+                                $manualPayee = trim($m[1]);
+                            }
+                            if (preg_match('/Bank:\s*([^|]+)/', $line, $m)) {
+                                $manualBank = trim($m[1]);
+                            }
+                            if (preg_match('/No Rek:\s*([^|]+)/', $line, $m)) {
+                                $manualAccount = trim($m[1]);
+                            }
+                            if (preg_match('/a\.n:\s*([^|]+)/', $line, $m)) {
+                                $manualHolder = trim($m[1]);
+                            }
+                            break;
+                        }
+                    }
+                }
+            @endphp
             <x-card title="Payment Information">
-                <div class="space-y-4">
-                    <div>
-                        <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Request Type</div>
-                        <x-badge variant="warning" class="text-xs">{{ strtoupper(str_replace('_', ' ', $request->payment_type)) }}</x-badge>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-3">
+                        <div>
+                            <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Request Type</div>
+                            <x-badge variant="warning" class="text-xs">{{ strtoupper(str_replace('_', ' ', $request->payment_type)) }}</x-badge>
+                        </div>
+                        @if($request->description)
+                        <div>
+                            <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Description</div>
+                            <div class="font-medium text-slate-900 dark:text-slate-100">{{ $request->description }}</div>
+                        </div>
+                        @endif
+
+                        @if($request->vendor)
+                        <div>
+                            <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Linked Vendor (optional)</div>
+                            <div class="font-medium text-slate-900 dark:text-slate-100">{{ $request->vendor->name }}</div>
+                            <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ $request->vendor->phone }}</div>
+                        </div>
+                        @endif
                     </div>
-                    @if($request->description)
+
+                    @if($manualPayee || $manualBank || $manualAccount || $manualHolder)
                     <div>
-                        <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Description</div>
-                        <div class="font-medium text-slate-900 dark:text-slate-100">{{ $request->description }}</div>
-                    </div>
-                    @endif
-                    @if($request->vendor)
-                    <div>
-                        <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Vendor</div>
-                        <div class="font-medium text-slate-900 dark:text-slate-100">{{ $request->vendor->name }}</div>
-                        <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ $request->vendor->phone }}</div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Transfer To</div>
+                        <div class="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/30 p-3 space-y-1">
+                            <div class="font-medium text-slate-900 dark:text-slate-100">
+                                {{ $manualPayee ?? '-' }}
+                            </div>
+                            <div class="text-xs text-slate-600 dark:text-slate-300">
+                                @if($manualBank)
+                                    {{ $manualBank }}
+                                @endif
+                                @if($manualAccount)
+                                    {{ $manualBank ? ' · ' : '' }}{{ $manualAccount }}
+                                @endif
+                            </div>
+                            @if($manualHolder)
+                            <div class="text-xs text-slate-600 dark:text-slate-300">
+                                a.n. {{ $manualHolder }}
+                            </div>
+                            @endif
+                        </div>
                     </div>
                     @endif
                 </div>
@@ -323,4 +372,3 @@
     });
     </script>
 @endsection
-

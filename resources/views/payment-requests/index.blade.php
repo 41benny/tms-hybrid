@@ -405,15 +405,50 @@
                                 {{ $r->vendorBill?->vendor->name ?? $r->vendor?->name ?? '-' }}
                             @endif
                         </td>
-                        <td class="px-4 py-3 whitespace-nowrap text-slate-600 dark:text-slate-400 text-sm">
-                            @if($r->vendorBankAccount)
-                                <div class="font-medium text-slate-900 dark:text-slate-100 text-sm">{{ $r->vendorBankAccount->bank_name }}</div>
-                                <div class="text-[11px] text-slate-500 dark:text-slate-400 font-mono">{{ $r->vendorBankAccount->account_number }}</div>
-                                <div class="text-[11px] text-slate-500 dark:text-slate-400">a.n. {{ $r->vendorBankAccount->account_holder_name }}</div>
-                            @else
-                                <span class="text-xs text-slate-400 dark:text-slate-600">-</span>
-                            @endif
-                        </td>
+                          <td class="px-4 py-3 whitespace-nowrap text-slate-600 dark:text-slate-400 text-sm">
+                              @if($r->vendorBankAccount)
+                                  <div class="font-medium text-slate-900 dark:text-slate-100 text-sm">{{ $r->vendorBankAccount->bank_name }}</div>
+                                  <div class="text-[11px] text-slate-500 dark:text-slate-400 font-mono">{{ $r->vendorBankAccount->account_number }}</div>
+                                  <div class="text-[11px] text-slate-500 dark:text-slate-400">a.n. {{ $r->vendorBankAccount->account_holder_name }}</div>
+                              @elseif($r->payment_type === 'manual' && $r->notes)
+                                  @php
+                                      $manualPayee = $manualBank = $manualAccount = $manualHolder = null;
+                                      foreach (preg_split("/\r\n|\n|\r/", $r->notes) as $line) {
+                                          if (strpos($line, 'Manual payee info') !== false) {
+                                              if (preg_match('/Payee:\s*([^|]+)/', $line, $m)) {
+                                                  $manualPayee = trim($m[1]);
+                                              }
+                                              if (preg_match('/Bank:\s*([^|]+)/', $line, $m)) {
+                                                  $manualBank = trim($m[1]);
+                                              }
+                                              if (preg_match('/No Rek:\s*([^|]+)/', $line, $m)) {
+                                                  $manualAccount = trim($m[1]);
+                                              }
+                                              if (preg_match('/a\.n:\s*([^|]+)/', $line, $m)) {
+                                                  $manualHolder = trim($m[1]);
+                                              }
+                                              break;
+                                          }
+                                      }
+                                  @endphp
+                                  @if($manualPayee || $manualAccount || $manualBank || $manualHolder)
+                                      <div class="font-medium text-slate-900 dark:text-slate-100 text-sm">
+                                          {{ $manualPayee ?? '-' }}
+                                      </div>
+                                      <div class="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+                                          @if($manualBank) {{ $manualBank }} @endif
+                                          @if($manualAccount) {{ $manualBank ? ' · ' : '' }}{{ $manualAccount }} @endif
+                                      </div>
+                                      @if($manualHolder)
+                                          <div class="text-[11px] text-slate-500 dark:text-slate-400">a.n. {{ $manualHolder }}</div>
+                                      @endif
+                                  @else
+                                      <span class="text-xs text-slate-400 dark:text-slate-600">-</span>
+                                  @endif
+                              @else
+                                  <span class="text-xs text-slate-400 dark:text-slate-600">-</span>
+                              @endif
+                          </td>
                         @if(Auth::check() && (Auth::user()->role ?? 'admin') === 'super_admin')
                         <td class="px-4 py-3 whitespace-nowrap text-slate-600 dark:text-slate-400 text-sm">
                             {{ $r->requestedBy->name ?? '-' }}

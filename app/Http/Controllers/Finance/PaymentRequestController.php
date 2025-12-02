@@ -194,7 +194,16 @@ class PaymentRequestController extends Controller
                 }
             }
 
-            $paymentRequest = PaymentRequest::create($validated);
+              if ($validated['payment_type'] === 'manual') {
+                  unset(
+                      $validated['manual_payee_name'],
+                      $validated['manual_bank_name'],
+                      $validated['manual_bank_account'],
+                      $validated['manual_bank_holder']
+                  );
+              }
+
+              $paymentRequest = PaymentRequest::create($validated);
 
             // Load requestedBy relationship for notification
             $paymentRequest->load('requestedBy');

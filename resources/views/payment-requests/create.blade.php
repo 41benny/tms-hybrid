@@ -42,70 +42,138 @@
     @elseif($vendorBill ?? false)
         @include('payment-requests.partials.form-vendor-bill', ['vendorBill' => $vendorBill])
     @else
-        @php
-            $vendorOptions = ($vendors ?? collect())->map(fn($v) => [
-                'id' => $v->id,
-                'name' => $v->name,
-                'vendor_type' => $v->vendor_type,
-            ])->values();
-        @endphp
         <div class="max-w-3xl mx-auto">
             <x-card title="Manual Payment Request Form" subtitle="Create payment request outside vendor bill">
                 <form method="POST" action="{{ route('payment-requests.store') }}">
                     @csrf
                     <input type="hidden" name="payment_type" value="manual">
                     <div class="space-y-6">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Vendor (opsional)</label>
-                            <select name="vendor_id" class="w-full rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                <option value="">-- Tidak pilih vendor --</option>
-                                @foreach($vendors ?? [] as $vendor)
-                                    <option value="{{ $vendor->id }}" @selected(old('vendor_id') == $vendor->id)>{{ $vendor->name }} ({{ $vendor->vendor_type }})</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {{-- Penerima Transfer --}}
+                        <div class="space-y-4">
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Nama Penerima</label>
-                                <input type="text" name="manual_payee_name" value="{{ old('manual_payee_name') }}" placeholder="Contoh: Budi, Supplier A" class="w-full rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <div class="flex rounded-lg overflow-hidden border border-slate-300 dark:border-[#3d3d3d] bg-white dark:bg-[#252525]">
+                                    <input
+                                        type="text"
+                                        name="manual_payee_name"
+                                        value="{{ old('manual_payee_name') }}"
+                                        placeholder="Contoh: Budi, Supplier A"
+                                        class="flex-1 min-w-0 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 bg-transparent focus:outline-none"
+                                    >
+                                    <button
+                                        type="button"
+                                        class="inline-flex items-center gap-1 px-3 text-xs font-medium text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/20 hover:bg-sky-100 dark:hover:bg-sky-900/40 border-l border-slate-300 dark:border-[#3d3d3d]"
+                                        title="Cari penerima tersimpan (coming soon)"
+                                    >
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 5a6 6 0 100 12 6 6 0 000-12z" />
+                                        </svg>
+                                        Cari
+                                    </button>
+                                </div>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Bank</label>
-                                <input type="text" name="manual_bank_name" value="{{ old('manual_bank_name') }}" placeholder="Nama bank (opsional)" class="w-full rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Nomor Rekening</label>
+                                    <input
+                                        type="text"
+                                        name="manual_bank_account"
+                                        value="{{ old('manual_bank_account') }}"
+                                        placeholder="Nomor rekening (opsional)"
+                                        class="w-full rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    >
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Bank Tujuan</label>
+                                    <input
+                                        type="text"
+                                        name="manual_bank_name"
+                                        value="{{ old('manual_bank_name') }}"
+                                        placeholder="Nama bank (opsional, wajib jika isi no rek)"
+                                        class="w-full rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    >
+                                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                        Wajib diisi jika nomor rekening diisi.
+                                    </p>
+                                </div>
                             </div>
+
                             <div>
-                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">No Rekening</label>
-                                <input type="text" name="manual_bank_account" value="{{ old('manual_bank_account') }}" placeholder="Nomor rekening (opsional)" class="w-full rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Atas Nama (opsional)</label>
+                                <input
+                                    type="text"
+                                    name="manual_bank_holder"
+                                    value="{{ old('manual_bank_holder') }}"
+                                    placeholder="Nama pemilik rekening"
+                                    class="w-full rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                >
+                            </div>
+
+                            <div class="flex items-center justify-between gap-3">
+                                <div class="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onclick="const cb = document.getElementById('save_recipient_toggle'); if (!cb) return; cb.checked = !cb.checked; const knob = document.getElementById('save_recipient_knob'); if (knob) knob.style.transform = cb.checked ? 'translateX(1.25rem)' : 'translateX(0)'; this.classList.toggle('bg-indigo-500', cb.checked); this.classList.toggle('bg-slate-200', !cb.checked);"
+                                        class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out bg-slate-200 dark:bg-slate-700"
+                                    >
+                                        <span id="save_recipient_knob" class="inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-0"></span>
+                                    </button>
+                                    <input type="checkbox" name="save_recipient" id="save_recipient_toggle" class="hidden">
+                                    <span class="text-sm text-slate-700 dark:text-slate-300">Simpan data penerima</span>
+                                </div>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">
+                                    Jika aktif, data nama &amp; rekening dapat disimpan ke master (konfigurasi backend menyusul).
+                                </p>
                             </div>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            <div>
-                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Atas Nama</label>
-                                <input type="text" name="manual_bank_holder" value="{{ old('manual_bank_holder') }}" placeholder="Nama pemilik rekening (opsional)" class="w-full rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div class="md:col-span-2 text-xs text-slate-500 dark:text-slate-400 flex items-end">
-                                <p>Nama & rekening bebas diisi, tidak wajib terhubung vendor. Pilih vendor hanya jika mau link ke master.</p>
-                            </div>
-                        </div>
+
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Payment Description <span class="text-red-500">*</span></label>
-                            <input type="text" name="description" value="{{ old('description') }}" required placeholder="Example: Office rent payment, Operational expenses, etc" class="w-full rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 @error('description') border-red-500 @enderror">
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Tujuan Transfer / Deskripsi <span class="text-red-500">*</span></label>
+                            <input type="text" name="description" value="{{ old('description') }}" required placeholder="Contoh: Pembayaran sewa kantor, biaya operasional, dll" class="w-full rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 @error('description') border-red-500 @enderror">
                             @error('description')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Payment Amount <span class="text-red-500">*</span></label>
-                            <input type="text" id="amount_display_manual" placeholder="Enter payment amount" value="{{ old('amount') ? number_format(old('amount'), 0, ',', '.') : '' }}" class="w-full rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 @error('amount') border-red-500 @enderror">
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Jumlah Transfer (Rp) <span class="text-red-500">*</span></label>
+                            <input type="text" id="amount_display_manual" placeholder="Masukkan jumlah transfer" value="{{ old('amount') ? number_format(old('amount'), 0, ',', '.') : '' }}" class="w-full rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 @error('amount') border-red-500 @enderror">
                             <input type="hidden" name="amount" id="amount_input_manual" value="{{ old('amount', 0) }}">
                             @error('amount')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Additional Notes</label>
-                            <textarea name="notes" rows="4" placeholder="Add notes for this request (optional)" class="w-full rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">{{ old('notes') }}</textarea>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Keterangan (opsional)</label>
+                            <textarea name="notes" rows="4" placeholder="Catatan tambahan untuk tim finance (opsional)" class="w-full rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">{{ old('notes') }}</textarea>
                         </div>
+
+                        {{-- Link ke Vendor (opsional) --}}
+                        <div class="pt-4 border-t border-slate-200 dark:border-slate-700">
+                            <details class="group">
+                                <summary class="flex items-center justify-between cursor-pointer list-none">
+                                    <div class="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                        Link ke Vendor (opsional)
+                                    </div>
+                                    <svg class="w-4 h-4 text-slate-500 dark:text-slate-400 transition-transform duration-200 group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </summary>
+                                <div class="mt-3">
+                                    <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Vendor (opsional)</label>
+                                    <select name="vendor_id" class="w-full rounded-lg bg-white dark:bg-[#252525] border border-slate-300 dark:border-[#3d3d3d] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                        <option value="">-- Tidak pilih vendor --</option>
+                                        @foreach($vendors ?? [] as $vendor)
+                                            <option value="{{ $vendor->id }}" @selected(old('vendor_id') == $vendor->id)>{{ $vendor->name }} ({{ $vendor->vendor_type }})</option>
+                                        @endforeach
+                                    </select>
+                                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                        Pilih vendor hanya jika ingin link ke master vendor. Nama penerima &amp; rekening tetap bebas diisi.
+                                    </p>
+                                </div>
+                            </details>
+                        </div>
+
                         <div class="flex flex-col sm:flex-row items-center gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
                             <x-button type="submit" variant="primary" size="sm" class="w-full sm:w-auto justify-center normal-case">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
