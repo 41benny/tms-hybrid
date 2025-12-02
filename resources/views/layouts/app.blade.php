@@ -29,8 +29,8 @@
 
 @php
     $role = auth()->user()->role ?? null;
-    // Sales: sembunyikan sidebar di mobile/tablet, tampil di desktop (lg+). Role lain: selalu tampil.
-    $sidebarClass = $role === \App\Models\User::ROLE_SALES ? 'hidden lg:flex lg:w-72' : 'flex w-72';
+    // Sales: sembunyikan sidebar di mobile, tampil mulai md (tablet/laptop). Role lain: selalu tampil.
+    $sidebarClass = $role === \App\Models\User::ROLE_SALES ? 'hidden md:flex md:w-72' : 'flex w-72';
 @endphp
 
     <div class="fixed inset-0 z-[-1] theme-bg-gradient transition-all duration-700"></div>
