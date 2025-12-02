@@ -190,6 +190,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('general-ledger', [ReportAccountingController::class, 'generalLedger'])->name('general-ledger');
         Route::get('profit-loss', [ReportAccountingController::class, 'profitLoss'])->name('profit-loss');
         Route::get('balance-sheet', [ReportAccountingController::class, 'balanceSheet'])->name('balance-sheet');
+        Route::get('cash-flow', [ReportAccountingController::class, 'cashFlow'])->name('cash-flow');
 
         // Tax Reports
         Route::prefix('tax')->name('tax.')->group(function () {
