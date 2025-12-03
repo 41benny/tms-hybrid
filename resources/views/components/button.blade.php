@@ -33,7 +33,7 @@
         @endif
     </a>
 @else
-    <button {{ $attributes->merge(['class' => $classes, 'type' => 'button']) }}>
+    <button {{ $attributes->merge(['class' => $classes])->merge(['type' => $attributes->get('type', 'button')]) }}>
         @if($icon && $iconPosition === 'left')
             <span>{{ $icon }}</span>
         @endif

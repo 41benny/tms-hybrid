@@ -70,7 +70,7 @@ class FiscalPeriodController extends Controller
             ->count();
 
         if ($draftVendorBillsWithSentInvoices > 0) {
-            $errors[] = "⚠️ CRITICAL: {$draftVendorBillsWithSentInvoices} vendor bill masih DRAFT padahal invoice terkait sudah SENT (revenue tercatat tapi expense tidak tercatat - profit overstated!)";
+            $errors[] = "CRITICAL: {$draftVendorBillsWithSentInvoices} vendor bill masih DRAFT padahal invoice terkait sudah SENT (revenue tercatat tapi expense tidak tercatat - profit overstated!)";
         }
 
         // ========================================
@@ -175,7 +175,7 @@ class FiscalPeriodController extends Controller
 
         // Jika ada error, tampilkan dan jangan close
         if (count($errors) > 0) {
-            $errorMessage = "Periode tidak bisa di-close karena:\n" . implode("\n", array_map(fn($e) => "• {$e}", $errors));
+            $errorMessage = "Periode tidak bisa di-close karena:\n" . implode("\n", array_map(fn($e) => "- {$e}", $errors));
             return back()->with('error', $errorMessage);
         }
 

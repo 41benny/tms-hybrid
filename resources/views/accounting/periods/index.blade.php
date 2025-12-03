@@ -29,6 +29,30 @@
         </div>
     </div>
 
+    @if(session('success') || session('error') || session('info') || $errors->any())
+        <div class="space-y-3 mb-6">
+            @if(session('success'))
+                <x-alert variant="success">{{ session('success') }}</x-alert>
+            @endif
+            @if(session('error'))
+                <x-alert variant="danger">{!! nl2br(e(session('error'))) !!}</x-alert>
+            @endif
+            @if(session('info'))
+                <x-alert variant="info">{{ session('info') }}</x-alert>
+            @endif
+            @if($errors->any())
+                <x-alert variant="danger">
+                    <div class="font-semibold mb-1">Perbaiki isian berikut:</div>
+                    <ul class="list-disc list-inside space-y-1">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </x-alert>
+            @endif
+        </div>
+    @endif
+
     @php
         $currentYear = (int) date('Y');
         $currentMonth = (int) date('m');
