@@ -135,6 +135,13 @@
                                         $isPastMonth = mktime(0, 0, 0, $p->month, 1, $p->year) < mktime(0, 0, 0, date('m'), 1, date('Y'));
                                     @endphp
                                     @if($p->status === 'open' && $isPastMonth)
+                                        <form method="post" action="{{ route('accounting.periods.close', $p) }}" class="inline">
+                                            @csrf
+                                            <input type="hidden" name="preview" value="1">
+                                            <button class="px-3 py-1.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs hover:bg-slate-300 dark:hover:bg-slate-600" title="Cek apakah periode ini sudah siap di-close tanpa menutupnya">
+                                                Cek Validasi
+                                            </button>
+                                        </form>
                                         <form method="post" action="{{ route('accounting.periods.close', $p) }}" onsubmit="return confirm('PERINGATAN: Anda akan CLOSE periode {{ $p->month }}/{{ $p->year }}. Setelah di-close tidak bisa posting transaksi baru dan tidak bisa edit transaksi existing. Lanjutkan?')">
                                             @csrf
                                             <button class="px-3 py-1.5 rounded bg-yellow-600 hover:bg-yellow-700 text-white text-xs">Close</button>

@@ -28,7 +28,7 @@ class FiscalPeriodController extends Controller
         }
     }
 
-    public function close(FiscalPeriod $period)
+    public function close(FiscalPeriod $period, Request $request)
     {
         $this->ensureSuperAdmin();
         if ($period->status !== 'open') {
@@ -52,6 +52,7 @@ class FiscalPeriodController extends Controller
         // Validasi: Cek apakah ada transaksi yang belum di-jurnal
         $startDate = $period->start_date;
         $endDate = $period->end_date;
+        $previewOnly = $request->boolean('preview');
 
         $errors = [];
 
@@ -177,6 +178,10 @@ class FiscalPeriodController extends Controller
         if (count($errors) > 0) {
             $errorMessage = "Periode tidak bisa di-close karena:\n" . implode("\n", array_map(fn($e) => "- {$e}", $errors));
             return back()->with('error', $errorMessage);
+        }
+
+        if ($previewOnly) {
+            return back()->with('success', 'Validasi lulus. Tidak ada blocker, periode aman untuk di-close.');
         }
 
         // Jika semua aman, close periode
