@@ -7,6 +7,8 @@ use App\Models\Finance\VendorBill;
 use App\Models\Master\Vendor;
 use App\Models\Operations\Transport;
 use App\Services\Accounting\JournalService;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -19,6 +21,16 @@ class VendorBillController extends Controller
     {
         $query = VendorBill::query()->with(['vendor', 'items', 'payments', 'paymentRequests']);
         $scope = $request->get('scope');
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+        if ($user && $user->role === User::ROLE_SALES) {
+            $salesProfile = $user->salesProfile;
+            if ($salesProfile) {
+                $query->forSales($salesProfile->id);
+            } else {
+                $query->whereRaw('1=0');
+            }
+        }
         // Default tampilkan hanya outstanding kecuali user pilih 'all'
         if ($scope !== 'all') {
             $query->outstanding();
@@ -126,6 +138,7 @@ class VendorBillController extends Controller
      */
     public function show(VendorBill $vendor_bill)
     {
+        $this->authorizeForSales($vendor_bill);
         $vendor_bill->load(['vendor', 'items.shipmentLeg', 'payments.account', 'paymentRequests.requestedBy']);
 
         // Calculate DPP, PPN, PPH
@@ -164,6 +177,7 @@ class VendorBillController extends Controller
      */
     public function edit(VendorBill $vendor_bill)
     {
+        $this->authorizeForSales($vendor_bill);
         $vendors = Vendor::orderBy('name')->get();
         $vendor_bill->load('items');
 
@@ -175,6 +189,7 @@ class VendorBillController extends Controller
      */
     public function update(Request $request, VendorBill $vendor_bill)
     {
+        $this->authorizeForSales($vendor_bill);
         $data = $request->validate([
             'vendor_id' => ['required', 'exists:vendors,id'],
             'bill_date' => ['required', 'date'],
@@ -207,6 +222,7 @@ class VendorBillController extends Controller
      */
     public function destroy(VendorBill $vendor_bill)
     {
+        $this->authorizeForSales($vendor_bill);
         $vendor_bill->delete();
 
         return redirect()->route('vendor-bills.index')->with('success', 'Vendor bill dihapus.');
@@ -214,36 +230,89 @@ class VendorBillController extends Controller
 
     public function markAsReceived(VendorBill $vendor_bill)
     {
+        \Log::info('=== markAsReceived START ===', [
+            'vendor_bill_id' => $vendor_bill->id,
+            'vendor_bill_number' => $vendor_bill->vendor_bill_number,
+            'current_status' => $vendor_bill->status,
+            'user_id' => auth()->id(),
+            'user_email' => auth()->user()?->email,
+            'user_role' => auth()->user()?->role,
+        ]);
+
+        try {
+            $this->authorizeForSales($vendor_bill);
+            \Log::info('Authorization passed');
+        } catch (\Exception $e) {
+            \Log::error('Authorization failed', ['error' => $e->getMessage()]);
+            throw $e;
+        }
+
         // Validasi total amount
         if ($vendor_bill->total_amount <= 0) {
+            \Log::warning('Validation failed: total_amount <= 0', ['total_amount' => $vendor_bill->total_amount]);
             return back()->with('error', 'Vendor bill tidak dapat diposting karena total amount = 0 atau negatif.');
         }
 
         // Validasi ada items
         if ($vendor_bill->items()->count() === 0) {
+            \Log::warning('Validation failed: no items');
             return back()->with('error', 'Vendor bill tidak dapat diposting karena tidak ada item.');
         }
 
+        \Log::info('Validations passed, updating status to received');
         $vendor_bill->update(['status' => 'received']);
 
         if (class_exists(JournalService::class)) {
             try {
+                \Log::info('Attempting to post to journal');
                 app(JournalService::class)->postVendorBill($vendor_bill);
+                \Log::info('Journal posted successfully');
             } catch (\Exception $e) {
+                \Log::error('Journal posting failed', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
                 // Rollback status jika posting gagal
                 $vendor_bill->update(['status' => 'draft']);
                 return back()->with('error', 'Gagal membuat jurnal: ' . $e->getMessage());
             }
         }
 
+        \Log::info('=== markAsReceived SUCCESS ===');
         return back()->with('success', 'Vendor bill ditandai diterima dan jurnal berhasil dibuat.');
     }
 
     public function markAsPaid(VendorBill $vendor_bill)
     {
+        $this->authorizeForSales($vendor_bill);
         $vendor_bill->update(['status' => 'paid']);
 
         return back()->with('success', 'Vendor bill ditandai lunas.');
+    }
+
+    /**
+     * Batasi akses vendor bill hanya untuk JO milik sales terkait.
+     */
+    private function authorizeForSales(VendorBill $bill): void
+    {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+        if (! $user || $user->role !== User::ROLE_SALES) {
+            return;
+        }
+
+        $salesProfile = $user->salesProfile;
+        if (! $salesProfile) {
+            abort(403, 'Sales profile tidak ditemukan');
+        }
+
+        $owned = $bill->items()->whereHas('shipmentLeg.jobOrder', function ($q) use ($salesProfile) {
+            $q->where('sales_id', $salesProfile->id);
+        })->exists();
+
+        if (! $owned) {
+            abort(403, 'Anda tidak berhak mengakses vendor bill ini');
+        }
     }
 
     /**

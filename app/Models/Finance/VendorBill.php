@@ -67,6 +67,16 @@ class VendorBill extends Model
         return $this->amount_paid >= $this->total_amount;
     }
 
+    /**
+     * Scope: filter vendor bill yang terkait JO milik sales tertentu.
+     */
+    public function scopeForSales($query, int $salesId)
+    {
+        return $query->whereHas('items.shipmentLeg.jobOrder', function ($q) use ($salesId) {
+            $q->where('sales_id', $salesId);
+        });
+    }
+
     protected static function booted(): void
     {
         static::creating(function (VendorBill $bill) {
