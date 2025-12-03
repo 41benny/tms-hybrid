@@ -22,7 +22,7 @@ class PostingService
             ->first();
 
         if (! $period) {
-            throw new InvalidArgumentException("Periode fiskal untuk {$date->format('F Y')} belum dibuat. Silakan buat periode fiskal terlebih dahulu di menu Accounting → Fiscal Periods.");
+            throw new InvalidArgumentException("Periode fiskal untuk {$date->format('F Y')} belum dibuat. Silakan buat periode fiskal terlebih dahulu di menu Accounting > Fiscal Periods.");
         }
 
         if ($period->status !== 'open') {
