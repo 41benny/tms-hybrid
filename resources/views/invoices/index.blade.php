@@ -62,6 +62,7 @@
                 <tr class="text-slate-500">
                     <th class="px-4 py-2">Type</th>
                     <th class="px-4 py-2">Nomor</th>
+                    <th class="px-4 py-2">Job Order</th>
                     <th class="px-4 py-2">Customer</th>
                     <th class="px-4 py-2">Tanggal</th>
                     <th class="px-4 py-2">Total</th>
@@ -80,6 +81,20 @@
                         </x-badge>
                     </td>
                     <td class="px-4 py-2 font-medium">{{ $inv->invoice_number }}</td>
+                    <td class="px-4 py-2">
+                        @php
+                            $jobNumbers = $inv->items->pluck('jobOrder.job_number')->filter()->unique()->values();
+                        @endphp
+                        @if($jobNumbers->isNotEmpty())
+                            <div class="space-y-1">
+                                @foreach($jobNumbers as $jn)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200 text-xs font-medium">{{ $jn }}</span>
+                                @endforeach
+                            </div>
+                        @else
+                            <span class="text-slate-400 text-xs">-</span>
+                        @endif
+                    </td>
                     <td class="px-4 py-2">{{ $inv->customer->name ?? '-' }}</td>
                     <td class="px-4 py-2">{{ $inv->invoice_date->format('d M Y') }}</td>
                     <td class="px-4 py-2">{{ number_format($inv->total_amount, 2, ',', '.') }}</td>

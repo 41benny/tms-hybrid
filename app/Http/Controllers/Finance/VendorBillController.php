@@ -139,7 +139,12 @@ class VendorBillController extends Controller
     public function show(VendorBill $vendor_bill)
     {
         $this->authorizeForSales($vendor_bill);
-        $vendor_bill->load(['vendor', 'items.shipmentLeg', 'payments.account', 'paymentRequests.requestedBy']);
+        $vendor_bill->load([
+            'vendor',
+            'items.shipmentLeg',
+            'payments.cashBankTransaction.account',
+            'paymentRequests.requestedBy',
+        ]);
 
         // Calculate DPP, PPN, PPH
         $dpp = 0;

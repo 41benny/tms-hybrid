@@ -8,6 +8,7 @@
         $canManageStatus = $user?->hasPermission('invoices.manage_status');
         $canCancelInvoice = $user?->hasPermission('invoices.cancel');
         $canUpdateInvoice = $user?->hasPermission('invoices.update');
+        $needsJournal = is_null($invoice->journal_id);
     @endphp
     <div class="mb-4 flex items-center justify-between">
         <div class="flex items-center gap-3">
@@ -17,6 +18,18 @@
             <div>
                 <div class="text-xl font-semibold">{{ $invoice->invoice_number }}</div>
                 <p class="text-sm text-slate-500 dark:text-slate-400">{{ $invoice->customer->name ?? '-' }}</p>
+                @php
+                    $jobNumbers = $invoice->items->pluck('jobOrder.job_number')->filter()->unique()->values();
+                @endphp
+                <div class="flex flex-wrap gap-1 mt-1">
+                    @forelse($jobNumbers as $jn)
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200 text-[11px] font-medium" title="Job Order">
+                            {{ $jn }}
+                        </span>
+                    @empty
+                        <span class="text-xs text-slate-400">Tidak ada JO terhubung</span>
+                    @endforelse
+                </div>
             </div>
         </div>
         <div class="flex items-center gap-2">
@@ -65,11 +78,11 @@
                 </button>
             @endif
 
-            @if($invoice->status === 'draft' && $canManageStatus)
+            @if($canManageStatus && $needsJournal && $invoice->status !== 'cancelled')
                 <form method="post" action="{{ route('invoices.mark-as-sent', $invoice) }}">
                     @csrf
                     @method('PATCH')
-                    <button type="submit" class="cursor-pointer inline-flex items-center justify-center w-9 h-9 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors" title="Post to Journal">
+                    <button type="submit" class="cursor-pointer inline-flex items-center justify-center w-9 h-9 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors" title="Buat jurnal untuk invoice ini">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
                     </button>
                 </form>

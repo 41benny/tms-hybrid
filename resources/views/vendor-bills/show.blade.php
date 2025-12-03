@@ -19,7 +19,9 @@
                 </svg>
                 Print PO Vendor
             </x-button>
-            @php($fullyRequested = $bill->remaining_to_request <= 0)
+            @php
+                $fullyRequested = $bill->remaining_to_request <= 0;
+            @endphp
             @if($bill->status !== 'paid' && $bill->status !== 'cancelled' && !$fullyRequested)
                 <x-button :href="route('payment-requests.create', ['vendor_bill_id'=>$bill->id])" variant="success" size="sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -48,6 +50,30 @@
             @endif
         </div>
     </div>
+
+    @if(session('success') || session('error') || session('info') || $errors->any())
+        <div class="space-y-3 mb-6">
+            @if(session('success'))
+                <x-alert variant="success">{{ session('success') }}</x-alert>
+            @endif
+            @if(session('error'))
+                <x-alert variant="danger">{!! nl2br(e(session('error'))) !!}</x-alert>
+            @endif
+            @if(session('info'))
+                <x-alert variant="info">{{ session('info') }}</x-alert>
+            @endif
+            @if($errors->any())
+                <x-alert variant="danger">
+                    <div class="font-semibold mb-1">Perbaiki isian berikut:</div>
+                    <ul class="list-disc list-inside space-y-1">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </x-alert>
+            @endif
+        </div>
+    @endif
 
     {{-- Ringkasan Hutang --}}
     <x-card title="Ringkasan Hutang" class="mb-6">
@@ -159,7 +185,7 @@
                             </td>
                             <td class="px-3 py-2">
                                 <a href="{{ route('payment-requests.show', $pr) }}" class="text-blue-600 dark:text-blue-400 hover:underline text-xs">
-                                    Lihat →
+                                    Lihat
                                 </a>
                             </td>
                         </tr>
@@ -229,23 +255,30 @@
                         </thead>
                         <tbody>
                             @foreach($bill->payments as $payment)
+                                @php
+                                    $paidAt = $payment->cashBankTransaction?->tanggal ?? $payment->payment_date;
+                                    $accountName = $payment->cashBankTransaction?->account?->name ?? '-';
+                                    $description = $payment->cashBankTransaction?->description ?? $payment->notes ?? '-';
+                                    $refNumber = $payment->cashBankTransaction?->reference_number;
+                                    $amountPaid = $payment->cashBankTransaction?->amount ?? $payment->amount_paid;
+                                @endphp
                                 <tr class="border-b border-slate-100 dark:border-slate-800/50">
                                     <td class="px-3 py-2 text-slate-900 dark:text-slate-100">
-                                        {{ $payment->tanggal->format('d M Y') }}
+                                        {{ $paidAt ? $paidAt->format('d M Y') : '-' }}
                                     </td>
                                     <td class="px-3 py-2 text-slate-600 dark:text-slate-400">
-                                        {{ $payment->account->name ?? '-' }}
+                                        {{ $accountName }}
                                     </td>
                                     <td class="px-3 py-2 text-slate-600 dark:text-slate-400">
-                                        <div>{{ $payment->description ?: '-' }}</div>
-                                        @if($payment->reference_number)
+                                        <div>{{ $description }}</div>
+                                        @if($refNumber)
                                             <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                                                Ref: {{ $payment->reference_number }}
+                                                Ref: {{ $refNumber }}
                                             </div>
                                         @endif
                                     </td>
                                     <td class="px-3 py-2 text-right font-medium text-emerald-600 dark:text-emerald-400">
-                                        Rp {{ number_format($payment->amount, 0, ',', '.') }}
+                                        Rp {{ number_format($amountPaid, 0, ',', '.') }}
                                     </td>
                                 </tr>
                             @endforeach

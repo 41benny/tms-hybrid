@@ -29,7 +29,7 @@ class InvoiceController extends Controller
     {
         $this->authorizePermission('invoices.view');
 
-        $query = Invoice::query()->with('customer');
+        $query = Invoice::query()->with(['customer', 'items.jobOrder:id,job_number']);
         if ($status = $request->get('status')) {
             $query->where('status', $status);
         }
@@ -461,7 +461,7 @@ class InvoiceController extends Controller
     {
         $this->authorizePermission('invoices.view');
 
-        $invoice->load(['customer', 'items']);
+        $invoice->load(['customer', 'items.jobOrder:id,job_number']);
 
         return view('invoices.show', compact('invoice'));
     }
