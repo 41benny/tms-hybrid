@@ -203,4 +203,12 @@ class JobOrder extends Model
         $expected = $this->invoice_amount + $this->total_billable;
         return max(0, $expected - $this->total_invoiced);
     }
+
+    /**
+     * Scope: filter JO milik sales tertentu.
+     */
+    public function scopeOwnedBySales($query, int $salesId)
+    {
+        return $query->where('sales_id', $salesId);
+    }
 }

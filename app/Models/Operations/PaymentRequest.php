@@ -137,4 +137,18 @@ class PaymentRequest extends Model
     {
         return $this->generateAutoDescription();
     }
+
+    /**
+     * Scope: payment request terkait JO milik sales tertentu (via vendor bill atau driver advance).
+     */
+    public function scopeForSales($query, int $salesId)
+    {
+        return $query->where(function ($q) use ($salesId) {
+            $q->whereHas('vendorBill.items.shipmentLeg.jobOrder', function ($sub) use ($salesId) {
+                $sub->where('sales_id', $salesId);
+            })->orWhereHas('driverAdvance.shipmentLeg.jobOrder', function ($sub) use ($salesId) {
+                $sub->where('sales_id', $salesId);
+            });
+        });
+    }
 }

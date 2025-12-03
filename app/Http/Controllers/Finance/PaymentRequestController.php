@@ -29,11 +29,17 @@ class PaymentRequestController extends Controller
             'driverAdvance.driver',
         ]);
 
-        // Skip role filter for development
-        // TODO: Implement proper authentication and role-based filtering
+        /** @var \App\Models\User|null $user */
         $user = Auth::user();
-        if ($user && ($user->role ?? 'admin') !== 'super_admin') {
-            // Admin hanya bisa lihat pengajuannya sendiri
+        if ($user && $user->role === User::ROLE_SALES) {
+            $salesProfile = $user->salesProfile;
+            if ($salesProfile) {
+                $query->forSales($salesProfile->id);
+            } else {
+                $query->whereRaw('1=0');
+            }
+        } elseif ($user && ($user->role ?? 'admin') !== User::ROLE_SUPER_ADMIN) {
+            // Non-superadmin lain: default hanya yang dia ajukan
             $query->where('requested_by', $user->id);
         }
 
@@ -85,6 +91,7 @@ class PaymentRequestController extends Controller
             if ($vendorBillId) {
                 // Payment Request dari Vendor Bill
                 $vendorBill = VendorBill::with(['vendor.activeBankAccounts', 'items.shipmentLeg.jobOrder', 'paymentRequests'])->findOrFail($vendorBillId);
+                $this->authorizeVendorBillForSales($vendorBill);
 
                 // Calculate remaining yang BELUM DIAJUKAN (bukan yang belum dibayar)
                 $totalRequested = $vendorBill->paymentRequests->sum('amount');
@@ -93,6 +100,7 @@ class PaymentRequestController extends Controller
             } elseif ($driverAdvanceId) {
                 // Payment Request dari Driver Advance
                 $driverAdvance = \App\Models\Operations\DriverAdvance::with(['driver', 'shipmentLeg.jobOrder'])->findOrFail($driverAdvanceId);
+                $this->authorizeDriverAdvanceForSales($driverAdvance);
             } else {
                 // Manual Payment Request - load all vendors
                 $vendors = Vendor::with('activeBankAccounts')->where('is_active', true)->orderBy('name')->get();
@@ -128,13 +136,25 @@ class PaymentRequestController extends Controller
         // Generate request number
         $validated['request_number'] = $this->generateRequestNumber();
         $validated['request_date'] = now()->toDateString();
-        // Use default user (ID 1) if not authenticated (for development)
         $validated['requested_by'] = Auth::id() ?? 1;
         $validated['status'] = 'pending';
 
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+        $isSales = $user && $user->role === User::ROLE_SALES;
+        $salesProfileId = $isSales ? optional($user->salesProfile)->id : null;
+
+        // Batasi sales: tidak boleh payment_type manual tanpa referensi
+        if ($isSales && $validated['payment_type'] === 'manual') {
+            return back()->withErrors(['payment_type' => 'Sales tidak boleh membuat payment request manual.'])->withInput();
+        }
+
         // Handle driver advance payment (uses 'trucking' type with driver_advance_id)
         if (!empty($validated['driver_advance_id'])) {
-            $driverAdvance = \App\Models\Operations\DriverAdvance::with(['driver', 'paymentRequests'])->findOrFail($validated['driver_advance_id']);
+            $driverAdvance = \App\Models\Operations\DriverAdvance::with(['driver', 'paymentRequests', 'shipmentLeg.jobOrder'])->findOrFail($validated['driver_advance_id']);
+            if ($isSales) {
+                $this->authorizeDriverAdvanceForSales($driverAdvance, $salesProfileId);
+            }
 
             // Calculate remaining amount that hasn't been requested yet
             $totalRequested = $driverAdvance->paymentRequests->sum('amount');
@@ -153,7 +173,10 @@ class PaymentRequestController extends Controller
 
         // Validate amount for vendor_bill type - cek sisa yang BELUM DIAJUKAN
         if ($validated['payment_type'] === 'vendor_bill') {
-            $vendorBill = VendorBill::with('paymentRequests')->findOrFail($validated['vendor_bill_id']);
+            $vendorBill = VendorBill::with('paymentRequests', 'items.shipmentLeg.jobOrder')->findOrFail($validated['vendor_bill_id']);
+            if ($isSales) {
+                $this->authorizeVendorBillForSales($vendorBill, $salesProfileId);
+            }
             $totalRequested = $vendorBill->paymentRequests->sum('amount');
             $remaining = $vendorBill->total_amount - $totalRequested;
 
@@ -236,6 +259,7 @@ class PaymentRequestController extends Controller
 
     public function show(PaymentRequest $payment_request)
     {
+        $this->authorizeForSales($payment_request);
         $payment_request->load([
             'vendorBill.vendor', 
             'vendor.activeBankAccounts', 
@@ -248,18 +272,12 @@ class PaymentRequestController extends Controller
             'cashBankTransaction'
         ]);
 
-        // Skip permission check for development
-        // TODO: Implement proper authentication
-        // $user = Auth::user();
-        // if ($user && ($user->role ?? 'admin') !== 'super_admin' && $payment_request->requested_by !== $user->id) {
-        //     abort(403, 'Anda tidak memiliki akses ke pengajuan ini.');
-        // }
-
         return view('payment-requests.show', ['request' => $payment_request]);
     }
 
     public function approve(PaymentRequest $payment_request)
     {
+        $this->authorizeForSales($payment_request);
         // Skip auth check for development
         // TODO: Implement proper authentication
         // $user = Auth::user();
@@ -282,6 +300,7 @@ class PaymentRequestController extends Controller
 
     public function reject(Request $request, PaymentRequest $payment_request)
     {
+        $this->authorizeForSales($payment_request);
         // Skip auth check for development
         // TODO: Implement proper authentication
         // $user = Auth::user();
