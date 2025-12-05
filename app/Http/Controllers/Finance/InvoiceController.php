@@ -61,10 +61,23 @@ class InvoiceController extends Controller
         // Get customer_id from request
         $customerId = $request->get('customer_id');
         
+        // Get JO IDs that already have normal/final invoice (not cancelled)
+        // These should be excluded from the list
+        $fullyInvoicedJobOrderIds = \App\Models\Finance\InvoiceItem::query()
+            ->whereNotNull('job_order_id')
+            ->whereHas('invoice', function($q) {
+                $q->where('status', '!=', 'cancelled')
+                  ->whereIn('invoice_type', ['normal', 'final']);
+            })
+            ->pluck('job_order_id')
+            ->unique()
+            ->toArray();
+        
         // Get job orders, filtered by customer if selected
-        // Optimized: Only load minimal data for modal list
+        // Exclude JO that already have normal/final invoice
         $jobOrdersQuery = JobOrder::query()
-            ->select('id', 'job_number', 'customer_id', 'origin', 'destination', 'status', 'invoice_amount');
+            ->select('id', 'job_number', 'customer_id', 'origin', 'destination', 'status', 'invoice_amount')
+            ->whereNotIn('id', $fullyInvoicedJobOrderIds);
         
         if ($customerId) {
             $jobOrdersQuery->where('customer_id', $customerId);

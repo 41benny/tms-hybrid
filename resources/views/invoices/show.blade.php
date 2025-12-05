@@ -33,15 +33,9 @@
             </div>
         </div>
         <div class="flex items-center gap-2">
-            @if($invoice->canBePrinted())
-                <a href="{{ route('invoices.pdf', $invoice) }}" target="_blank" class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-slate-800 text-white hover:bg-slate-700 dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-slate-300 transition-colors" title="Print / PDF">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                </a>
-            @else
-                <button disabled class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-slate-300 text-slate-500 cursor-not-allowed dark:bg-slate-700 dark:text-slate-500" title="Invoice harus di-approve terlebih dahulu">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                </button>
-            @endif
+            <a href="{{ route('invoices.pdf', $invoice) }}" target="_blank" class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-slate-800 text-white hover:bg-slate-700 dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-slate-300 transition-colors" title="Print / PDF">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+            </a>
 
             @if($invoice->status !== 'cancelled')
                 <a href="{{ route('cash-banks.create', ['sumber'=>'customer_payment','invoice_id'=>$invoice->id,'amount'=>$invoice->total_amount]) }}" class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors" title="Terima Pembayaran">

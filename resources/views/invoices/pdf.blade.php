@@ -65,6 +65,23 @@
     <div class="watermark">DRAFT</div>
 @endif
 <div class="invoice-wrapper">
+    <!-- Company Header -->
+    <div class="flex items-start mb-6" style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #6366f1;">
+        <div style="margin-right: 16px;">
+            <img src="{{ asset('images/Logo Merah.png') }}" alt="Company Logo" style="width: 64px; height: auto;">
+        </div>
+        <div style="flex: 1;">
+            <h2 class="font-bold" style="font-size: 16px; font-weight: 700; color: #1f2933; margin: 0; line-height: 1.2;">PT. VINTAMA PERKASA NUSANTARA</h2>
+            <div class="text-xs" style="font-size: 10px; color: #64748b; margin-top: 3px; font-style: italic;">
+                Heavy Equipment and Transportation Service
+            </div>
+            <div class="text-xs" style="font-size: 10px; color: #64748b; margin-top: 4px; line-height: 1.4;">
+                Ruko Asia Tropis AT 16 No.39, Kab. Bekasi
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoice Info -->
     <div class="flex justify-between items-start mb-4">
         <div>
             <h1>INVOICE</h1>
@@ -182,30 +199,48 @@
         </div>
     </div>
 
-    <div class="mt-6 flex justify-between">
-        <div class="text-xs">
-            Dicetak pada: {{ now()->format('d M Y H:i') }}<br>
-            Dibuat oleh: {{ $invoice->createdBy->name ?? '-' }}
+
+
+
+
+    <!-- Disclaimer Section -->
+    <div class="mt-6 pt-4" style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
+        <div class="text-xs" style="font-size: 10px; color: #64748b; line-height: 1.6;">
+            Dokumen ini dikeluarkan secara digital melalui sistem terintegrasi perusahaan.<br>
+            Validitas dan keakuratan data telah melalui proses verifikasi internal.<br>
+            Segala bentuk perubahan mengikuti kebijakan dan prosedur perusahaan yang berlaku.
         </div>
+    </div>
+
+    <!-- QR Code (Left) and Wet Signature (Right) -->
+    <div class="mt-4 flex justify-between items-end" style="margin-top: 16px; display: flex; justify-content: space-between; align-items: flex-end;">
+        <!-- QR Code Section (Left) -->
+        <div class="text-center" style="text-align: center;">
+            <div style="display: inline-block; padding: 8px; background: #ffffff; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.08);">
+                @if($invoice->signature)
+                    {!! QrCode::size(110)->generate(
+                        'INV: ' . $invoice->invoice_number . "\n" .
+                        'DATE: ' . $invoice->invoice_date->format('Y-m-d') . "\n" .
+                        'SIG: ' . $invoice->signature . "\n" .
+                        'GEN: Vintama Perkasa Nusantara'
+                    ) !!}
+                @else
+                    <div style="width: 110px; height: 110px; background: #f3f4f6; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #9ca3af;">
+                        No Signature
+                    </div>
+                @endif
+            </div>
+            <div class="text-xs" style="font-size: 9px; color: #9ca3af; margin-top: 6px; letter-spacing: 0.5px; font-weight: 500;">
+                Digital Signature – Secure Document
+            </div>
+        </div>
+        
+        <!-- Wet Signature Section (Right) -->
         <div class="text-right text-sm" style="width: 40%;">
             <div class="mb-6">Hormat kami,</div>
             <div style="margin-top:48px;border-top:1px solid #d0d7de;padding-top:4px;">(________________________)</div>
         </div>
     </div>
-
-    @if($invoice->isApproved())
-    <div class="mt-6 pt-4" style="margin-top: 24px; padding-top: 16px; border-top: 2px solid #059669;">
-        <div class="text-xs" style="font-size: 10px; color: #059669;">
-            <div class="font-bold mb-1" style="font-weight: 700; margin-bottom: 4px; font-size: 11px;">✓ INVOICE APPROVED</div>
-            <div style="color: #64748b; line-height: 1.5;">
-                Invoice ini telah mendapatkan persetujuan dari <strong>{{ $invoice->approvedBy->name }}</strong> pada <strong>{{ $invoice->approved_at->format('d F Y, H:i') }} WIB</strong>.
-            </div>
-            <div style="color: #64748b; margin-top: 4px; line-height: 1.5;">
-                Dokumen ini sah dan dapat digunakan sebagai bukti transaksi resmi.
-            </div>
-        </div>
-    </div>
-    @endif
 
     <div class="mt-4 text-center no-print">
         <button onclick="window.print()" style="padding:6px 12px;border:1px solid #d0d7de;border-radius:4px;background:#111827;color:#fff;cursor:pointer;">

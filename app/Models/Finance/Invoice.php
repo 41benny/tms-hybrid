@@ -345,6 +345,13 @@ class Invoice extends Model
                 $invoice->invoice_number = static::generateNumber();
             }
             
+            // Generate signature: XXXX-XXXX-XXXX format
+            if (empty($invoice->signature)) {
+                $invoice->signature = strtoupper(\Illuminate\Support\Str::random(4)) . '-' . 
+                                     strtoupper(\Illuminate\Support\Str::random(4)) . '-' . 
+                                     strtoupper(\Illuminate\Support\Str::random(4));
+            }
+            
             // Only set created_by if auth is available and user is logged in
             if (app()->bound('auth') && auth()->hasUser()) {
                 $invoice->created_by = auth()->id();
