@@ -83,10 +83,12 @@ class DriverAdvance extends Model
 
     /**
      * Get remaining amount that can still be requested
+     * This should exclude deductions (savings + guarantee) since those are not paid to driver
      */
     public function getRemainingToRequestAttribute(): float
     {
-        $remaining = (float) $this->amount - $this->total_requested;
+        // Total amount minus deductions minus what's already been requested
+        $remaining = (float) $this->amount - $this->total_deductions - $this->total_requested;
         return $remaining > 0 ? $remaining : 0.0;
     }
 
@@ -171,12 +173,12 @@ class DriverAdvance extends Model
 
     /**
      * Scope: Driver advances that still have remaining amount to be requested
-     * Status is pending or dp_paid and total_requested < amount
+     * Status is pending or dp_paid and (amount - deductions - total_requested) > 0
      */
     public function scopeOutstanding($query)
     {
         return $query->whereIn('status', ['pending', 'dp_paid'])
-            ->whereRaw('(amount - (SELECT COALESCE(SUM(amount),0) FROM payment_requests WHERE driver_advance_id = driver_advances.id)) > 0');
+            ->whereRaw('(amount - COALESCE(deduction_savings, 0) - COALESCE(deduction_guarantee, 0) - (SELECT COALESCE(SUM(amount),0) FROM payment_requests WHERE driver_advance_id = driver_advances.id)) > 0');
     }
 
     /**
@@ -185,6 +187,6 @@ class DriverAdvance extends Model
     public function scopeFullyRequested($query)
     {
         return $query->whereIn('status', ['pending', 'dp_paid'])
-            ->whereRaw('(amount - (SELECT COALESCE(SUM(amount),0) FROM payment_requests WHERE driver_advance_id = driver_advances.id)) = 0');
+            ->whereRaw('(amount - COALESCE(deduction_savings, 0) - COALESCE(deduction_guarantee, 0) - (SELECT COALESCE(SUM(amount),0) FROM payment_requests WHERE driver_advance_id = driver_advances.id)) = 0');
     }
 }
