@@ -617,6 +617,28 @@
                     sidebar.classList.add('collapsed');
                 }
 
+                // ========================================
+                // RESTORE SIDEBAR SCROLL POSITION
+                // ========================================
+                const savedScrollPos = sessionStorage.getItem('sidebar-scroll-position');
+                if (savedScrollPos) {
+                    sidebar.scrollTop = parseInt(savedScrollPos, 10);
+                }
+
+                // SAVE SIDEBAR SCROLL POSITION before navigation
+                sidebar.addEventListener('scroll', function() {
+                    sessionStorage.setItem('sidebar-scroll-position', sidebar.scrollTop);
+                });
+
+                // Also save scroll position when clicking any link
+                const allLinks = sidebar.querySelectorAll('a');
+                allLinks.forEach(link => {
+                    link.addEventListener('click', function() {
+                        sessionStorage.setItem('sidebar-scroll-position', sidebar.scrollTop);
+                    });
+                });
+                // ========================================
+
                 // Add simple tooltips for nav items (using their text labels)
                 const navItems = document.querySelectorAll('#sidebar .nav-item');
                 navItems.forEach(function (item) {
