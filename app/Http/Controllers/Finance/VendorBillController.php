@@ -388,10 +388,20 @@ class VendorBillController extends Controller
 
     /**
      * Return related job order info (aggregated from legs) for popup display.
+     * 
+     * Optimized: Added shipmentLegs to eager loading to avoid N+1 queries.
      */
     public function getJobInfo(VendorBill $vendor_bill)
     {
-        $vendor_bill->load(['items.shipmentLeg.jobOrder.customer', 'items.shipmentLeg.jobOrder.sales', 'items.shipmentLeg.jobOrder.items', 'items.shipmentLeg']);
+        // Eager load all necessary relationships including shipmentLegs for leg_count
+        $vendor_bill->load([
+            'items.shipmentLeg.jobOrder.customer', 
+            'items.shipmentLeg.jobOrder.sales', 
+            'items.shipmentLeg.jobOrder.items', 
+            'items.shipmentLeg.jobOrder.shipmentLegs', // Added to avoid N+1 on leg_count
+            'items.shipmentLeg'
+        ]);
+        
         $jobOrders = collect();
         foreach ($vendor_bill->items as $item) {
             if ($item->shipmentLeg && $item->shipmentLeg->jobOrder) {
@@ -417,7 +427,7 @@ class VendorBillController extends Controller
                 'origin' => $jo->origin,
                 'destination' => $jo->destination,
                 'cargo_summary' => $cargoSummary,
-                'leg_count' => $jo->shipmentLegs()->count(),
+                'leg_count' => $jo->shipmentLegs->count(), // Use collection count instead of query
             ];
         });
 
