@@ -14,6 +14,7 @@
     <form action="{{ route('invoices.update', $invoice) }}" method="POST" id="invoiceForm" onsubmit="submitInvoiceFormWithScroll(this)">
         @csrf
         @method('PUT')
+        <input type="hidden" name="status" value="{{ $invoice->status }}">
 
         <x-card class="p-6">
             {{-- Header Section --}}
@@ -193,9 +194,9 @@
 
                 @if(isset($previewItems) && count($previewItems) > 0)
                     <div class="space-y-4" id="invoice-items-container" data-next-index="{{ count($previewItems) }}">
-                        @php 
+                        @php
                             $subtotalPreview = 0;
-                            $lastItemType = null;
+                            $lastItemExcludeTax = null;
                         @endphp
                         @foreach($previewItems as $index => $item)
                             @php
@@ -203,14 +204,15 @@
                                 $price = (float) $item['unit_price'];
                                 $amount = $qty * $price;
                                 $subtotalPreview += $amount;
-                                
-                                $currentItemType = $item['item_type'] ?? 'other';
-                                $showSeparator = $lastItemType === 'job_order' && in_array($currentItemType, ['insurance_billable', 'additional_cost_billable']);
-                                $lastItemType = $currentItemType;
+
+                                // Detect billable items: items with exclude_tax = true and has shipment_leg_id (insurance billable)
+                                $currentExcludeTax = !empty($item['exclude_tax']);
+                                $isFirstBillableItem = ($lastItemExcludeTax === false || $lastItemExcludeTax === null) && $currentExcludeTax === true;
+                                $lastItemExcludeTax = $currentExcludeTax;
                             @endphp
-                            
+
                             {{-- Separator between main items and billable items --}}
-                            @if($showSeparator)
+                            @if($isFirstBillableItem)
                                 <div class="flex items-center gap-3 py-3">
                                     <div class="flex-1 border-t-2 border-dashed border-amber-300 dark:border-amber-700"></div>
                                     <span class="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider px-3 py-1 bg-amber-50 dark:bg-amber-900/20 rounded-full">
@@ -219,7 +221,7 @@
                                     <div class="flex-1 border-t-2 border-dashed border-amber-300 dark:border-amber-700"></div>
                                 </div>
                             @endif
-                            
+
                             <div class="border border-slate-200 dark:border-slate-700 rounded-lg p-4 bg-slate-50 dark:bg-slate-800/30">
                                 {{-- Hidden Fields --}}
                                 <input type="hidden" name="items[{{ $index }}][job_order_id]" value="{{ $item['job_order_id'] ?? '' }}">

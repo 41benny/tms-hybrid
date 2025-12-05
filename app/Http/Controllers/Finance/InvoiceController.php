@@ -93,9 +93,30 @@ class InvoiceController extends Controller
 
         // AJAX request for job orders list
         if ($request->ajax() && $request->has('load_job_orders')) {
+            // Get invoice status per JO (exclude cancelled invoices)
+            $invoicedJobOrders = \App\Models\Finance\InvoiceItem::query()
+                ->whereNotNull('job_order_id')
+                ->whereHas('invoice', function($q) {
+                    $q->where('status', '!=', 'cancelled');
+                })
+                ->with(['invoice:id,invoice_number,invoice_type,status'])
+                ->get()
+                ->groupBy('job_order_id')
+                ->map(function($items) {
+                    $invoices = $items->pluck('invoice')->unique('id');
+                    $hasDp = $invoices->where('invoice_type', 'down_payment')->isNotEmpty();
+                    $hasNormalOrFinal = $invoices->whereIn('invoice_type', ['normal', 'final'])->isNotEmpty();
+                    return [
+                        'has_dp' => $hasDp,
+                        'has_normal_or_final' => $hasNormalOrFinal,
+                        'invoice_numbers' => $invoices->pluck('invoice_number')->implode(', '),
+                    ];
+                });
+            
             return view('invoices.partials.job-order-list', [
                 'jobOrders' => $jobOrders,
-                'selectedJobOrderIds' => (array) $request->get('job_order_ids', [])
+                'selectedJobOrderIds' => (array) $request->get('job_order_ids', []),
+                'invoicedJobOrders' => $invoicedJobOrders,
             ]);
         }
         
@@ -106,10 +127,31 @@ class InvoiceController extends Controller
                 return response()->json(['error' => 'Customer not found'], 404);
             }
             
+            // Get invoice status per JO (exclude cancelled invoices)
+            $invoicedJobOrders = \App\Models\Finance\InvoiceItem::query()
+                ->whereNotNull('job_order_id')
+                ->whereHas('invoice', function($q) {
+                    $q->where('status', '!=', 'cancelled');
+                })
+                ->with(['invoice:id,invoice_number,invoice_type,status'])
+                ->get()
+                ->groupBy('job_order_id')
+                ->map(function($items) {
+                    $invoices = $items->pluck('invoice')->unique('id');
+                    $hasDp = $invoices->where('invoice_type', 'down_payment')->isNotEmpty();
+                    $hasNormalOrFinal = $invoices->whereIn('invoice_type', ['normal', 'final'])->isNotEmpty();
+                    return [
+                        'has_dp' => $hasDp,
+                        'has_normal_or_final' => $hasNormalOrFinal,
+                        'invoice_numbers' => $invoices->pluck('invoice_number')->implode(', '),
+                    ];
+                });
+            
             return view('invoices.partials.job-order-modal', [
                 'selectedCustomer' => $selectedCustomer,
                 'statusFilter' => $statusFilter,
-                'jobOrders' => $jobOrders
+                'jobOrders' => $jobOrders,
+                'invoicedJobOrders' => $invoicedJobOrders,
             ]);
         }
 

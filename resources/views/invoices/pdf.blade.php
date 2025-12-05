@@ -72,7 +72,6 @@
                 <div><span class="font-bold">Nomor:</span> {{ $invoice->invoice_number }}</div>
                 <div><span class="font-bold">Tanggal:</span> {{ $invoice->invoice_date?->format('d M Y') }}</div>
                 <div><span class="font-bold">Jatuh Tempo:</span> {{ $invoice->due_date?->format('d M Y') }}</div>
-                <div><span class="font-bold">Status:</span> {{ strtoupper(str_replace('_',' ', $invoice->status)) }}</div>
             </div>
         </div>
         <div class="text-right">
@@ -153,10 +152,12 @@
                     <td class="text-sm">PPN</td>
                     <td class="text-right text-sm">{{ number_format($tax, 2, ',', '.') }}</td>
                 </tr>
+                @if($discount > 0)
                 <tr>
                     <td class="text-sm">Diskon</td>
                     <td class="text-right text-sm">-{{ number_format($discount, 2, ',', '.') }}</td>
                 </tr>
+                @endif
                 <tr class="border-bottom">
                     <td colspan="2"></td>
                 </tr>
@@ -166,7 +167,7 @@
                 </tr>
                 @if($invoice->show_pph23)
                 <tr>
-                    <td class="text-sm" style="color: #d97706;">PPh 23 (Estimasi)</td>
+                    <td class="text-sm" style="color: #d97706;">PPh 23</td>
                     <td class="text-right text-sm" style="color: #d97706;">-{{ number_format($pph23, 2, ',', '.') }}</td>
                 </tr>
                 <tr class="border-bottom">
