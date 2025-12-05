@@ -507,45 +507,61 @@
                         <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">= (Nilai Pertanggungan × Rate%) + Biaya Admin</p>
                     </div>
 
-                    <x-input
-                        name="billable_rate"
-                        type="number"
-                        step="0.0001"
-                        label="Rate untuk Customer (%)"
-                        :value="old('billable_rate', $leg->mainCost?->billable_rate ?? 0)"
-                        placeholder="e.g., 0.1500"
-                        id="billable_rate_edit"
-                    />
+                    {{-- Billable to Customer Section --}}
+                    <div class="border-t border-slate-200 dark:border-slate-700 pt-4 mt-4">
+                        <div class="flex items-center gap-3 mb-4">
+                            <input type="checkbox"
+                                   name="billable_to_customer"
+                                   id="billable_to_customer_edit"
+                                   value="1"
+                                   {{ old('billable_to_customer', $leg->mainCost?->premium_billable > 0 ? 1 : 0) ? 'checked' : '' }}
+                                   class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                            <label for="billable_to_customer_edit" class="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
+                                ✅ Billable to Customer (Ditagihkan ke Customer)
+                            </label>
+                        </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                            Premi yang Ditagihkan ke Customer (IDR) <span class="text-xs text-slate-500">(Auto)</span>
-                        </label>
-                        <input
-                            type="text"
-                            id="premium_billable_display_edit"
-                            readonly
-                            value="Rp {{ number_format($leg->mainCost?->premium_billable ?? 0, 0, ',', '.') }}"
-                            class="w-full rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-slate-900 dark:text-slate-100 font-medium"
-                        >
-                        <input type="hidden" name="premium_billable" id="premium_billable_edit" value="{{ old('premium_billable', $leg->mainCost?->premium_billable ?? 0) }}">
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">= Nilai Pertanggungan × Rate Customer (tanpa by admin)</p>
+                        <div id="billable_section_edit" class="grid grid-cols-1 md:grid-cols-2 gap-4 {{ old('billable_to_customer', $leg->mainCost?->premium_billable > 0 ? 1 : 0) ? '' : 'hidden' }}">
+                            <x-input
+                                name="billable_rate"
+                                type="number"
+                                step="0.0001"
+                                label="Rate untuk Customer (%)"
+                                :value="old('billable_rate', $leg->mainCost?->billable_rate ?? 0)"
+                                placeholder="e.g., 0.1500"
+                                id="billable_rate_edit"
+                            />
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                                    Premi yang Ditagihkan ke Customer (IDR) <span class="text-xs text-slate-500">(Auto)</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    id="premium_billable_display_edit"
+                                    readonly
+                                    value="Rp {{ number_format($leg->mainCost?->premium_billable ?? 0, 0, ',', '.') }}"
+                                    class="w-full rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-slate-900 dark:text-slate-100 font-medium"
+                                >
+                                <input type="hidden" name="premium_billable" id="premium_billable_edit" value="{{ old('premium_billable', $leg->mainCost?->premium_billable ?? 0) }}">
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">= Nilai Pertanggungan × Rate Customer (tanpa by admin)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800/50 rounded-lg p-4 border border-green-200 dark:border-green-800 {{ old('billable_to_customer', $leg->mainCost?->premium_billable > 0 ? 1 : 0) ? '' : 'hidden' }}" id="margin_section_edit">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-xs font-semibold text-green-600 dark:text-green-400 mb-1">Margin Premi</div>
+                                <div class="text-sm text-green-700 dark:text-green-300" id="margin_info_edit">Rp 0</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-2xl font-bold text-green-600 dark:text-green-400" id="margin_percentage_edit">0%</div>
+                                <div class="text-xs text-green-600 dark:text-green-400">Margin</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-                <div class="bg-white dark:bg-slate-800/50 rounded-lg p-4 border border-green-200 dark:border-green-800">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <div class="text-xs font-semibold text-green-600 dark:text-green-400 mb-1">Margin Premi</div>
-                            <div class="text-sm text-green-700 dark:text-green-300" id="margin_info_edit">Rp 0</div>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-2xl font-bold text-green-600 dark:text-green-400" id="margin_percentage_edit">0%</div>
-                            <div class="text-xs text-green-600 dark:text-green-400">Margin</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             {{-- PIC Costs (Fee/Insentif Perorangan) --}}
             <div id="pic_costs" class="hidden space-y-4">
@@ -814,17 +830,29 @@ document.addEventListener('DOMContentLoaded', function() {
     const pph23Input = document.getElementById('pph23_input');
     const totalDisplay = document.getElementById('vendor_total_display');
 
+    // PERBAIKAN: Cek apakah nilai PPN/PPh23 sudah ada dari database saat page load
+    // Jika sudah ada (bukan 0 atau undefined), tandai sebagai manually edited
+    // agar tidak di-override oleh auto-calculate
+    if (ppnInput && ppnInput.value !== '' && ppnInput.value !== undefined) {
+        // Nilai sudah ada dari database, jangan auto-calculate lagi
+        ppnInput.dataset.manuallyEdited = 'true';
+    }
+    if (pph23Input && pph23Input.value !== '' && pph23Input.value !== undefined) {
+        // Nilai sudah ada dari database, jangan auto-calculate lagi
+        pph23Input.dataset.manuallyEdited = 'true';
+    }
+
     function calculateVendorTax() {
         const vendorCost = parseFloat(vendorCostInput.value) || 0;
 
-        // Auto-calculate PPN 11% (bisa di-override manual)
+        // Auto-calculate PPN 11% (hanya jika belum pernah diisi/diedit)
         if (!ppnInput.dataset.manuallyEdited) {
             const ppn = Math.round(vendorCost * 0.11);
             ppnInput.value = ppn;
             document.getElementById('ppn_display').value = formatNumber(ppn);
         }
 
-        // Auto-calculate PPH 23 2% (bisa di-override manual)
+        // Auto-calculate PPH 23 2% (hanya jika belum pernah diisi/diedit)
         if (!pph23Input.dataset.manuallyEdited) {
             const pph23 = Math.round(vendorCost * 0.02);
             pph23Input.value = pph23;
@@ -859,15 +887,25 @@ document.addEventListener('DOMContentLoaded', function() {
     const pph23PelayaranInput = document.getElementById('pph23_pelayaran_input');
     const pelayaranTotalDisplay = document.getElementById('pelayaran_total_display');
 
+    // PERBAIKAN: Cek apakah nilai PPN/PPh23 pelayaran sudah ada dari database
+    if (ppnPelayaranInput && ppnPelayaranInput.value !== '' && ppnPelayaranInput.value !== undefined) {
+        ppnPelayaranInput.dataset.manuallyEdited = 'true';
+    }
+    if (pph23PelayaranInput && pph23PelayaranInput.value !== '' && pph23PelayaranInput.value !== undefined) {
+        pph23PelayaranInput.dataset.manuallyEdited = 'true';
+    }
+
     function calculatePelayaranTax() {
         const freightCost = parseFloat(freightCostInput.value) || 0;
 
+        // Auto-calculate hanya jika belum pernah diisi/diedit
         if (!ppnPelayaranInput.dataset.manuallyEdited) {
             const ppn = Math.round(freightCost * 0.11);
             ppnPelayaranInput.value = ppn;
             document.getElementById('ppn_pelayaran_display').value = formatNumber(ppn);
         }
 
+        // Auto-calculate hanya jika belum pernah diisi/diedit
         if (!pph23PelayaranInput.dataset.manuallyEdited) {
             const pph23 = Math.round(freightCost * 0.02);
             pph23PelayaranInput.value = pph23;
@@ -904,7 +942,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Setup formatted input for admin fee (biaya admin) - Edit mode
     setupFormattedInput('admin_fee_display_edit', 'admin_fee_edit');
 
-    // Trigger calculations on page load
+    // Trigger calculations on page load - HANYA untuk update total display
+    // Auto-calculate sudah dicegah oleh flag manuallyEdited di atas
     if (vendorCostInput && parseFloat(vendorCostInput.value) > 0) {
         calculateVendorTax();
     }
@@ -957,6 +996,29 @@ document.addEventListener('DOMContentLoaded', function() {
     if (premiumRateEdit) premiumRateEdit.addEventListener('input', calculateInsurancePremiumEdit);
     if (adminFeeEdit) adminFeeEdit.addEventListener('input', calculateInsurancePremiumEdit);
     if (billableRateEdit) billableRateEdit.addEventListener('input', calculateInsurancePremiumEdit);
+
+    // Handle Billable to Customer checkbox for Insurance (Edit)
+    const billableCheckboxEdit = document.getElementById('billable_to_customer_edit');
+    const billableSectionEdit = document.getElementById('billable_section_edit');
+    const marginSectionEdit = document.getElementById('margin_section_edit');
+
+    if (billableCheckboxEdit) {
+        billableCheckboxEdit.addEventListener('change', function() {
+            if (this.checked) {
+                billableSectionEdit.classList.remove('hidden');
+                marginSectionEdit.classList.remove('hidden');
+            } else {
+                billableSectionEdit.classList.add('hidden');
+                marginSectionEdit.classList.add('hidden');
+                // Reset billable rate to 0 when unchecked
+                if (billableRateEdit) billableRateEdit.value = 0;
+            }
+            // Recalculate premium after toggle
+            if (typeof calculateInsurancePremiumEdit === 'function') {
+                calculateInsurancePremiumEdit();
+            }
+        });
+    }
 
     // Calculate on page load if editing insurance leg
     if (insuredValueEdit) {

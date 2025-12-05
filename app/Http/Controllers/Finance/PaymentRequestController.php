@@ -498,4 +498,97 @@ class PaymentRequestController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+    /**
+     * Batasi akses vendor bill hanya untuk JO milik sales terkait.
+     */
+    private function authorizeVendorBillForSales(VendorBill $bill, ?int $salesProfileId = null): void
+    {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+        if (! $user || $user->role !== User::ROLE_SALES) {
+            return;
+        }
+
+        $salesProfile = $salesProfileId ? $user->salesProfile : $user->salesProfile;
+        if (! $salesProfile) {
+            abort(403, 'Sales profile tidak ditemukan');
+        }
+
+        $owned = $bill->items()->whereHas('shipmentLeg.jobOrder', function ($q) use ($salesProfile) {
+            $q->where('sales_id', $salesProfile->id);
+        })->exists();
+
+        if (! $owned) {
+            abort(403, 'Anda tidak berhak mengakses vendor bill ini');
+        }
+    }
+
+    /**
+     * Batasi akses driver advance hanya untuk JO milik sales terkait.
+     */
+    private function authorizeDriverAdvanceForSales($driverAdvance, ?int $salesProfileId = null): void
+    {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+        if (! $user || $user->role !== User::ROLE_SALES) {
+            return;
+        }
+
+        $salesProfile = $salesProfileId ? $user->salesProfile : $user->salesProfile;
+        if (! $salesProfile) {
+            abort(403, 'Sales profile tidak ditemukan');
+        }
+
+        // Check if the driver advance's shipment leg belongs to a job order owned by this sales
+        if ($driverAdvance->shipmentLeg && $driverAdvance->shipmentLeg->jobOrder) {
+            if ($driverAdvance->shipmentLeg->jobOrder->sales_id !== $salesProfile->id) {
+                abort(403, 'Anda tidak berhak mengakses driver advance ini');
+            }
+        } else {
+            abort(403, 'Driver advance tidak terkait dengan job order yang valid');
+        }
+    }
+
+    /**
+     * Batasi akses payment request hanya untuk yang terkait dengan JO milik sales.
+     */
+    private function authorizeForSales(PaymentRequest $paymentRequest): void
+    {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+        if (! $user || $user->role !== User::ROLE_SALES) {
+            return;
+        }
+
+        $salesProfile = $user->salesProfile;
+        if (! $salesProfile) {
+            abort(403, 'Sales profile tidak ditemukan');
+        }
+
+        // Check vendor bill type
+        if ($paymentRequest->payment_type === 'vendor_bill' && $paymentRequest->vendorBill) {
+            $owned = $paymentRequest->vendorBill->items()->whereHas('shipmentLeg.jobOrder', function ($q) use ($salesProfile) {
+                $q->where('sales_id', $salesProfile->id);
+            })->exists();
+
+            if (! $owned) {
+                abort(403, 'Anda tidak berhak mengakses payment request ini');
+            }
+        }
+        // Check trucking/driver advance type
+        elseif ($paymentRequest->payment_type === 'trucking' && $paymentRequest->driverAdvance) {
+            if ($paymentRequest->driverAdvance->shipmentLeg && $paymentRequest->driverAdvance->shipmentLeg->jobOrder) {
+                if ($paymentRequest->driverAdvance->shipmentLeg->jobOrder->sales_id !== $salesProfile->id) {
+                    abort(403, 'Anda tidak berhak mengakses payment request ini');
+                }
+            }
+        }
+        // For manual payment requests, allow if user is the requester
+        elseif ($paymentRequest->payment_type === 'manual') {
+            if ($paymentRequest->requested_by !== $user->id) {
+                abort(403, 'Anda tidak berhak mengakses payment request ini');
+            }
+        }
+    }
 }

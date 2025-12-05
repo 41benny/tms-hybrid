@@ -193,20 +193,38 @@
 
                 @if(isset($previewItems) && count($previewItems) > 0)
                     <div class="space-y-4" id="invoice-items-container" data-next-index="{{ count($previewItems) }}">
-                        @php $subtotalPreview = 0; @endphp
+                        @php 
+                            $subtotalPreview = 0;
+                            $lastItemType = null;
+                        @endphp
                         @foreach($previewItems as $index => $item)
                             @php
                                 $qty = (float) $item['quantity'];
                                 $price = (float) $item['unit_price'];
                                 $amount = $qty * $price;
                                 $subtotalPreview += $amount;
+                                
+                                $currentItemType = $item['item_type'] ?? 'other';
+                                $showSeparator = $lastItemType === 'job_order' && in_array($currentItemType, ['insurance_billable', 'additional_cost_billable']);
+                                $lastItemType = $currentItemType;
                             @endphp
+                            
+                            {{-- Separator between main items and billable items --}}
+                            @if($showSeparator)
+                                <div class="flex items-center gap-3 py-3">
+                                    <div class="flex-1 border-t-2 border-dashed border-amber-300 dark:border-amber-700"></div>
+                                    <span class="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider px-3 py-1 bg-amber-50 dark:bg-amber-900/20 rounded-full">
+                                        📋 Biaya Tambahan (Billable)
+                                    </span>
+                                    <div class="flex-1 border-t-2 border-dashed border-amber-300 dark:border-amber-700"></div>
+                                </div>
+                            @endif
+                            
                             <div class="border border-slate-200 dark:border-slate-700 rounded-lg p-4 bg-slate-50 dark:bg-slate-800/30">
                                 {{-- Hidden Fields --}}
                                 <input type="hidden" name="items[{{ $index }}][job_order_id]" value="{{ $item['job_order_id'] ?? '' }}">
                                 <input type="hidden" name="items[{{ $index }}][shipment_leg_id]" value="{{ $item['shipment_leg_id'] ?? '' }}">
                                 <input type="hidden" name="items[{{ $index }}][item_type]" value="{{ $item['item_type'] ?? 'other' }}">
-                                <input type="hidden" name="items[{{ $index }}][exclude_tax]" value="{{ $item['exclude_tax'] ?? 0 }}">
 
                                 <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
                                     <div class="md:col-span-2">
@@ -236,7 +254,20 @@
                                         </div>
                                     </div>
                                 </div>
-                                {{-- Tombol Hapus Baris (Optional, bisa ditambahkan nanti) --}}
+                                
+                                {{-- Checkbox untuk Exclude Tax --}}
+                                <div class="mt-3 flex items-center gap-2">
+                                    <input type="checkbox" 
+                                           name="items[{{ $index }}][exclude_tax]" 
+                                           id="exclude_tax_{{ $index }}"
+                                           value="1"
+                                           {{ !empty($item['exclude_tax']) ? 'checked' : '' }}
+                                           class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                                    <label for="exclude_tax_{{ $index }}" class="text-xs text-slate-600 dark:text-slate-400 cursor-pointer">
+                                        <span class="font-medium">Exclude dari PPN</span>
+                                        <span class="text-slate-500 dark:text-slate-500"> (Item ini tidak dikenakan pajak)</span>
+                                    </label>
+                                </div>
                             </div>
                         @endforeach
                     </div>
@@ -314,6 +345,24 @@
                     <input type="hidden" id="invoice_subtotal_value" value="{{ $subtotalPreview }}">
 
                     <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700 space-y-2">
+                        {{-- Breakdown: Taxable vs Non-Taxable --}}
+                        <div class="pb-2 mb-2 border-b border-slate-200 dark:border-slate-700">
+                            <div class="flex justify-between items-center text-xs text-slate-600 dark:text-slate-400">
+                                <span class="flex items-center gap-1">
+                                    <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                                    Subtotal Kena PPN
+                                </span>
+                                <span id="display_taxable_subtotal" class="font-medium text-blue-600 dark:text-blue-400">Rp 0</span>
+                            </div>
+                            <div class="flex justify-between items-center text-xs text-slate-600 dark:text-slate-400 mt-1">
+                                <span class="flex items-center gap-1">
+                                    <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                                    Subtotal Tidak Kena PPN
+                                </span>
+                                <span id="display_nontaxable_subtotal" class="font-medium text-amber-600 dark:text-amber-400">Rp 0</span>
+                            </div>
+                        </div>
+                        
                         <div class="flex justify-between items-center text-sm">
                             <span class="text-slate-600 dark:text-slate-400">Subtotal</span>
                             <span class="font-medium text-slate-900 dark:text-slate-100" id="display_subtotal">
@@ -905,6 +954,47 @@
                 return 'Rp ' + num.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
             }
 
+            // Function to calculate taxable vs non-taxable breakdown
+            function updateTaxableBreakdown() {
+                let taxableSubtotal = 0;
+                let nontaxableSubtotal = 0;
+                
+                // Loop through all items
+                document.querySelectorAll('[name^="items["][name$="][exclude_tax]"]').forEach(checkbox => {
+                    const match = checkbox.name.match(/items\[(\d+)\]/);
+                    if (!match) return;
+                    
+                    const index = match[1];
+                    const qtyInput = document.querySelector(`[name="items[${index}][quantity]"]`);
+                    const priceInput = document.querySelector(`[name="items[${index}][unit_price]"]`);
+                    
+                    if (qtyInput && priceInput) {
+                        const qty = parseFloat(qtyInput.value) || 0;
+                        const price = parseFloat(priceInput.value) || 0;
+                        const amount = qty * price;
+                        
+                        if (checkbox.checked) {
+                            nontaxableSubtotal += amount;
+                        } else {
+                            taxableSubtotal += amount;
+                        }
+                    }
+                });
+                
+                // Update display
+                const displayTaxableSubtotal = document.getElementById('display_taxable_subtotal');
+                const displayNontaxableSubtotal = document.getElementById('display_nontaxable_subtotal');
+                
+                if (displayTaxableSubtotal) {
+                    displayTaxableSubtotal.textContent = formatRupiah(taxableSubtotal);
+                }
+                if (displayNontaxableSubtotal) {
+                    displayNontaxableSubtotal.textContent = formatRupiah(nontaxableSubtotal);
+                }
+                
+                return { taxableSubtotal, nontaxableSubtotal };
+            }
+
             function recalcTotals() {
                 const subtotal = parseFloat(subtotalHidden.value || '0') || 0;
                 let tax = parseFloat(taxInput.value || '0') || 0;
@@ -920,11 +1010,16 @@
                 if(displayTotal) displayTotal.textContent = formatRupiah(total);
                 if(displayPph23) displayPph23.textContent = '- ' + formatRupiah(pph23);
                 if(displayNetPayable) displayNetPayable.textContent = formatRupiah(netPayable);
+                
+                // Update taxable breakdown
+                updateTaxableBreakdown();
             }
 
             function recalcPpn() {
                 if (!subtotalHidden || !taxInput || !taxCodeSelect) return;
-                const subtotal = parseFloat(subtotalHidden.value || '0') || 0;
+                
+                // Get taxable subtotal only (exclude items with exclude_tax checked)
+                const { taxableSubtotal } = updateTaxableBreakdown();
                 const code = taxCodeSelect.value;
 
                 let rate = 0.11; // Default
@@ -936,10 +1031,10 @@
                 const dppNilaiLainRow = document.getElementById('dpp_nilai_lain_row');
                 const displayDppNilaiLain = document.getElementById('display_dpp_nilai_lain');
 
-                let taxBase = subtotal;
+                let taxBase = taxableSubtotal; // Use taxable subtotal only
                 if (dppNilaiLainCheckbox && dppNilaiLainCheckbox.checked) {
-                    // Formula: Total Main Item * 11/12
-                    const dppNilaiLain = subtotal * (11 / 12);
+                    // Formula: Taxable Subtotal * 11/12
+                    const dppNilaiLain = taxableSubtotal * (11 / 12);
                     taxBase = dppNilaiLain;
 
                     // Override rate to 12% as per regulation (effectively 11% of original)
@@ -973,16 +1068,26 @@
 
             if (btnCalcPph23) {
                 btnCalcPph23.addEventListener('click', function() {
-                    const subtotal = parseFloat(subtotalHidden.value || '0') || 0;
-                    const pph = subtotal * 0.02;
+                    // Calculate PPh23 from TAXABLE subtotal only (not all items)
+                    const { taxableSubtotal } = updateTaxableBreakdown();
+                    const pph = taxableSubtotal * 0.02;
                     if(pph23Input) {
                         pph23Input.value = pph.toFixed(2);
                         recalcTotals();
                     }
                 });
             }
+            
+            // Add event listeners to all exclude_tax checkboxes
+            document.querySelectorAll('[name^="items["][name$="][exclude_tax]"]').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    recalcPpn();
+                    recalcTotals();
+                });
+            });
 
             // Initial calc
+            updateTaxableBreakdown();
             recalcTotals();
 
             // Due date auto-calc
