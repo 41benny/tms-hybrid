@@ -495,7 +495,7 @@
                                 readonly
                                 class="w-full rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-slate-900 dark:text-slate-100 font-medium">
                             <input type="hidden" name="premium_billable" id="premium_billable">
-                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">= Nilai Pertanggungan × Rate Customer</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">= (Nilai Pertanggungan × Rate Customer) + Biaya Admin</p>
                         </div>
                     </div>
                 </div>
@@ -854,8 +854,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (premiumCost) premiumCost.value = cost.toFixed(2);
         if (premiumCostDisplay) premiumCostDisplay.value = 'Rp ' + new Intl.NumberFormat('id-ID').format(cost);
 
-        // Calculate Premium Billable = Insured Value × Billable Rate% (without admin)
-        const billable = insured * billRate / 100;
+        // Calculate Premium Billable = (Insured Value × Billable Rate%) + Admin Fee
+        const billable = (insured * billRate / 100) + admin;
         if (premiumBillable) premiumBillable.value = billable.toFixed(2);
         if (premiumBillableDisplay) premiumBillableDisplay.value = 'Rp ' + new Intl.NumberFormat('id-ID').format(billable);
 
