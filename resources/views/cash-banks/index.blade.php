@@ -24,69 +24,29 @@
         </div>
     @endif
 
-    <x-card>
+    <x-card :noPadding="true">
         <x-slot:header>
-            <div class="flex flex-col md:flex-row md:items-center md:justify-end gap-4">
-                <x-button :href="route('cash-banks.create')" variant="primary">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Transaksi Baru
-                </x-button>
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="text-xl font-semibold">Kas/Bank</div>
+                <div class="flex gap-2">
+                    <x-button :href="route('cash-banks.create')" variant="primary">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Transaksi Baru
+                    </x-button>
+                </div>
             </div>
         </x-slot:header>
 
-        <form method="get" class="grid grid-cols-1 md:grid-cols-6 gap-3">
-            <select name="cash_bank_account_id" class="rounded-lg bg-[var(--bg-surface-secondary)] border border-[var(--border-color)] px-3 py-2 text-sm text-[var(--color-text-main)] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                <option value="">Semua Akun</option>
-                @foreach($accounts as $a)
-                    <option value="{{ $a->id }}" @selected(request('cash_bank_account_id')==$a->id)>{{ $a->name }}</option>
-                @endforeach
-            </select>
-            <select name="sumber" class="rounded-lg bg-[var(--bg-surface-secondary)] border border-[var(--border-color)] px-3 py-2 text-sm text-[var(--color-text-main)] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                <option value="">Semua Sumber</option>
-                @foreach(['customer_payment','vendor_payment','expense','other_in','other_out'] as $s)
-                    <option value="{{ $s }}" @selected(request('sumber')==$s)>{{ ucwords(str_replace('_',' ', $s)) }}</option>
-                @endforeach
-            </select>
-            <input type="date" name="from" value="{{ request('from') }}" placeholder="Dari Tanggal" class="rounded-lg bg-[var(--bg-surface-secondary)] border border-[var(--border-color)] px-3 py-2 text-sm text-[var(--color-text-main)] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
-            <input type="date" name="to" value="{{ request('to') }}" placeholder="Sampai Tanggal" class="rounded-lg bg-[var(--bg-surface-secondary)] border border-[var(--border-color)] px-3 py-2 text-sm text-[var(--color-text-main)] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
-            <div></div>
-            <x-button type="submit" variant="outline">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                </svg>
-                Filter
-            </x-button>
-        </form>
-    </x-card>
-
-    <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-        <x-card title="Ringkasan">
-            <div class="text-sm space-y-1">
-                <div class="flex justify-between">
-                    <span>Total Masuk:</span>
-                    <b class="text-green-600 dark:text-green-400">Rp {{ number_format($summary['in'] ?? 0, 0, ',', '.') }}</b>
-                </div>
-                <div class="flex justify-between">
-                    <span>Total Keluar:</span>
-                    <b class="text-red-600 dark:text-red-400">Rp {{ number_format($summary['out'] ?? 0, 0, ',', '.') }}</b>
-                </div>
-                <div class="flex justify-between pt-2 border-t border-slate-200 dark:border-slate-700">
-                    <span>Net:</span>
-                    <b class="text-blue-600 dark:text-blue-400">Rp {{ number_format($summary['net'] ?? 0, 0, ',', '.') }}</b>
-                </div>
-            </div>
-        </x-card>
-    </div>
-
-    <x-card :noPadding="true" class="mt-4">
+        <form method="get" id="filter-form">
         <div class="overflow-x-auto">
         <table class="min-w-full text-sm">
             <thead class="text-left border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+                {{-- Row 1: Column Headers --}}
                 <tr class="text-slate-600 dark:text-slate-400 text-xs uppercase">
                     <th class="px-3 py-3 text-center">No</th>
-                    <th class="px-3 py-3">Tanggal</th>
+                    <th class="px-3 py-3" style="min-width: 100px">Tanggal</th>
                     <th class="px-3 py-3">No Voucher</th>
                     <th class="px-3 py-3">Nama</th>
                     <th class="px-3 py-3">Deskripsi</th>
@@ -96,6 +56,48 @@
                     <th class="px-3 py-3 text-right">Saldo</th>
                     <th class="px-3 py-3">Kategori</th>
                     <th class="px-3 py-3 text-center">Aksi</th>
+                </tr>
+                {{-- Row 2: Filters --}}
+                <tr class="bg-slate-100 dark:bg-slate-900/50 text-xs">
+                    <th class="px-1 py-1"></th>
+                    <th class="px-1 py-1">
+                        <div class="flex flex-col gap-1">
+                            <input type="date" name="from" value="{{ request('from') }}" class="w-full px-1 py-1 text-[10px] rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onchange="this.form.submit()">
+                            <input type="date" name="to" value="{{ request('to') }}" class="w-full px-1 py-1 text-[10px] rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onchange="this.form.submit()">
+                        </div>
+                    </th>
+                    <th class="px-1 py-1">
+                        <input type="text" name="voucher_number" value="{{ request('voucher_number') }}" placeholder="Cari Voucher..." class="w-full px-2 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onkeypress="if(event.keyCode==13){this.form.submit()}">
+                    </th>
+                    <th class="px-1 py-1">
+                        <input type="text" name="recipient" value="{{ request('recipient') }}" placeholder="Cari Nama..." class="w-full px-2 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onkeypress="if(event.keyCode==13){this.form.submit()}">
+                    </th>
+                    <th class="px-1 py-1">
+                        <input type="text" name="description" value="{{ request('description') }}" placeholder="Cari Deskripsi..." class="w-full px-2 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onkeypress="if(event.keyCode==13){this.form.submit()}">
+                    </th>
+                    <th class="px-1 py-1">
+                        <select name="cash_bank_account_id" class="w-full px-1 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onchange="this.form.submit()">
+                            <option value="">Semua</option>
+                            @foreach($accounts as $a)
+                                <option value="{{ $a->id }}" @selected(request('cash_bank_account_id')==$a->id)>{{ $a->name }}</option>
+                            @endforeach
+                        </select>
+                    </th>
+                    {{-- Empty filters for Amount columns --}}
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th class="px-1 py-1">
+                        <select name="sumber" class="w-full px-1 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onchange="this.form.submit()">
+                            <option value="">Semua</option>
+                            @foreach(['customer_payment','vendor_payment','expense','other_in','other_out'] as $s)
+                                <option value="{{ $s }}" @selected(request('sumber')==$s)>{{ ucwords(str_replace('_',' ', $s)) }}</option>
+                            @endforeach
+                        </select>
+                    </th>
+                    <th class="px-1 py-1 text-center">
+                        <a href="{{ route('cash-banks.index') }}" class="text-xs text-red-600 hover:text-red-800" title="Reset Filter">Reset</a>
+                    </th>
                 </tr>
             </thead>
             <tbody>
@@ -120,11 +122,6 @@
                         $kredit = $netAmount;
                         $signedNet = -$netAmount;
                     }
-                    
-                    // Specific logic: Display Saldo refers to Balance AFTER this transaction.
-                    // But our loop goes Backwards (desc).
-                    // So $runningBalance (initially Top Balance) IS the balance after this transaction (Row 1).
-                    // Then for Row 2, we subtract this row's contribution.
                     
                     $currentBalance = $runningBalance;
                     $runningBalance -= $signedNet; 
@@ -193,7 +190,7 @@
                         </span>
                     </td>
                     <td class="px-3 py-3">
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 justify-center">
                             <a href="{{ route('cash-banks.show', $t) }}" class="inline-flex items-center px-2 py-1 text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded" title="Detail">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -230,8 +227,24 @@
                 </tr>
             @endforelse
             </tbody>
+            <tfoot class="bg-slate-50 dark:bg-slate-800 border-t-2 border-slate-200 dark:border-slate-700 font-bold text-sm">
+                <tr>
+                    <td colspan="6" class="px-3 py-3 text-right uppercase text-slate-500 dark:text-slate-400">Total Ringkasan:</td>
+                    <td class="px-3 py-3 text-right text-green-600 dark:text-green-400">
+                        Rp {{ number_format($summary['in'] ?? 0, 0, ',', '.') }}
+                    </td>
+                    <td class="px-3 py-3 text-right text-red-600 dark:text-red-400">
+                        Rp {{ number_format($summary['out'] ?? 0, 0, ',', '.') }}
+                    </td>
+                    <td class="px-3 py-3 text-right text-blue-600 dark:text-blue-400">
+                        Rp {{ number_format($summary['net'] ?? 0, 0, ',', '.') }}
+                    </td>
+                    <td colspan="2"></td>
+                </tr>
+            </tfoot>
         </table>
         </div>
+        </form>
     </x-card>
 
     <div class="mt-4">{{ $transactions->links() }}</div>
