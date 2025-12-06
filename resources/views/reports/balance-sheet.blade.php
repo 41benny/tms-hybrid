@@ -136,6 +136,13 @@
                                 <td class="px-4 py-1.5 text-right font-mono">{{ number_format($r['balance'], 2, ',', '.') }}</td>
                             </tr>
                         @endforeach
+                        
+                        {{-- Current Earnings Row --}}
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                            <td class="px-4 py-1.5 pl-8 font-semibold text-slate-600 dark:text-slate-400">Laba Rugi Tahun Berjalan</td>
+                            <td class="px-4 py-1.5 text-right font-mono font-semibold text-slate-600 dark:text-slate-400">{{ number_format($currentEarnings, 2, ',', '.') }}</td>
+                        </tr>
+                        
                         <tr class="font-bold bg-slate-100 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700">
                             <td class="px-4 py-2">Total Ekuitas</td>
                             <td class="px-4 py-2 text-right font-mono">{{ number_format($totals['equity'], 2, ',', '.') }}</td>

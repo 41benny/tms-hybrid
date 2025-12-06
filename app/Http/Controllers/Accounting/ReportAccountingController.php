@@ -212,6 +212,7 @@ class ReportAccountingController extends Controller
         $types = ['asset', 'liability', 'equity'];
         $accounts = ChartOfAccount::whereIn('type', $types)->orderBy('type')->orderBy('code')->get();
 
+        // 1. Get Balance Sheet Accounts Movements & Opening
         $moves = DB::table('journal_lines as jl')
             ->join('journals as j', 'j.id', '=', 'jl.journal_id')
             ->where('j.status', 'posted')
@@ -219,22 +220,56 @@ class ReportAccountingController extends Controller
             ->groupBy('jl.account_id')
             ->selectRaw('jl.account_id, SUM(jl.debit) as d, SUM(jl.credit) as c')
             ->get()->keyBy('account_id');
+
         $opens = DB::table('opening_balances')->where('year', $year)
             ->groupBy('account_id')->selectRaw('account_id, SUM(debit) as d, SUM(credit) as c')->get()->keyBy('account_id');
 
         $sections = ['asset' => [], 'liability' => [], 'equity' => []];
         $totals = ['asset' => 0, 'liability' => 0, 'equity' => 0];
+
         foreach ($accounts as $acc) {
             $bal = (($opens->get($acc->id)->d ?? 0) - ($opens->get($acc->id)->c ?? 0))
                 + (($moves->get($acc->id)->d ?? 0) - ($moves->get($acc->id)->c ?? 0));
+            
+            // For Liability and Equity, Balance is usually Credit (Negative in our Debit-Credit logic if Asset is positive)
+            // But usually we display them as positive numbers on the report.
+            // Asset: Debit - Credit (Positive)
+            // Liability/Equity: Credit - Debit (Positive)
+            
             if (abs($bal) < 0.00001) {
                 continue;
             }
-            $sections[$acc->type][] = ['acc' => $acc, 'balance' => $bal];
-            $totals[$acc->type] += $bal;
+
+            // Adjust sign for display
+            $displayBal = $bal;
+            if ($acc->type == 'liability' || $acc->type == 'equity') {
+                $displayBal = -1 * $bal;
+            }
+
+            $sections[$acc->type][] = ['acc' => $acc, 'balance' => $displayBal];
+            $totals[$acc->type] += $displayBal;
         }
 
-        return view('reports.balance-sheet', compact('asOf', 'sections', 'totals'));
+        // 2. Calculate Current Year Earnings (Revenue - Expense)
+        // From start of year to As Of date
+        $startOfYear = $year . '-01-01';
+
+        // Get all Revenue and Expense movements
+        $plMoves = DB::table('journal_lines as jl')
+            ->join('journals as j', 'j.id', '=', 'jl.journal_id')
+            ->join('chart_of_accounts as a', 'a.id', '=', 'jl.account_id')
+            ->where('j.status', 'posted')
+            ->whereBetween('j.journal_date', [$startOfYear, $asOf])
+            ->whereIn('a.type', ['revenue', 'expense'])
+            ->selectRaw('SUM(jl.credit) - SUM(jl.debit) as net_amount')
+            ->value('net_amount');
+            
+        $currentEarnings = (float) ($plMoves ?? 0);
+
+        // Add Current Earnings to Equity Total
+        $totals['equity'] += $currentEarnings;
+
+        return view('reports.balance-sheet', compact('asOf', 'sections', 'totals', 'currentEarnings'));
     }
 
     public function cashFlow(Request $request)
