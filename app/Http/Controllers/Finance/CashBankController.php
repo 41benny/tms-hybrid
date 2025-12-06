@@ -19,12 +19,15 @@ class CashBankController extends Controller
     {
         $accounts = CashBankAccount::orderBy('name')->get();
         $query = CashBankTransaction::query()->with(['account', 'invoice', 'vendorBill', 'customer', 'vendor']);
+        
         if ($acc = $request->get('cash_bank_account_id')) {
             $query->where('cash_bank_account_id', $acc);
         }
         if ($src = $request->get('sumber')) {
             $query->where('sumber', $src);
         }
+        
+        // Date filters for Main Query
         if ($from = $request->get('from')) {
             $query->whereDate('tanggal', '>=', $from);
         }
@@ -37,15 +40,69 @@ class CashBankController extends Controller
             $query->whereNull('voided_at');
         }
         
-        $transactions = $query->latest('id')->paginate(20)->withQueryString();
+        $transactions = $query->latest('tanggal')->latest('id')->paginate(20)->withQueryString();
 
-        $summary = [
-            'in' => (clone $query)->where('jenis', 'cash_in')->sum('amount'),
-            'out' => (clone $query)->where('jenis', 'cash_out')->sum('amount'),
-        ];
+        // --- Summary Calculation (Net Amount) ---
+        // Net = Amount - PPh23 - Admin
+        $netRaw = "(amount - COALESCE(withholding_pph23, 0) - COALESCE(admin_fee, 0))";
+        
+        // Clone for Summary (In/Out/Net)
+        $summaryQuery = (clone $query);
+        // We need to re-apply the base where clauses if we cloned from a modified query? 
+        // $query is already modified with wheres.
+        // But for Summary we want the sum of the *current filtered view*.
+        // Need to be careful with 'latest' and 'paginate' which are not applied to $query object itself yet (paginate returns result, but query builder keeps state? No, paginate is terminal... wait, $query is Builder).
+        
+        // Summary 'In'
+        $summary['in'] = (clone $query)->where('jenis', 'cash_in')->sum(\DB::raw($netRaw));
+        // Summary 'Out'
+        $summary['out'] = (clone $query)->where('jenis', 'cash_out')->sum(\DB::raw($netRaw));
         $summary['net'] = $summary['in'] - $summary['out'];
 
-        return view('cash-banks.index', compact('transactions', 'accounts', 'summary'));
+        // --- Running Balance Calculation ---
+        // 1. Calculate Opening Balance (Before 'from' date, match other filters)
+        $openingBalance = 0;
+        if ($from) {
+            $openingQuery = CashBankTransaction::query();
+            if ($acc) $openingQuery->where('cash_bank_account_id', $acc);
+            if ($src) $openingQuery->where('sumber', $src);
+            if (!$request->get('show_voided')) $openingQuery->whereNull('voided_at');
+            
+            $openingQuery->whereDate('tanggal', '<', $from);
+            
+            $signedNetRaw = "(CASE WHEN jenis='cash_in' THEN 1 ELSE -1 END) * " . $netRaw;
+            $openingBalance = $openingQuery->sum(\DB::raw($signedNetRaw));
+        }
+
+        // 2. Calculate Total Movement in Current View (All Pages)
+        $signedNetRaw = "(CASE WHEN jenis='cash_in' THEN 1 ELSE -1 END) * " . $netRaw;
+        $totalInView = (clone $query)->sum(\DB::raw($signedNetRaw));
+
+        // 3. Calculate Movement of Skipped Items (Newer items on previous pages)
+        // Since we order by Latest, "Skipped" items are the NEWEST ones (Start of list).
+        // The "Top Balance" of the current page = Opening + TotalInView - (Sum of Newer Items)
+        
+        $skippedSum = 0;
+        if ($transactions->currentPage() > 1) {
+            $skip = ($transactions->currentPage() - 1) * $transactions->perPage();
+            // We need to sum the first $skip items of the query.
+            // Efficient way: re-run query with limit/take.
+            $skippedSum = (clone $query)
+                ->latest('tanggal')->latest('id')
+                ->take($skip)
+                ->get() // We have to get() to sum in PHP to be accurate with ordering or use subquery
+                ->sum(function($t) {
+                    $net = $t->amount - ($t->withholding_pph23 ?? 0) - ($t->admin_fee ?? 0);
+                    return $t->jenis === 'cash_in' ? $net : -$net;
+                });
+        }
+
+        // Balance at the very top of the current page list (Latest date on this page)
+        // Logic: End Balance (Latest) = Opening + Total Movement.
+        // Balance at Top of Page = (Opening + TotalInView) - SkippedSum (Newer items not shown).
+        $pageStartBalance = $openingBalance + $totalInView - $skippedSum;
+
+        return view('cash-banks.index', compact('transactions', 'accounts', 'summary', 'pageStartBalance'));
     }
 
     /**

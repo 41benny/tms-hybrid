@@ -100,21 +100,34 @@
             </thead>
             <tbody>
             @php
-                $runningBalance = 0;
+                $runningBalance = $pageStartBalance;
                 $startNumber = ($transactions->currentPage() - 1) * $transactions->perPage() + 1;
             @endphp
             @forelse($transactions as $index => $t)
                 @php
-                    // Calculate running balance
+                    // Calculate Net Amount
+                    $netAmount = $t->amount - ($t->withholding_pph23 ?? 0) - ($t->admin_fee ?? 0);
+                    
+                    // Display checks
+                    $isNetDiff = abs($netAmount - $t->amount) > 0.01;
+                    
                     if ($t->jenis === 'cash_in') {
-                        $runningBalance += $t->amount;
-                        $debet = $t->amount;
+                        $debet = $netAmount;
                         $kredit = 0;
+                        $signedNet = $netAmount;
                     } else {
-                        $runningBalance -= $t->amount;
                         $debet = 0;
-                        $kredit = $t->amount;
+                        $kredit = $netAmount;
+                        $signedNet = -$netAmount;
                     }
+                    
+                    // Specific logic: Display Saldo refers to Balance AFTER this transaction.
+                    // But our loop goes Backwards (desc).
+                    // So $runningBalance (initially Top Balance) IS the balance after this transaction (Row 1).
+                    // Then for Row 2, we subtract this row's contribution.
+                    
+                    $currentBalance = $runningBalance;
+                    $runningBalance -= $signedNet; 
                 @endphp
                 <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
                     <td class="px-3 py-3 text-center text-slate-500">{{ $startNumber + $index }}</td>
@@ -142,21 +155,31 @@
                     </td>
                     <td class="px-3 py-3 text-right font-mono">
                         @if($debet > 0)
-                            <span class="text-green-600 dark:text-green-400">Rp {{ number_format($debet, 0, ',', '.') }}</span>
+                            <div class="flex flex-col items-end">
+                                <span class="text-green-600 dark:text-green-400 font-bold">Rp {{ number_format($debet, 0, ',', '.') }}</span>
+                                @if($isNetDiff)
+                                    <span class="text-[10px] text-slate-400 line-through" title="Gross: {{ number_format($t->amount, 0) }}">Rp {{ number_format($t->amount, 0, ',', '.') }}</span>
+                                @endif
+                            </div>
                         @else
                             <span class="text-slate-400">-</span>
                         @endif
                     </td>
                     <td class="px-3 py-3 text-right font-mono">
                         @if($kredit > 0)
-                            <span class="text-red-600 dark:text-red-400">Rp {{ number_format($kredit, 0, ',', '.') }}</span>
+                             <div class="flex flex-col items-end">
+                                <span class="text-red-600 dark:text-red-400 font-bold">Rp {{ number_format($kredit, 0, ',', '.') }}</span>
+                                @if($isNetDiff)
+                                    <span class="text-[10px] text-slate-400 line-through" title="Gross: {{ number_format($t->amount, 0) }}">Rp {{ number_format($t->amount, 0, ',', '.') }}</span>
+                                @endif
+                            </div>
                         @else
                             <span class="text-slate-400">-</span>
                         @endif
                     </td>
                     <td class="px-3 py-3 text-right font-mono font-bold">
-                        <span class="{{ $runningBalance >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400' }}">
-                            Rp {{ number_format($runningBalance, 0, ',', '.') }}
+                        <span class="{{ $currentBalance >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400' }}">
+                            Rp {{ number_format($currentBalance, 0, ',', '.') }}
                         </span>
                     </td>
                     <td class="px-3 py-3">
