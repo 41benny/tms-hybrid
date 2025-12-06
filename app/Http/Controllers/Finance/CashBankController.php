@@ -27,15 +27,55 @@ class CashBankController extends Controller
             $query->where('sumber', $src);
         }
         
-        // Date filters for Main Query
-        if ($from = $request->get('from')) {
+        // Date Filter (Single date exact match)
+        if ($date = $request->get('date')) {
+            $query->whereDate('tanggal', $date);
+        } elseif ($from = $request->get('from')) {
+            // Backward compatibility or range if needed
             $query->whereDate('tanggal', '>=', $from);
-        }
-        if ($to = $request->get('to')) {
-            $query->whereDate('tanggal', '<=', $to);
+            if ($to = $request->get('to')) {
+                $query->whereDate('tanggal', '<=', $to);
+            }
         }
         
-        // Exclude voided transactions by default (unless show_voided=1)
+        // Text Filters
+        if ($voucher = $request->get('voucher_number')) {
+            $query->where('voucher_number', 'like', "%{$voucher}%");
+        }
+        
+        if ($desc = $request->get('description')) {
+            $query->where('description', 'like', "%{$desc}%");
+        }
+        
+        if ($recipient = $request->get('recipient')) {
+            $query->where(function($q) use ($recipient) {
+                $q->where('recipient_name', 'like', "%{$recipient}%")
+                  ->orWhereHas('customer', fn($c) => $c->where('name', 'like', "%{$recipient}%"))
+                  ->orWhereHas('vendor', fn($v) => $v->where('name', 'like', "%{$recipient}%"));
+            });
+        }
+
+        // Amount Filters (Debit/Credit)
+        // Assumption: User searches for the Amount value.
+        // We compare against 'amount' column (Gross). 
+        // If exact searching net amounts is needed, logic would be more complex.
+        if ($debitSearch = $request->get('debit')) {
+            // Sanitize: remove non-numeric chars (e.g. dots, Rp) except comma/dot for decimal? 
+            // Let's assume input is integer-like "100000".
+            $val = str_replace(['.', ','], '', $debitSearch);
+            if (is_numeric($val)) {
+                $query->where('jenis', 'cash_in')->where('amount', $val);
+            }
+        }
+        
+        if ($creditSearch = $request->get('credit')) {
+            $val = str_replace(['.', ','], '', $creditSearch);
+            if (is_numeric($val)) {
+                $query->where('jenis', 'cash_out')->where('amount', $val);
+            }
+        }
+
+        // Exclude voided transactions by default
         if (!$request->get('show_voided')) {
             $query->whereNull('voided_at');
         }

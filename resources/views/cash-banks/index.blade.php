@@ -61,42 +61,42 @@
                 <tr class="bg-slate-100 dark:bg-slate-900/50 text-xs">
                     <th class="px-1 py-1"></th>
                     <th class="px-1 py-1">
-                        <div class="flex flex-col gap-1">
-                            <input type="date" name="from" value="{{ request('from') }}" class="w-full px-1 py-1 text-[10px] rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onchange="this.form.submit()">
-                            <input type="date" name="to" value="{{ request('to') }}" class="w-full px-1 py-1 text-[10px] rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onchange="this.form.submit()">
-                        </div>
+                        <input type="date" name="date" value="{{ request('date') }}" class="w-full px-1 py-1 text-[10px] rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onchange="this.form.submit()">
                     </th>
                     <th class="px-1 py-1">
-                        <input type="text" name="voucher_number" value="{{ request('voucher_number') }}" placeholder="Cari Voucher..." class="w-full px-2 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onkeypress="if(event.keyCode==13){this.form.submit()}">
+                        <input type="text" name="voucher_number" value="{{ request('voucher_number') }}" placeholder="Cari..." class="w-full px-2 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onkeypress="if(event.keyCode==13){this.form.submit()}">
                     </th>
                     <th class="px-1 py-1">
-                        <input type="text" name="recipient" value="{{ request('recipient') }}" placeholder="Cari Nama..." class="w-full px-2 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onkeypress="if(event.keyCode==13){this.form.submit()}">
+                        <input type="text" name="recipient" value="{{ request('recipient') }}" placeholder="Cari..." class="w-full px-2 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onkeypress="if(event.keyCode==13){this.form.submit()}">
                     </th>
                     <th class="px-1 py-1">
-                        <input type="text" name="description" value="{{ request('description') }}" placeholder="Cari Deskripsi..." class="w-full px-2 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onkeypress="if(event.keyCode==13){this.form.submit()}">
+                        <input type="text" name="description" value="{{ request('description') }}" placeholder="Cari..." class="w-full px-2 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onkeypress="if(event.keyCode==13){this.form.submit()}">
                     </th>
                     <th class="px-1 py-1">
                         <select name="cash_bank_account_id" class="w-full px-1 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onchange="this.form.submit()">
-                            <option value="">Semua</option>
+                            <option value="">All</option>
                             @foreach($accounts as $a)
                                 <option value="{{ $a->id }}" @selected(request('cash_bank_account_id')==$a->id)>{{ $a->name }}</option>
                             @endforeach
                         </select>
                     </th>
-                    {{-- Empty filters for Amount columns --}}
-                    <th></th>
-                    <th></th>
+                    <th class="px-1 py-1">
+                        <input type="text" name="debit" value="{{ request('debit') }}" placeholder="Cari..." class="w-full px-2 py-1 text-xs text-right rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onkeypress="if(event.keyCode==13){this.form.submit()}">
+                    </th>
+                    <th class="px-1 py-1">
+                        <input type="text" name="credit" value="{{ request('credit') }}" placeholder="Cari..." class="w-full px-2 py-1 text-xs text-right rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onkeypress="if(event.keyCode==13){this.form.submit()}">
+                    </th>
                     <th></th>
                     <th class="px-1 py-1">
                         <select name="sumber" class="w-full px-1 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onchange="this.form.submit()">
-                            <option value="">Semua</option>
+                            <option value="">All</option>
                             @foreach(['customer_payment','vendor_payment','expense','other_in','other_out'] as $s)
                                 <option value="{{ $s }}" @selected(request('sumber')==$s)>{{ ucwords(str_replace('_',' ', $s)) }}</option>
                             @endforeach
                         </select>
                     </th>
                     <th class="px-1 py-1 text-center">
-                        <a href="{{ route('cash-banks.index') }}" class="text-xs text-red-600 hover:text-red-800" title="Reset Filter">Reset</a>
+                        <a href="{{ route('cash-banks.index') }}" class="text-xs text-red-600 hover:text-red-800" title="Reset Filter">x</a>
                     </th>
                 </tr>
             </thead>
