@@ -130,12 +130,28 @@ class JournalService
         return $journal;
     }
 
+    protected function getCashAccountCode(CashBankTransaction $trx): string
+    {
+        // Ensure account is loaded
+        if (!$trx->relationLoaded('account')) {
+            $trx->load('account.chartOfAccount');
+        }
+
+        // Try to get specific COA from CashBankAccount
+        if ($trx->account && $trx->account->chartOfAccount) {
+            return $trx->account->chartOfAccount->code;
+        }
+        
+        // Fallback to global mapping
+        return $this->map('cash');
+    }
+
     public function postCustomerPayment(CashBankTransaction $trx): Journal
     {
         if ($j = $this->alreadyPosted('customer_payment', $trx->id)) {
             return $j;
         }
-        $cash = $this->map('cash');
+        $cash = $this->getCashAccountCode($trx);
         $ar = $this->map('ar');
         
         // Amount di sini adalah Total Invoice yang dilunasi (AR)
@@ -281,7 +297,7 @@ class JournalService
             return $j;
         }
         $ap = $this->map('ap');
-        $cash = $this->map('cash');
+        $cash = $this->getCashAccountCode($trx);
         
         // Amount di sini adalah Total Hutang yang dibayar (AP)
         $apAmount = (float) $trx->amount;
@@ -331,7 +347,7 @@ class JournalService
         if ($j = $this->alreadyPosted('expense', $trx->id)) {
             return $j;
         }
-        $cash = $this->map('cash');
+        $cash = $this->getCashAccountCode($trx);
         $expCode = $trx->accountCoa?->code ?? $this->map('expense_other');
         $amt = (float) $trx->amount;
         $lines = [
@@ -352,7 +368,7 @@ class JournalService
         if ($j = $this->alreadyPosted('other_in', $trx->id)) {
             return $j;
         }
-        $cash = $this->map('cash');
+        $cash = $this->getCashAccountCode($trx);
         $incomeCode = $trx->accountCoa?->code ?? $this->map('other_income');
         $amt = (float) $trx->amount;
         $lines = [
@@ -373,7 +389,7 @@ class JournalService
         if ($j = $this->alreadyPosted('other_out', $trx->id)) {
             return $j;
         }
-        $cash = $this->map('cash');
+        $cash = $this->getCashAccountCode($trx);
         $expenseCode = $trx->accountCoa?->code ?? $this->map('expense_other');
         $amt = (float) $trx->amount;
         $lines = [
@@ -482,7 +498,7 @@ class JournalService
             return $j;
         }
         
-        $cash = $this->map('cash');
+        $cash = $this->getCashAccountCode($trx);
         $driverPayable = $this->map('driver_payable'); // 2155 - Hutang Uang Jalan Supir
         
         $netAmount = (float) $trx->amount; // Net paid to driver
