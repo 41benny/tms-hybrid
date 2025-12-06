@@ -248,4 +248,124 @@
     </x-card>
 
     <div class="mt-4">{{ $transactions->links() }}</div>
+
+    <style>
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            word-break: break-word;
+        }
+
+        table {
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        table td {
+            white-space: normal;
+        }
+
+        /* Resizable columns */
+        table th {
+            position: relative;
+            user-select: none;
+            overflow: visible;
+        }
+
+        table th .resizer {
+            position: absolute;
+            top: 0;
+            right: -3px;
+            width: 6px;
+            cursor: col-resize;
+            user-select: none;
+            height: 100%;
+            z-index: 1;
+        }
+
+        table th .resizer:hover {
+            background-color: rgba(99, 102, 241, 0.5);
+        }
+
+        table th .resizer.resizing {
+            background-color: rgba(99, 102, 241, 0.7);
+        }
+
+        @media print {
+            .no-print, button, form, nav, aside {
+                display: none !important;
+            }
+            
+            table {
+                font-size: 10px;
+            }
+            
+            thead {
+                position: static !important;
+            }
+            
+            .resizer {
+                display: none !important;
+            }
+        }
+    </style>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(() => {
+            const table = document.querySelector('table');
+            if (!table) return;
+            
+            // Only target the first row headers for resizing
+            const cols = table.querySelectorAll('thead tr:first-child th');
+            
+            cols.forEach((col, index) => {
+                // Set initial width
+                if (!col.style.width) {
+                    col.style.width = (col.offsetWidth + 20) + 'px'; // Add buffer
+                }
+                
+                const resizer = document.createElement('div');
+                resizer.classList.add('resizer');
+                col.appendChild(resizer);
+                
+                let startX, startWidth;
+                
+                resizer.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    startX = e.pageX;
+                    startWidth = col.offsetWidth;
+                    
+                    resizer.classList.add('resizing');
+                    document.body.style.cursor = 'col-resize';
+                    document.body.style.userSelect = 'none';
+                    
+                    const mouseMoveHandler = function(e) {
+                        e.preventDefault();
+                        const width = startWidth + (e.pageX - startX);
+                        if (width > 50) { // minimum width
+                            col.style.width = width + 'px';
+                        }
+                    };
+                    
+                    const mouseUpHandler = function() {
+                        resizer.classList.remove('resizing');
+                        document.body.style.cursor = '';
+                        document.body.style.userSelect = '';
+                        document.removeEventListener('mousemove', mouseMoveHandler);
+                        document.removeEventListener('mouseup', mouseUpHandler);
+                    };
+                    
+                    document.addEventListener('mousemove', mouseMoveHandler);
+                    document.addEventListener('mouseup', mouseUpHandler);
+                });
+            });
+        }, 100);
+    });
+    </script>
 @endsection
