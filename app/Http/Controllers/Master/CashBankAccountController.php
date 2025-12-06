@@ -62,7 +62,7 @@ class CashBankAccountController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'code' => ['nullable', 'string', 'max:50'],
+            'code' => ['nullable', 'string', 'max:50', 'unique:cash_bank_accounts,code'],
             'type' => ['required', 'in:cash,bank'],
             'account_number' => ['nullable', 'string', 'max:100'],
             'bank_name' => ['nullable', 'string', 'max:255'],
@@ -119,7 +119,7 @@ class CashBankAccountController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'code' => ['nullable', 'string', 'max:50'],
+            'code' => ['nullable', 'string', 'max:50', 'unique:cash_bank_accounts,code,' . $cash_bank_account->id],
             'type' => ['required', 'in:cash,bank'],
             'account_number' => ['nullable', 'string', 'max:100'],
             'bank_name' => ['nullable', 'string', 'max:255'],

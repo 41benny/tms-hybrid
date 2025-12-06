@@ -21,8 +21,8 @@ class VoucherNumberService
         $tanggal = $tanggal ?? now();
         $account = CashBankAccount::findOrFail($cashBankAccountId);
         
-        // Get bank code (default to 'KSB' if not set)
-        $bankCode = $account->bank_code ?? 'KSB';
+        // Get bank code (prioritize 'code' field, then 'bank_code', default to 'KSB' if not set)
+        $bankCode = $account->code ?? $account->bank_code ?? 'KSB';
         
         // M untuk Masuk (cash_in), K untuk Keluar (cash_out)
         $direction = $jenis === 'cash_in' ? 'M' : 'K';

@@ -133,27 +133,28 @@
                     <td class="px-3 py-3 text-center text-slate-500">{{ $startNumber + $index }}</td>
                     <td class="px-3 py-3 whitespace-nowrap">
                         <div class="font-medium text-slate-900 dark:text-slate-100">{{ $t->tanggal->format('d/m/Y') }}</div>
-                        <div class="text-xs text-slate-500 dark:text-slate-400">{{ $t->tanggal->format('H:i') }}</div>
                     </td>
                     <td class="px-3 py-3">
-                        <div class="font-mono text-sm font-bold text-blue-600 dark:text-blue-400">{{ $t->voucher_number }}</div>
+                        <div class="text-sm font-bold text-blue-600 dark:text-blue-400">{{ $t->voucher_number }}</div>
                     </td>
                     <td class="px-3 py-3">
                         @php
                             $displayName = $t->recipient_name ?: ($t->customer?->name ?? $t->vendor?->name ?? '-');
                         @endphp
-                        <div class="font-medium text-slate-900 dark:text-slate-100">{{ $displayName }}</div>
+                        <div class="font-medium text-slate-900 dark:text-slate-100 truncate max-w-[150px]" title="{{ $displayName }}">
+                            {{ $displayName }}
+                        </div>
                     </td>
-                    <td class="px-3 py-3 max-w-xs">
+                    <td class="px-3 py-3 max-w-[200px]">
                         <div class="text-slate-700 dark:text-slate-300 truncate" title="{{ $t->description }}">
-                            {{ Str::limit($t->description, 50) ?: '-' }}
+                            {{ $t->description ?: '-' }}
                         </div>
                     </td>
                     <td class="px-3 py-3">
                         <div class="text-slate-900 dark:text-slate-100">{{ $t->account->name ?? '-' }}</div>
                         <div class="text-xs text-slate-500 dark:text-slate-400">{{ $t->account->account_number ?? '' }}</div>
                     </td>
-                    <td class="px-3 py-3 text-right font-mono">
+                    <td class="px-3 py-3 text-right">
                         @if($debet > 0)
                             <div class="flex flex-col items-end">
                                 <span class="text-green-600 dark:text-green-400 font-bold">Rp {{ number_format($debet, 0, ',', '.') }}</span>
@@ -165,7 +166,7 @@
                             <span class="text-slate-400">-</span>
                         @endif
                     </td>
-                    <td class="px-3 py-3 text-right font-mono">
+                    <td class="px-3 py-3 text-right">
                         @if($kredit > 0)
                              <div class="flex flex-col items-end">
                                 <span class="text-red-600 dark:text-red-400 font-bold">Rp {{ number_format($kredit, 0, ',', '.') }}</span>
@@ -177,7 +178,7 @@
                             <span class="text-slate-400">-</span>
                         @endif
                     </td>
-                    <td class="px-3 py-3 text-right font-mono font-bold">
+                    <td class="px-3 py-3 text-right font-bold">
                         <span class="{{ $currentBalance >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400' }}">
                             Rp {{ number_format($currentBalance, 0, ',', '.') }}
                         </span>
