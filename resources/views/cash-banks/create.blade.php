@@ -233,7 +233,7 @@
                         <!-- Suggestions will be populated by JavaScript -->
                     </div>
                 </div>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Hanya akun 6xxx dan 7xxx</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Pilih akun sesuai jenis transaksi (Aset, Hutang, Beban, dll)</p>
               </div>
               <div id="driver_advance_field" style="display: none;">
                   <label class="block text-sm mb-1">Driver Advance</label>
