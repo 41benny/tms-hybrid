@@ -667,8 +667,10 @@ class CashBankController extends Controller
                 $cargoUnit = 'unit'; // Default unit since job_order_items doesn't have unit column
                 $cargoDesc = $cargoItem ? $cargoItem->cargo_type : 'barang';
                 
-                // Determine if DP or full payment
-                $paymentType = ($advance->dp_amount > 0 && $advance->status === 'dp_paid') ? 'Pelunasan' : 'DP';
+                // Determine if DP or Pelunasan based on current status
+                // If status is 'pending', this will be the first payment (DP)
+                // If status is 'dp_paid', this is a settlement payment (Pelunasan)
+                $paymentType = ($advance->status === 'pending') ? 'DP' : 'Pelunasan';
                 
                 // Format: "Bayar [DP/Pelunasan] uang jalan [Driver] [Nopol] order [Customer] muat [Qty Unit Cargo] [Origin]-[Destination] [Job Number]"
                 $desc = sprintf(
@@ -853,7 +855,17 @@ class CashBankController extends Controller
      */
     public function show(CashBankTransaction $cash_bank)
     {
-        $cash_bank->load(['account', 'invoice', 'vendorBill', 'customer', 'vendor', 'accountCoa', 'invoicePayments.invoice']);
+        $cash_bank->load([
+            'account', 
+            'invoice', 
+            'vendorBill.vendorBillItems.shipmentLeg.jobOrder', 
+            'customer', 
+            'vendor', 
+            'accountCoa', 
+            'invoicePayments.invoice',
+            'driverAdvancePayments.driverAdvance.shipmentLeg.jobOrder',
+            'vendorBillPayments.vendorBill.vendorBillItems.shipmentLeg.jobOrder'
+        ]);
 
         return view('cash-banks.show', ['trx' => $cash_bank]);
     }

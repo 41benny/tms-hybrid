@@ -28,6 +28,36 @@
                     if ($invoices->isEmpty() && $trx->invoice) {
                         $invoices = collect([$trx->invoice]);
                     }
+
+                    // Get Job Orders from various sources
+                    $jobOrders = collect();
+                    
+                    // From invoices
+                    foreach($invoices as $invoice) {
+                        foreach($invoice->items as $item) {
+                            if($item->job_order_id) {
+                                $jobOrders->push($item->jobOrder);
+                            }
+                        }
+                    }
+                    
+                    // From vendor bill
+                    if($trx->vendorBill) {
+                        foreach($trx->vendorBill->vendorBillItems as $item) {
+                            if($item->shipmentLeg && $item->shipmentLeg->jobOrder) {
+                                $jobOrders->push($item->shipmentLeg->jobOrder);
+                            }
+                        }
+                    }
+                    
+                    // From driver advance payments
+                    foreach($trx->driverAdvancePayments as $payment) {
+                        if($payment->driverAdvance && $payment->driverAdvance->shipmentLeg && $payment->driverAdvance->shipmentLeg->jobOrder) {
+                            $jobOrders->push($payment->driverAdvance->shipmentLeg->jobOrder);
+                        }
+                    }
+                    
+                    $jobOrders = $jobOrders->unique('id');
                 @endphp
                 
                 <div>Invoice: 
@@ -43,6 +73,19 @@
                 </div>
                 
                 <div>Vendor Bill: {{ optional($trx->vendorBill)->vendor_bill_number ?: '-' }}</div>
+                
+                <div>Job Order:
+                    @if($jobOrders->isNotEmpty())
+                        @foreach($jobOrders as $jo)
+                            <a href="{{ route('job-orders.show', $jo) }}" class="text-blue-600 hover:underline">
+                                {{ $jo->job_number }}
+                            </a>@if(!$loop->last), @endif
+                        @endforeach
+                    @else
+                        -
+                    @endif
+                </div>
+                
                 <div>Customer: {{ optional($trx->customer)->name ?: '-' }}</div>
                 <div>Vendor: {{ optional($trx->vendor)->name ?: '-' }}</div>
                 <div>COA: {{ optional($trx->accountCoa)->code }} {{ optional($trx->accountCoa)->name }}</div>

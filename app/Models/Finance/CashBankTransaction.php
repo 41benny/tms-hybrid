@@ -76,4 +76,14 @@ class CashBankTransaction extends Model
     {
         return $this->hasMany(InvoiceTransactionPayment::class);
     }
+
+    public function driverAdvancePayments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\Models\Operations\DriverAdvancePayment::class);
+    }
+
+    public function vendorBillPayments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(VendorBillPayment::class);
+    }
 }
