@@ -196,17 +196,37 @@
     $rekeningNo   = optional($transaction->account)->account_number;
     $kategori     = ucwords(str_replace('_',' ', $transaction->sumber ?? '-'));
 
-    $penerima = $transaction->recipient_name ?: '-';
-    if($transaction->customer){ $penerima .= ' / '.$transaction->customer->name; }
-    if($transaction->vendor){ $penerima .= ' / '.$transaction->vendor->name; }
+    // Get recipient name (avoid duplication)
+    $penerima = $transaction->recipient_name ?: ($transaction->customer?->name ?? $transaction->vendor?->name ?? '-');
 
+    // Terbilang function
     $__words = null;
     try{
         if(class_exists(\Terbilang\Terbilang::class)){
             $__words = \Terbilang\Terbilang::make($transaction->amount);
         }
     }catch(\Throwable $e){}
-    if(!$__words){ $__words = trim($transaction->amount); }
+    
+    // Fallback terbilang if library not available
+    if(!$__words){
+        if(!function_exists('terbilang_simple')){
+            function terbilang_simple($x){
+                $x = abs((int)$x);
+                $angka = ["","satu","dua","tiga","empat","lima","enam","tujuh","delapan","sembilan","sepuluh","sebelas"];
+                if($x < 12) return " ".$angka[$x];
+                if($x < 20) return terbilang_simple($x-10)." belas";
+                if($x < 100) return terbilang_simple((int)($x/10))." puluh".terbilang_simple($x%10);
+                if($x < 200) return " seratus".terbilang_simple($x-100);
+                if($x < 1000) return terbilang_simple((int)($x/100))." ratus".terbilang_simple($x%100);
+                if($x < 2000) return " seribu".terbilang_simple($x-1000);
+                if($x < 1000000) return terbilang_simple((int)($x/1000))." ribu".terbilang_simple($x%1000);
+                if($x < 1000000000) return terbilang_simple((int)($x/1000000))." juta".terbilang_simple($x%1000000);
+                if($x < 1000000000000) return terbilang_simple((int)($x/1000000000))." miliar".terbilang_simple($x%1000000000);
+                return "";
+            }
+        }
+        $__words = trim(terbilang_simple((int)$transaction->amount));
+    }
 @endphp
 
 <div class="toolbar no-print">
@@ -221,7 +241,8 @@
 @endphp
 
 <div class="sheet">
-    <div class="ribbon"></div>
+    <!-- Ribbon: Red for cash_out, Blue for cash_in -->
+    <div class="ribbon" style="background: linear-gradient(90deg, {{ $transaction->jenis === 'cash_out' ? '#ef4444, #dc2626' : 'var(--gold), var(--gold-deep)' }})"></div>
 
     <div class="header">
         <div class="brand">
