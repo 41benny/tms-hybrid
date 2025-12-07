@@ -1,0 +1,47 @@
+Pembayaran Pajak PPh (ke akun hutang pajak biasanya)
+
+Pembayaran PPN (hutang pajak)
+
+Pembayaran Retribusi (by belum ada akun)
+
+Pembayaran Perizinan / Legalitas  (by belum ada akun)
+Pembelian Komputer/Laptop (asset)
+
+Pembelian Peralatan Kantor(asset)
+
+Pembelian Mesin / Peralatan(asset)
+
+Pembelian Kendaraan Operasional (asset/hutang bank)
+
+Renovasi / Perbaikan Besar (Capitalized) ((asset))
+Beban Solar / Bensin
+
+Beban Parkir / Tol
+
+Beban Pengiriman / Ekspedisi
+Beban ATK (Alat Tulis Kantor)
+
+Beban Listrik & Air
+
+Beban Internet & Komunikasi
+
+Beban Sewa Kantor
+
+Beban Kebersihan
+
+Beban Keamanan
+
+Beban Perjalanan Dinas
+
+Beban Representasi / Jamuan
+Beban Gaji Karyawan
+
+Beban Lembur
+
+Beban Tunjangan
+
+Beban BPJS Ketenagakerjaan
+
+Beban BPJS Kesehatan
+
+Beban Komisi / Insentif

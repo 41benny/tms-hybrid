@@ -117,6 +117,34 @@ class ChartOfAccountsSeeder extends Seeder
             ['code' => '7240', 'name' => 'Beban Pajak Bank', 'type' => 'expense'],
             ['code' => '7250', 'name' => 'Beban Selisih Kurs', 'type' => 'expense'],
             ['code' => '7290', 'name' => 'Beban Lain-lain Lainnya', 'type' => 'expense'],
+            
+            // ====== BEBAN TAMBAHAN (Added 2025-12-07) ======
+            // SDM & Payroll
+            ['code' => '6115', 'name' => 'Beban Lembur', 'type' => 'expense'],
+            ['code' => '6117', 'name' => 'Beban Tunjangan Karyawan', 'type' => 'expense'],
+            ['code' => '6118', 'name' => 'Beban BPJS Ketenagakerjaan', 'type' => 'expense'],
+            ['code' => '6119', 'name' => 'Beban BPJS Kesehatan', 'type' => 'expense'],
+            ['code' => '6125', 'name' => 'Beban Komisi & Insentif', 'type' => 'expense'],
+            ['code' => '6135', 'name' => 'Beban Pengobatan', 'type' => 'expense'],
+            
+            // Operasional Kantor
+            ['code' => '6131', 'name' => 'Beban Kebersihan', 'type' => 'expense'],
+            ['code' => '6132', 'name' => 'Beban Keamanan', 'type' => 'expense'],
+            ['code' => '6133', 'name' => 'Beban Representasi & Jamuan', 'type' => 'expense'],
+            ['code' => '6134', 'name' => 'Beban Konsumsi & Rumah Tangga Kantor', 'type' => 'expense'],
+            
+            // Marketing & Umum
+            ['code' => '6180', 'name' => 'Beban Iklan & Promosi', 'type' => 'expense'],
+            ['code' => '6181', 'name' => 'Beban Sumbangan & CSR', 'type' => 'expense'],
+            
+            // Pajak & Legal
+            ['code' => '6182', 'name' => 'Beban Retribusi', 'type' => 'expense'],
+            ['code' => '6183', 'name' => 'Beban Perizinan & Legalitas', 'type' => 'expense'],
+            
+            // Penyusutan
+            ['code' => '6300', 'name' => 'Beban Penyusutan', 'type' => 'expense', 'is_postable' => false],
+            ['code' => '6310', 'name' => 'Beban Penyusutan Kendaraan', 'type' => 'expense'],
+            ['code' => '6320', 'name' => 'Beban Penyusutan Peralatan', 'type' => 'expense'],
         ];
 
         foreach ($rows as $row) {
