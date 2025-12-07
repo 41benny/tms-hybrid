@@ -99,6 +99,21 @@
 .dark #invoices-scroll::-webkit-scrollbar-thumb:hover {
     background: rgb(100 116 139);
 }
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+    animation: fadeInUp 0.3s ease-out;
+}
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-down {
+    animation: fadeInDown 0.3s ease-out;
+}
 </style>
 @endpush
 
@@ -837,6 +852,33 @@
                     Confirm Selection
                 </button>
             </div>
+        </div>
+    </div>
+</div>
+
+{{-- Modal Confirmation Helper --}}
+<div id="confirmationModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[10000] hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-xl shadow-2xl max-w-md w-full p-6 animate-fade-in-up">
+        <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+                <svg class="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2" id="confirmTitle">Konfirmasi</h3>
+                <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed" id="confirmMessage">
+                    Are you sure?
+                </p>
+            </div>
+        </div>
+        <div class="mt-6 flex justify-end gap-3">
+            <button type="button" onclick="closeConfirmationModal()" class="px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-sm font-medium">
+                Batal
+            </button>
+            <button type="button" id="confirmActionBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-lg shadow-blue-500/30">
+                Ya, Lanjutkan
+            </button>
         </div>
     </div>
 </div>
@@ -1762,16 +1804,25 @@ function autoCalculatePPh23() {
     }
     
     
+    
     // Check if PPh23 is currently from invoice
     if (isPPh23FromInvoice) {
-        const confirmRecalc = confirm('PPh 23 saat ini sudah sesuai dengan data Invoice terpilih.\n\nApakah Anda yakin ingin menghitung ulang menjadi 2% dari Nominal? (Ini akan menimpa nilai PPh 23 dari Invoice)');
-        if (!confirmRecalc) {
-            return;
-        }
-        // If confirmed, reset flag so we can calculate manually
-        isPPh23FromInvoice = false;
+        showConfirmationModal(
+            'Hitung Ulang PPh 23?',
+            'PPh 23 saat ini <b>sudah sesuai</b> dengan data Invoice terpilih.<br><br>Apakah Anda yakin ingin menghitung ulang menjadi 2% dari Nominal? Ini akan <b>menimpa</b> nilai PPh 23 dari Invoice.',
+            function() {
+                // If confirmed logic
+                isPPh23FromInvoice = false;
+                performCalculatePPh23(amount);
+            }
+        );
+        return;
     }
 
+    performCalculatePPh23(amount);
+}
+
+function performCalculatePPh23(amount) {
     // Calculate 2% of amount (for manual entry)
     const pph23 = amount * 0.02;
     
@@ -1780,7 +1831,7 @@ function autoCalculatePPh23() {
     
     // Show notification
     const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 bg-blue-500 text-white px-4 py-3 rounded-lg shadow-lg z-50 max-w-sm';
+    notification.className = 'fixed top-4 right-4 bg-blue-500 text-white px-4 py-3 rounded-lg shadow-lg z-50 max-w-sm animate-fade-in-down';
     notification.innerHTML = `
         <div class="flex items-start gap-2">
             <svg class="w-5 h-5 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1795,9 +1846,62 @@ function autoCalculatePPh23() {
         </div>
     `;
     document.body.appendChild(notification);
-    setTimeout(() => notification.remove(), 3000);
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateY(-20px)';
+        notification.style.transition = 'all 0.3s ease-out';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
     
     updateTotalBank();
+}
+
+// ===== CUSTOM MODAL HELPER FUNCTIONS =====
+let onConfirmCallback = null;
+
+function showConfirmationModal(title, message, callback) {
+    document.getElementById('confirmTitle').innerText = title;
+    document.getElementById('confirmMessage').innerHTML = message;
+    
+    const modal = document.getElementById('confirmationModal');
+    modal.classList.remove('hidden');
+    
+    // Animate in
+    const content = modal.querySelector('div');
+    content.classList.remove('scale-95', 'opacity-0');
+    content.classList.add('scale-100', 'opacity-100');
+    
+    onConfirmCallback = callback;
+    document.body.style.overflow = 'hidden';
+}
+
+function closeConfirmationModal() {
+    const modal = document.getElementById('confirmationModal');
+    
+    // Animate out
+    const content = modal.querySelector('div');
+    content.classList.remove('scale-100', 'opacity-100');
+    content.classList.add('scale-95', 'opacity-0');
+    
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+        onConfirmCallback = null;
+    }, 200); // Wait for animation
+}
+
+// Setup confirm button listener on load
+document.addEventListener('DOMContentLoaded', function() {
+    const btn = document.getElementById('confirmActionBtn');
+    if (btn) {
+        btn.addEventListener('click', function() {
+            if (onConfirmCallback) {
+                onConfirmCallback();
+            }
+            closeConfirmationModal();
+        });
+    }
+});
 }
 
 function clearPPh23() {
