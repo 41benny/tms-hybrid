@@ -162,22 +162,33 @@
             <div>
                 <label class="block text-sm mb-1">Sumber <span class="text-red-500">*</span></label>
                 <select
-                    name="sumber"
-                    id="sumber"
+                    id="ui_source"
                     class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                     required
                     onchange="toggleFields()"
                 >
-                            <option value="customer_payment" @selected(old('sumber', $prefill['sumber'] ?? '') == 'customer_payment')>Customer Payment</option>
-                            <option value="vendor_payment" @selected(old('sumber', $prefill['sumber'] ?? '') == 'vendor_payment')>Vendor Payment</option>
-                            <option value="expense" @selected(old('sumber', $prefill['sumber'] ?? '') == 'expense')>Expense</option>
-                            <option value="other_in" @selected(old('sumber', $prefill['sumber'] ?? '') == 'other_in')>Other Income</option>
-                            <option value="other_out" @selected(old('sumber', $prefill['sumber'] ?? '') == 'other_out')>Other Expense</option>
-                            <option value="uang_jalan" @selected(old('sumber', $prefill['sumber'] ?? '') == 'uang_jalan')>Driver Advance / Savings</option>
-                        </select>
-                        @error('sumber')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                          @enderror
+                    <option value="customer_payment" @selected(in_array(old('sumber', $prefill['sumber'] ?? ''), ['customer_payment']))>Customer Payment</option>
+                    <option value="vendor_payment" @selected(in_array(old('sumber', $prefill['sumber'] ?? ''), ['vendor_payment']))>Vendor Payment</option>
+                    <option value="general" @selected(in_array(old('sumber', $prefill['sumber'] ?? ''), ['expense', 'other_in', 'other_out']))>Transaksi Umum</option>
+                    <option value="uang_jalan" @selected(old('sumber', $prefill['sumber'] ?? '') == 'uang_jalan')>Driver Advance / Savings</option>
+                </select>
+                <input type="hidden" name="sumber" id="sumber" value="{{ old('sumber', $prefill['sumber'] ?? 'customer_payment') }}">
+                @error('sumber')
+                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+            <div id="transaction_type_field" style="display: none;">
+                <label class="block text-sm mb-1">Jenis Transaksi <span class="text-red-500">*</span></label>
+                <div class="flex gap-4">
+                    <label class="flex items-center cursor-pointer">
+                        <input type="radio" name="transaction_type" value="out" class="mr-2" onchange="updateTransactionType()" checked>
+                        <span class="text-sm">Pengeluaran</span>
+                    </label>
+                    <label class="flex items-center cursor-pointer">
+                        <input type="radio" name="transaction_type" value="in" class="mr-2" onchange="updateTransactionType()">
+                        <span class="text-sm">Pemasukan</span>
+                    </label>
+                </div>
             </div>
             <div id="invoice_field" style="display: none;">
                 <label class="block text-sm mb-1">Invoices</label>
@@ -966,7 +977,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function toggleFields() {
-    const sumber = document.getElementById('sumber').value;
+    const uiSource = document.getElementById('ui_source').value;
+    const sumberInput = document.getElementById('sumber');
     
     // Hide all conditional fields first
     document.getElementById('invoice_field').style.display = 'none';
@@ -974,6 +986,7 @@ function toggleFields() {
     document.getElementById('coa_field').style.display = 'none';
     document.getElementById('driver_advance_field').style.display = 'none';
     document.getElementById('pph23_field').style.display = 'none';
+    document.getElementById('transaction_type_field').style.display = 'none';
     
     // Update jenis based on sumber
     const jenisSelect = document.getElementById('jenis');
@@ -982,41 +995,58 @@ function toggleFields() {
     const recipientLabel = document.getElementById('recipient_label');
     const recipientHint = document.getElementById('recipient_hint');
     
-    // Show relevant fields based on sumber
-    if (sumber === 'customer_payment') {
+    // Show relevant fields based on ui_source
+    if (uiSource === 'customer_payment') {
+        sumberInput.value = 'customer_payment';
         document.getElementById('invoice_field').style.display = 'block';
         document.getElementById('pph23_field').style.display = 'block';
         jenisSelect.value = 'cash_in';
         recipientLabel.textContent = 'Nama Pengirim';
         recipientHint.textContent = 'Nama customer/orang yang mengirim uang';
-    } else if (sumber === 'vendor_payment') {
+    } else if (uiSource === 'vendor_payment') {
+        sumberInput.value = 'vendor_payment';
         document.getElementById('vendor_bill_field').style.display = 'block';
         jenisSelect.value = 'cash_out';
         recipientLabel.textContent = 'Nama Penerima';
         recipientHint.textContent = 'Nama vendor/orang yang menerima uang';
-    } else if (sumber === 'uang_jalan') {
+    } else if (uiSource === 'uang_jalan') {
+        sumberInput.value = 'uang_jalan';
         document.getElementById('driver_advance_field').style.display = 'block';
         jenisSelect.value = 'cash_out';
         recipientLabel.textContent = 'Dibayarkan Kepada (Supir)';
         recipientHint.textContent = 'Nama supir yang mencairkan tabungan';
-    } else if (sumber === 'expense') {
+    } else if (uiSource === 'general') {
+        // Show transaction type selection
+        document.getElementById('transaction_type_field').style.display = 'block';
         document.getElementById('coa_field').style.display = 'block';
-        document.getElementById('coa_label').textContent = 'Akun Biaya' + (sumber === 'expense' ? '' : ' (Wajib)');
+        
+        // Call updateTransactionType to set proper values
+        updateTransactionType();
+    }
+}
+
+function updateTransactionType() {
+    const transactionType = document.querySelector('input[name="transaction_type"]:checked').value;
+    const sumberInput = document.getElementById('sumber');
+    const jenisSelect = document.getElementById('jenis');
+    const coaLabel = document.getElementById('coa_label');
+    const recipientLabel = document.getElementById('recipient_label');
+    const recipientHint = document.getElementById('recipient_hint');
+    
+    if (transactionType === 'out') {
+        // Pengeluaran -> expense
+        sumberInput.value = 'expense';
         jenisSelect.value = 'cash_out';
+        coaLabel.textContent = 'Akun Biaya';
         recipientLabel.textContent = 'Nama Penerima';
         recipientHint.textContent = 'Nama orang/perusahaan yang menerima pembayaran';
-    } else if (sumber === 'other_in') {
-        document.getElementById('coa_field').style.display = 'block';
-        document.getElementById('coa_label').textContent = 'Akun Pendapatan (Opsional)';
+    } else {
+        // Pemasukan -> other_in
+        sumberInput.value = 'other_in';
         jenisSelect.value = 'cash_in';
+        coaLabel.textContent = 'Akun Pendapatan';
         recipientLabel.textContent = 'Nama Pengirim';
         recipientHint.textContent = 'Nama orang/perusahaan yang mengirim uang';
-    } else if (sumber === 'other_out') {
-        document.getElementById('coa_field').style.display = 'block';
-        document.getElementById('coa_label').textContent = 'Akun Biaya (Opsional)';
-        jenisSelect.value = 'cash_out';
-        recipientLabel.textContent = 'Nama Penerima';
-        recipientHint.textContent = 'Nama orang/perusahaan yang menerima uang';
     }
 }
 
