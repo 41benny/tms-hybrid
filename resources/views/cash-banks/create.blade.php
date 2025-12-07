@@ -1902,7 +1902,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
-}
+
 
 function clearPPh23() {
     document.getElementById('pph23_display').value = '';
