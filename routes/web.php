@@ -142,6 +142,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('driver-advances/{driverAdvance}/pay-dp', [DriverAdvanceController::class, 'payDP'])->name('driver-advances.pay-dp');
     Route::post('driver-advances/{driverAdvance}/settlement', [DriverAdvanceController::class, 'processSettlement'])->name('driver-advances.settlement');
 
+    Route::get('cash-banks/export', [CashBankController::class, 'export'])->name('cash-banks.export');
     Route::resource('cash-banks', CashBankController::class)->only(['index', 'create', 'store', 'show']);
     Route::get('cash-banks/{cashBankTransaction}/print', [CashBankController::class, 'print'])->name('cash-banks.print');
     Route::delete('cash-banks/{cashBankTransaction}/cancel', [CashBankController::class, 'cancel'])->name('cash-banks.cancel');

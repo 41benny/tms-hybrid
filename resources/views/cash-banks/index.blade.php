@@ -28,6 +28,12 @@
         <x-slot:header>
             <div class="flex flex-col md:flex-row md:items-center md:justify-end gap-4">
                 <div class="flex gap-2">
+                    <a href="{{ route('cash-banks.export', request()->query()) }}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white transition-all bg-emerald-600 rounded-lg shadow hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582a2 2 0 011.414.586l2.828 2.828a2 2 0 002.828 0l2.828-2.828A2 2 0 0116.414 9H17V4M12 15v5m0 0l-3-3m3 3l3-3" />
+                        </svg>
+                        Export Excel
+                    </a>
                     <a href="{{ route('cash-banks.create') }}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white transition-all bg-indigo-600 rounded-lg shadow hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -191,7 +197,7 @@
                             ];
                             $shortCat = $catMap[$t->sumber] ?? ucwords(str_replace('_', '', $t->sumber));
                         @endphp
-                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium border
+                        <span class="cashbank-category inline-flex items-center px-2 py-1 rounded text-xs font-medium border
                             {{ $t->sumber === 'customer_payment' ? 'bg-green-100 text-green-800 border-green-200 dark:bg-transparent dark:text-green-400 dark:border-0 dark:italic dark:px-0' : '' }}
                             {{ $t->sumber === 'vendor_payment' ? 'bg-red-100 text-red-800 border-red-200 dark:bg-transparent dark:text-red-400 dark:border-0 dark:italic dark:px-0' : '' }}
                             {{ ($t->sumber === 'expense' || $t->sumber === 'other_out') ? 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-transparent dark:text-orange-400 dark:border-0 dark:italic dark:px-0' : '' }}
@@ -303,6 +309,16 @@
 
         table th .resizer.resizing {
             background-color: rgba(99, 102, 241, 0.7);
+        }
+
+        /* Aurora-only: render category as plain text (no badge) */
+        [data-theme="aurora"] .cashbank-category {
+            display: inline;
+            padding: 0 !important;
+            background: transparent !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
         }
 
         @media print {

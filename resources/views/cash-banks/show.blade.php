@@ -21,7 +21,27 @@
         </x-card>
         <x-card title="Relasi">
             <div class="space-y-1 text-sm">
-                <div>Invoice: {{ optional($trx->invoice)->invoice_number ?: '-' }}</div>
+                @php
+                    // Get invoices from many-to-many relationship
+                    $invoices = $trx->invoicePayments()->with('invoice')->get()->pluck('invoice')->filter();
+                    // Fallback to direct invoice relationship if exists
+                    if ($invoices->isEmpty() && $trx->invoice) {
+                        $invoices = collect([$trx->invoice]);
+                    }
+                @endphp
+                
+                <div>Invoice: 
+                    @if($invoices->isNotEmpty())
+                        @foreach($invoices as $invoice)
+                            <a href="{{ route('invoices.show', $invoice) }}" class="text-blue-600 hover:underline">
+                                {{ $invoice->invoice_number }}
+                            </a>@if(!$loop->last), @endif
+                        @endforeach
+                    @else
+                        -
+                    @endif
+                </div>
+                
                 <div>Vendor Bill: {{ optional($trx->vendorBill)->vendor_bill_number ?: '-' }}</div>
                 <div>Customer: {{ optional($trx->customer)->name ?: '-' }}</div>
                 <div>Vendor: {{ optional($trx->vendor)->name ?: '-' }}</div>

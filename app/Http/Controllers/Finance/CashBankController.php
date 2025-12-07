@@ -150,6 +150,176 @@ class CashBankController extends Controller
     }
 
     /**
+     * Export current filtered view to CSV (Excel-friendly).
+     */
+    public function export(Request $request)
+    {
+        $query = CashBankTransaction::query()->with(['account', 'customer', 'vendor']);
+
+        if ($acc = $request->get('cash_bank_account_id')) {
+            $query->where('cash_bank_account_id', $acc);
+        }
+        if ($src = $request->get('sumber')) {
+            $query->where('sumber', $src);
+        }
+
+        // Date filter (single or range)
+        $from = $request->get('from');
+        $to = $request->get('to');
+
+        if ($date = $request->get('date')) {
+            $query->whereDate('tanggal', $date);
+            $from = $date;
+        } elseif ($from) {
+            $query->whereDate('tanggal', '>=', $from);
+            if ($to) {
+                $query->whereDate('tanggal', '<=', $to);
+            }
+        }
+
+        // Text filters
+        if ($voucher = $request->get('voucher_number')) {
+            $query->where('voucher_number', 'like', "%{$voucher}%");
+        }
+
+        if ($desc = $request->get('description')) {
+            $query->where('description', 'like', "%{$desc}%");
+        }
+
+        if ($recipient = $request->get('recipient')) {
+            $query->where(function ($q) use ($recipient) {
+                $q->where('recipient_name', 'like', "%{$recipient}%")
+                    ->orWhereHas('customer', fn($c) => $c->where('name', 'like', "%{$recipient}%"))
+                    ->orWhereHas('vendor', fn($v) => $v->where('name', 'like', "%{$recipient}%"));
+            });
+        }
+
+        // Amount filters (Debit/Credit) using net amount
+        if ($debitSearch = $request->get('debit')) {
+            $val = preg_replace('/[^0-9]/', '', $debitSearch);
+            if (is_numeric($val)) {
+                $query->where('jenis', 'cash_in')
+                    ->whereRaw("CAST((amount - COALESCE(withholding_pph23, 0) - COALESCE(admin_fee, 0)) AS CHAR) LIKE ?", ["%{$val}%"]);
+            }
+        }
+
+        if ($creditSearch = $request->get('credit')) {
+            $val = preg_replace('/[^0-9]/', '', $creditSearch);
+            if (is_numeric($val)) {
+                $query->where('jenis', 'cash_out')
+                    ->whereRaw("CAST((amount - COALESCE(withholding_pph23, 0) - COALESCE(admin_fee, 0)) AS CHAR) LIKE ?", ["%{$val}%"]);
+            }
+        }
+
+        if (!$request->get('show_voided')) {
+            $query->whereNull('voided_at');
+        }
+
+        // Order and fetch (no pagination for export)
+        $transactions = (clone $query)->latest('tanggal')->latest('id')->get();
+
+        // Balance calculation (match index logic, without pagination skip)
+        $netRaw = "(amount - COALESCE(withholding_pph23, 0) - COALESCE(admin_fee, 0))";
+        $signedNetRaw = "(CASE WHEN jenis='cash_in' THEN 1 ELSE -1 END) * " . $netRaw;
+
+        $openingBalance = 0;
+        if ($from) {
+            $openingQuery = CashBankTransaction::query();
+            if ($acc) {
+                $openingQuery->where('cash_bank_account_id', $acc);
+            }
+            if ($src) {
+                $openingQuery->where('sumber', $src);
+            }
+            if (!$request->get('show_voided')) {
+                $openingQuery->whereNull('voided_at');
+            }
+
+            $openingQuery->whereDate('tanggal', '<', $from);
+            $openingBalance = $openingQuery->sum(\DB::raw($signedNetRaw));
+        }
+
+        $totalInView = (clone $query)->sum(\DB::raw($signedNetRaw));
+        $pageStartBalance = $openingBalance + $totalInView;
+
+        $filename = 'cash-bank-' . now()->format('Ymd_His') . '.csv';
+
+        $callback = function () use ($transactions, $pageStartBalance) {
+            $handle = fopen('php://output', 'w');
+
+            // UTF-8 BOM for Excel
+            fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+            $headers = [
+                'No',
+                'Tanggal',
+                'No Voucher',
+                'Nama',
+                'Deskripsi',
+                'Akun',
+                'No Akun',
+                'Debet',
+                'Kredit',
+                'Saldo',
+                'Kategori',
+            ];
+
+            fputcsv($handle, $headers, ';');
+
+            $formatNumber = static function ($value): string {
+                return $value === null ? '' : number_format((float) $value, 0, ',', '.');
+            };
+
+            $catMap = [
+                'customer_payment' => 'CustPay',
+                'vendor_payment' => 'VenPay',
+                'expense' => 'OthExp',
+                'other_in' => 'OthInc',
+                'other_out' => 'OthExp',
+                'uang_jalan' => 'DrivAdv',
+            ];
+
+            $runningBalance = $pageStartBalance;
+            $number = 1;
+
+            foreach ($transactions as $t) {
+                $netAmount = $t->amount - ($t->withholding_pph23 ?? 0) - ($t->admin_fee ?? 0);
+                $isCashIn = $t->jenis === 'cash_in';
+                $debet = $isCashIn ? $netAmount : 0;
+                $kredit = $isCashIn ? 0 : $netAmount;
+                $signedNet = $isCashIn ? $netAmount : -$netAmount;
+
+                $currentBalance = $runningBalance;
+                $runningBalance -= $signedNet;
+
+                $displayName = $t->recipient_name ?: ($t->customer?->name ?? $t->vendor?->name ?? '');
+                $category = $catMap[$t->sumber] ?? ucwords(str_replace('_', '', $t->sumber));
+
+                fputcsv($handle, [
+                    $number++,
+                    $t->tanggal?->format('d/m/Y') ?? '',
+                    $t->voucher_number,
+                    $displayName,
+                    $t->description,
+                    $t->account->name ?? '',
+                    $t->account->account_number ?? '',
+                    $formatNumber($debet),
+                    $formatNumber($kredit),
+                    $formatNumber($currentBalance),
+                    $category,
+                ], ';');
+            }
+
+            fclose($handle);
+        };
+
+        return response()->streamDownload($callback, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Cache-Control' => 'no-store, no-cache',
+        ]);
+    }
+
+    /**
      * Show the form for creating a new resource.
      */
     public function create(Request $request)
@@ -683,7 +853,7 @@ class CashBankController extends Controller
      */
     public function show(CashBankTransaction $cash_bank)
     {
-        $cash_bank->load(['account', 'invoice', 'vendorBill', 'customer', 'vendor', 'accountCoa']);
+        $cash_bank->load(['account', 'invoice', 'vendorBill', 'customer', 'vendor', 'accountCoa', 'invoicePayments.invoice']);
 
         return view('cash-banks.show', ['trx' => $cash_bank]);
     }
