@@ -191,7 +191,7 @@
                             ];
                             $shortCat = $catMap[$t->sumber] ?? ucwords(str_replace('_', '', $t->sumber));
                         @endphp
-                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-bold border shadow-sm
+                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium border
                             {{ $t->sumber === 'customer_payment' ? 'bg-green-100 text-green-800 border-green-200 dark:bg-green-600 dark:text-white dark:border-green-500' : '' }}
                             {{ $t->sumber === 'vendor_payment' ? 'bg-red-100 text-red-800 border-red-200 dark:bg-red-600 dark:text-white dark:border-red-500' : '' }}
                             {{ ($t->sumber === 'expense' || $t->sumber === 'other_out') ? 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-500 dark:text-white dark:border-orange-400' : '' }}
