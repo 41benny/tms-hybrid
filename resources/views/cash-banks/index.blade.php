@@ -26,15 +26,14 @@
 
     <x-card :noPadding="true">
         <x-slot:header>
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div class="text-xl font-semibold">Kas/Bank</div>
+            <div class="flex flex-col md:flex-row md:items-center md:justify-end gap-4">
                 <div class="flex gap-2">
-                    <x-button :href="route('cash-banks.create')" variant="primary">
+                    <a href="{{ route('cash-banks.create') }}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white transition-all bg-indigo-600 rounded-lg shadow hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
                         Transaksi Baru
-                    </x-button>
+                    </a>
                 </div>
             </div>
         </x-slot:header>
