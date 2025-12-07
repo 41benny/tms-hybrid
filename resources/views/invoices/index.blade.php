@@ -53,8 +53,15 @@
                     <th class="px-1 py-1">
                         <select name="transaction_type" class="w-full px-1 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onchange="this.form.submit()">
                             <option value="">All</option>
-                            <option value="cash" @selected(request('transaction_type')=='cash')>Cash</option>
-                            <option value="credit" @selected(request('transaction_type')=='credit')>Credit</option>
+                            <option value="01" @selected(request('transaction_type')=='01')>01 - Kepada Pihak yg Bukan Pemungut PPN</option>
+                            <option value="02" @selected(request('transaction_type')=='02')>02 - Kepada Pemungut Bendaharawan</option>
+                            <option value="03" @selected(request('transaction_type')=='03')>03 - Kepada Pemungut Selain Bendaharawan</option>
+                            <option value="04" @selected(request('transaction_type')=='04')>04 - DPP Nilai Lain</option>
+                            <option value="05" @selected(request('transaction_type')=='05')>05 - Besaran Tertentu</option>
+                            <option value="06" @selected(request('transaction_type')=='06')>06 - Penyerahan Lainnya</option>
+                            <option value="07" @selected(request('transaction_type')=='07')>07 - Penyerahan yg PPN-nya Tidak Dipungut</option>
+                            <option value="08" @selected(request('transaction_type')=='08')>08 - Penyerahan yg PPN-nya Dibebaskan</option>
+                            <option value="09" @selected(request('transaction_type')=='09')>09 - Penyerahan Aktiva (Pasal 16D)</option>
                         </select>
                     </th>
                     <th class="px-1 py-1">
@@ -75,7 +82,7 @@
                         <input type="date" name="date" value="{{ request('date') }}" class="w-full px-1 py-1 text-[10px] rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onchange="this.form.submit()">
                     </th>
                     <th class="px-1 py-1">
-                        <input type="number" name="min_amount" value="{{ request('min_amount') }}" placeholder="Min..." class="w-full px-2 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onkeypress="if(event.keyCode==13){this.form.submit()}">
+                        <input type="number" name="min_amount" value="{{ request('min_amount') }}" placeholder="Min..." class="w-full px-2 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onchange="this.form.submit()" onkeypress="if(event.keyCode==13){this.form.submit()}">
                     </th>
                     <th class="px-1 py-1">
                         <select name="status" class="w-full px-1 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onchange="this.form.submit()">
