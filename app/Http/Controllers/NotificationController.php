@@ -16,6 +16,10 @@ class NotificationController extends Controller
         $user = Auth::user();
 
         if (! $user) {
+            // If accessed via browser (not AJAX), redirect to login
+            if (!$request->expectsJson()) {
+                return redirect()->route('login');
+            }
             return response()->json(['notifications' => [], 'unread_count' => 0]);
         }
 
@@ -28,6 +32,12 @@ class NotificationController extends Controller
                 return $this->isNotificationValid($notification);
             });
 
+        // If accessed via browser (not AJAX), return view
+        if (!$request->expectsJson()) {
+            return view('notifications.index');
+        }
+
+        // If accessed via AJAX, return JSON
         return response()->json([
             'notifications' => $notifications->map(function ($notification) {
                 return [
