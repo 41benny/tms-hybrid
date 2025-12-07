@@ -28,12 +28,16 @@ class CashBankController extends Controller
         }
         
         // Date Filter (Single date exact match)
+        $from = $request->get('from'); // Initialize
+        $to = $request->get('to');
+
         if ($date = $request->get('date')) {
             $query->whereDate('tanggal', $date);
-        } elseif ($from = $request->get('from')) {
+            $from = $date; // Treat single date as the 'from' date for opening balance calculation
+        } elseif ($from) {
             // Backward compatibility or range if needed
             $query->whereDate('tanggal', '>=', $from);
-            if ($to = $request->get('to')) {
+            if ($to) {
                 $query->whereDate('tanggal', '<=', $to);
             }
         }
