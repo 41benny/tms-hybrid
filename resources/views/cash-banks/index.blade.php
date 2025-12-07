@@ -44,18 +44,18 @@
         <table class="min-w-full text-sm">
             <thead class="text-left border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
                 {{-- Row 1: Column Headers --}}
-                <tr class="text-slate-600 dark:text-slate-400 text-xs uppercase">
-                    <th class="px-3 py-3 text-center">No</th>
-                    <th class="px-3 py-3" style="min-width: 100px">Tanggal</th>
-                    <th class="px-3 py-3">No Voucher</th>
-                    <th class="px-3 py-3">Nama</th>
+                <tr class="text-slate-600 dark:text-slate-400 text-xs uppercase bg-slate-50 dark:bg-slate-800/50">
+                    <th class="px-3 py-3 text-center rounded-tl-xl" style="width: 50px">No</th>
+                    <th class="px-3 py-3" style="width: 110px">Tanggal</th>
+                    <th class="px-3 py-3" style="width: 140px">No Voucher</th>
+                    <th class="px-3 py-3" style="width: 180px">Nama</th>
                     <th class="px-3 py-3">Deskripsi</th>
-                    <th class="px-3 py-3">Akun</th>
-                    <th class="px-3 py-3 text-right">Debet</th>
-                    <th class="px-3 py-3 text-right">Kredit</th>
-                    <th class="px-3 py-3 text-right">Saldo</th>
-                    <th class="px-3 py-3">Kategori</th>
-                    <th class="px-3 py-3 text-center">Aksi</th>
+                    <th class="px-3 py-3" style="width: 150px">Akun</th>
+                    <th class="px-3 py-3 text-right" style="width: 120px">Debet</th>
+                    <th class="px-3 py-3 text-right" style="width: 120px">Kredit</th>
+                    <th class="px-3 py-3 text-right" style="width: 120px">Saldo</th>
+                    <th class="px-3 py-3" style="width: 130px">Kategori</th>
+                    <th class="px-3 py-3 text-center rounded-tr-xl" style="width: 100px">Aksi</th>
                 </tr>
                 {{-- Row 2: Filters --}}
                 <tr class="bg-slate-100 dark:bg-slate-900/50 text-xs">
