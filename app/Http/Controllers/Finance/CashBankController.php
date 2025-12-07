@@ -378,12 +378,7 @@ class CashBankController extends Controller
         })
         ->values();
         
-        $coas = ChartOfAccount::where(function($query) {
-                $query->where('code', 'LIKE', '6%')
-                      ->orWhere('code', 'LIKE', '7%');
-            })
-            ->orderBy('code')
-            ->get();
+        $coas = ChartOfAccount::orderBy('code')->get();
 
         $prefill = $request->only(['sumber', 'invoice_id', 'vendor_bill_id', 'amount']);
 
