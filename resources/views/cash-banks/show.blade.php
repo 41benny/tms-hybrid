@@ -5,13 +5,18 @@
 
         {{-- HEADER --}}
         <div class="flex items-start justify-between gap-4">
-            <div>
-                <div class="text-xl font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                    <span>Transaksi #{{ $trx->id }}</span>
+            <div class="flex items-start gap-3">
+                <a href="{{ route('cash-banks.index') }}" class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-700 transition-colors" title="Kembali ke daftar Kas/Bank">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                </a>
+                <div>
+                    <div class="text-xl font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                        <span>Transaksi #{{ $trx->id }}</span>
+                    </div>
+                    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                        {{ $trx->tanggal->format('d M Y') }} - {{ $trx->account->name ?? '-' }}
+                    </p>
                 </div>
-                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    {{ $trx->tanggal->format('d M Y') }} · {{ $trx->account->name ?? '-' }}
-                </p>
             </div>
 
             <div class="flex flex-col items-end gap-2">
@@ -48,7 +53,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
             {{-- RINGKASAN --}}
-            <x-card title="Ringkasan" class="md:col-span-1">
+            <x-card title="Ringkasan" class="md:col-span-1" headerClass="aurora-card-header">
                 <div class="space-y-3 text-sm">
 
                     <div class="flex items-center justify-between gap-4">
@@ -116,7 +121,7 @@
             </x-card>
 
             {{-- RELASI --}}
-            <x-card title="Relasi" class="md:col-span-2">
+            <x-card title="Relasi" class="md:col-span-2" headerClass="aurora-card-header">
                 <div class="space-y-3 text-sm">
                     @php
                         // 1. Invoices (Direct or via Payments)
@@ -138,7 +143,6 @@
 
                         // From Invoices
                         foreach($invoices as $invoice) {
-                            // Check if relationship loaded
                             if($invoice->relationLoaded('items')) {
                                 foreach($invoice->items as $item) {
                                     if($item->job_order_id) {
@@ -148,10 +152,9 @@
                             }
                         }
 
-                        // From Vendor Bills (Iterate ALL identified bills)
+                        // From Vendor Bills
                         foreach($vendorBills as $bill) {
-                            // Ensure items relationship is loaded or accessible
-                            $items = $bill->items ?? collect(); 
+                            $items = $bill->items ?? collect();
                             foreach($items as $item) {
                                 if($item->shipmentLeg && $item->shipmentLeg->jobOrder) {
                                     $jobOrders->push($item->shipmentLeg->jobOrder);
@@ -277,4 +280,18 @@
             </x-card>
         </div>
     </div>
+    <style>
+        [data-theme="aurora"] .aurora-card-header {
+            position: relative;
+        }
+        [data-theme="aurora"] .aurora-card-header::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #8b5cf6, #ec4899, #22d3ee);
+        }
+    </style>
 @endsection
