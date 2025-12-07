@@ -20,9 +20,6 @@
             </div>
 
             <div class="flex flex-col items-end gap-2">
-                <span class="inline-flex items-center rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 px-3 py-1 text-xs font-medium text-slate-700 dark:text-slate-200">
-                    Detail Kas / Bank
-                </span>
                 <span class="inline-flex items-center rounded-full
                     @if($trx->jenis === 'cash_in')
                         border-emerald-200 bg-emerald-50 text-emerald-700
