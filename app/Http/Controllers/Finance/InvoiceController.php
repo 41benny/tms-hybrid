@@ -30,18 +30,45 @@ class InvoiceController extends Controller
         $this->authorizePermission('invoices.view');
 
         $query = Invoice::query()->with(['customer', 'items.jobOrder:id,job_number']);
+        
+        // Invoice number search
+        if ($invoiceNumber = $request->get('invoice_number')) {
+            $query->where('invoice_number', 'like', '%' . $invoiceNumber . '%');
+        }
+        
+        // Status filter
         if ($status = $request->get('status')) {
             $query->where('status', $status);
         }
+        
+        // Customer filter
         if ($customer = $request->get('customer_id')) {
             $query->where('customer_id', $customer);
         }
+        
+        // Single date filter (replaces from/to for simplified filtering)
+        if ($date = $request->get('date')) {
+            $query->whereDate('invoice_date', $date);
+        }
+        
+        // Legacy support for date range
         if ($from = $request->get('from')) {
             $query->whereDate('invoice_date', '>=', $from);
         }
         if ($to = $request->get('to')) {
             $query->whereDate('invoice_date', '<=', $to);
         }
+        
+        // Approval status filter
+        if ($approvalStatus = $request->get('approval_status')) {
+            $query->where('approval_status', $approvalStatus);
+        }
+        
+        // Tax invoice status filter
+        if ($taxInvoiceStatus = $request->get('tax_invoice_status')) {
+            $query->where('tax_invoice_status', $taxInvoiceStatus);
+        }
+        
         $invoices = $query->latest()->paginate(15)->withQueryString();
 
         $customers = Customer::orderBy('name')->get();
