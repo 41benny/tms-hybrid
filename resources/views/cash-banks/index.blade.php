@@ -131,7 +131,7 @@
                         <div class="font-medium text-slate-900 dark:text-slate-100">{{ $t->tanggal->format('d/m/Y') }}</div>
                     </td>
                     <td class="px-3 py-3">
-                        <div class="text-sm font-bold text-blue-600 dark:text-blue-400">{{ $t->voucher_number }}</div>
+                        <div class="font-medium text-blue-600 dark:text-blue-400">{{ $t->voucher_number }}</div>
                     </td>
                     <td class="px-3 py-3">
                         @php
@@ -179,13 +179,24 @@
                             Rp {{ number_format($currentBalance, 0, ',', '.') }}
                         </span>
                     </td>
-                    <td class="px-3 py-3">
-                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium
-                            {{ $t->sumber === 'customer_payment' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : '' }}
-                            {{ $t->sumber === 'vendor_payment' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' : '' }}
-                            {{ $t->sumber === 'expense' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' : '' }}
-                            {{ in_array($t->sumber, ['other_in', 'other_out']) ? 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200' : '' }}">
-                            {{ ucwords(str_replace('_', ' ', $t->sumber)) }}
+                        @php
+                            $catMap = [
+                                'customer_payment' => 'CustPay',
+                                'vendor_payment'   => 'VenPay',
+                                'expense'          => 'OthExp',
+                                'other_in'         => 'OthInc',
+                                'other_out'        => 'OthExp',
+                                'uang_jalan'       => 'DrivAdv',
+                            ];
+                            $shortCat = $catMap[$t->sumber] ?? ucwords(str_replace('_', '', $t->sumber));
+                        @endphp
+                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium border
+                            {{ $t->sumber === 'customer_payment' ? 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800' : '' }}
+                            {{ $t->sumber === 'vendor_payment' ? 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/50 dark:text-red-300 dark:border-red-800' : '' }}
+                            {{ ($t->sumber === 'expense' || $t->sumber === 'other_out') ? 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/50 dark:text-orange-300 dark:border-orange-800' : '' }}
+                            {{ $t->sumber === 'other_in' ? 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-800' : '' }}
+                            {{ $t->sumber === 'uang_jalan' ? 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/50 dark:text-purple-300 dark:border-purple-800' : '' }}">
+                            {{ $shortCat }}
                         </span>
                     </td>
                     <td class="px-3 py-3">
