@@ -56,21 +56,22 @@ class CashBankController extends Controller
         }
 
         // Amount Filters (Debit/Credit)
-        // User input likely contains dots for thousands (Indonesian format e.g. 8.702.400)
-        // We strip non-numeric characters to get raw value.
+        // User visualizes Net Amount (Amount - PPh23 - Admin).
+        // Database stores Gross Amount.
+        // We need to filter based on: (amount - COALESCE(withholding_pph23, 0) - COALESCE(admin_fee, 0))
         if ($debitSearch = $request->get('debit')) {
-            // Remove everything except digits.
-            // Using LIKE allows partial matches (e.g. searching "8702" finds "8.702.400")
             $val = preg_replace('/[^0-9]/', '', $debitSearch); 
             if (is_numeric($val)) {
-                $query->where('jenis', 'cash_in')->where('amount', 'like', "%{$val}%");
+                $query->where('jenis', 'cash_in')
+                      ->whereRaw("CAST((amount - COALESCE(withholding_pph23, 0) - COALESCE(admin_fee, 0)) AS CHAR) LIKE ?", ["%{$val}%"]);
             }
         }
         
         if ($creditSearch = $request->get('credit')) {
             $val = preg_replace('/[^0-9]/', '', $creditSearch);
             if (is_numeric($val)) {
-                $query->where('jenis', 'cash_out')->where('amount', 'like', "%{$val}%");
+                $query->where('jenis', 'cash_out')
+                      ->whereRaw("CAST((amount - COALESCE(withholding_pph23, 0) - COALESCE(admin_fee, 0)) AS CHAR) LIKE ?", ["%{$val}%"]);
             }
         }
 
