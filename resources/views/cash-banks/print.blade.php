@@ -202,50 +202,58 @@
     <button class="btn btn-danger" onclick="window.close()">✖️ Tutup</button>
 </div>
 
+@php
+    // Determine dynamic title
+    // Check account type (Cash / Bank)
+    $accName = strtolower(optional($transaction->account)->name ?? '');
+    $isBank = str_contains($accName, 'bank') || str_contains($accName, 'bca') || str_contains($accName, 'mandiri') || str_contains($accName, 'bri');
+    $sourceType = $isBank ? 'Bank' : 'Kas';
+    $flowType = $transaction->jenis === 'cash_in' ? 'Masuk' : 'Keluar';
+    $voucherTitle = "Voucher {$sourceType} {$flowType}";
+@endphp
+
 <div class="sheet">
     <div class="ribbon"></div>
 
     {{-- Header --}}
-    <div class="header">
+    <div class="header" style="padding: 12px 16px;">
         <div class="brand">
             @if(file_exists(public_path('images/logo/Logo.png')))
-                <img src="{{ asset('images/logo/Logo.png') }}" alt="Logo" class="logo">
+                <img src="{{ asset('images/logo/Logo.png') }}" alt="Logo" class="logo" style="height: 54px;">
             @endif
             <div class="brand-info">
-                <div class="name">{{ $company }}</div>
+                <div class="name" style="font-size: 18px;">{{ $company }}</div>
                 @if($tagline)
-                    <div class="tagline">{{ $tagline }}</div>
+                    <div class="tagline" style="font-size: 11px;">{{ $tagline }}</div>
                 @endif
-                <p class="contact">
+                <p class="contact" style="font-size: 10px;">
                     {{ $address }}
-                    @if($phone) &nbsp;|&nbsp; Telp: {{ $phone }} @endif
-                    @if($email) &nbsp;|&nbsp; Email: {{ $email }} @endif
                 </p>
             </div>
         </div>
-        <div class="doc-meta">
-            <span class="doc-title">Voucher Kas / Bank</span>
-            <div class="kv" style="margin-top:6px">
+        <div class="doc-meta" style="padding: 8px 10px;">
+            <span class="doc-title" style="margin-bottom: 4px; font-size: 14px;">{{ $voucherTitle }}</span>
+            <div class="kv" style="margin-top:4px; font-size: 12px;">
                 <div>No. Voucher</div><div>: {{ $transaction->voucher_number }}</div>
                 <div>Tanggal</div><div>: {{ $transaction->tanggal->format('d/m/Y') }}</div>
-                <div>Jenis</div>
-                <div>: <span class="{{ $jenisClass }}">{{ $jenisLabel }}</span></div>
+                {{-- Jenis hidden as requested --}}
             </div>
         </div>
     </div>
 
     {{-- Konten Utama --}}
-    <div class="content">
-        <div class="grid-2">
-            {{-- KIRI --}}
+    <div class="content" style="padding: 12px;">
+        {{-- Top Section: Info & Desc --}}
+        <div class="grid-2" style="gap: 12px;">
+            {{-- KIRI: Info Dasar --}}
             <div class="card">
-                <div class="head">Informasi Voucher</div>
-                <div class="body">
-                    <div class="kv-sm">
+                <div class="head" style="padding: 6px 10px; font-size: 11px;">Informasi Voucher</div>
+                <div class="body" style="padding: 10px;">
+                    <div class="kv-sm" style="font-size: 12px;">
                         <div class="muted">Rekening</div>
                         <div>: {{ $rekeningNama }}
                             @if($rekeningNo)
-                                <div class="muted">{{ $rekeningNo }}</div>
+                                <span class="muted" style="font-size: 11px;">({{ $rekeningNo }})</span>
                             @endif
                         </div>
 
@@ -255,75 +263,71 @@
                         <div class="muted">Penerima</div>
                         <div>: {{ $penerima }}</div>
                     </div>
-
-                    <div class="amount">
-                        <div class="label">
-                            {{ $transaction->jenis === 'cash_in' ? 'Jumlah Diterima' : 'Jumlah Dibayar' }}
-                        </div>
-                        <div class="value">
-                            {{ $transaction->jenis === 'cash_out' ? '- ' : '' }}Rp {{ number_format($transaction->amount,0,',','.') }}
-                        </div>
-                        @if(!empty($__words))
-                            <div class="words">{{ ucwords($__words) }} Rupiah</div>
-                        @endif
-
-                        @if(($transaction->withholding_pph23 ?? 0) > 0)
-                            <div style="margin-top:6px; font-size:11px; color:var(--muted);">
-                                Termasuk potongan PPh 23:
-                                <strong>Rp {{ number_format($transaction->withholding_pph23,0,',','.') }}</strong>
-                            </div>
-                        @endif
-                    </div>
                 </div>
             </div>
 
-            {{-- KANAN --}}
+            {{-- KANAN: Keterangan --}}
             <div class="card">
-                <div class="head">Keterangan</div>
-                <div class="body">
-                    <div class="kv-sm">
+                <div class="head" style="padding: 6px 10px; font-size: 11px;">Keterangan</div>
+                <div class="body" style="padding: 10px;">
+                    <div class="kv-sm" style="font-size: 12px;">
                         <div class="muted">Uraian</div>
                         <div>: {{ $transaction->description ?? '-' }}</div>
 
-                        <div class="muted">No. Referensi</div>
+                        <div class="muted">No. Ref</div>
                         <div>: {{ $transaction->reference_number ?? '-' }}</div>
-
-                        <div class="muted">Dibuat Oleh</div>
-                        <div>: {{ $transaction->created_by_name ?? (auth()->user()->name ?? '-') }}</div>
-
-                        <div class="muted">Dicatat Pada</div>
-                        <div>:
-                            {{ optional($transaction->created_at)->format('d/m/Y H:i') ?? '-' }}
-                        </div>
+                        
+                        {{-- Condensed creator info --}}
+                         <div class="muted">Dibuat</div>
+                        <div>: {{ $transaction->created_by_name ?? (auth()->user()->name ?? '-') }} ({{ optional($transaction->created_at)->format('d/m/Y') }})</div>
                     </div>
                 </div>
             </div>
         </div>
 
+        {{-- Amount Section: Split 2 Columns --}}
+        <div class="amount-split" style="display: grid; grid-template-columns: 200px 1fr; gap: 12px; margin-top: 12px; align-items: stretch;">
+             {{-- Left: Numeric --}}
+             <div style="border:1.5px solid var(--gold); border-radius:10px; padding: 10px; text-align: center; display: flex; flex-direction: column; justify-content: center; background: #fff;">
+                <div style="font-size: 10px; color: var(--muted); margin-bottom: 2px;">JUMLAH</div>
+                <div style="font-size: 20px; font-weight: 900; color: #000;">Rp {{ number_format($transaction->amount,0,',','.') }}</div>
+                 @if(($transaction->withholding_pph23 ?? 0) > 0)
+                    <div style="font-size: 9px; color: var(--muted); margin-top: 2px;">(Inc. PPh23: {{ number_format($transaction->withholding_pph23,0) }})</div>
+                 @endif
+             </div>
+
+             {{-- Right: Words --}}
+             <div style="border:1px dashed #eadfb7; border-radius:10px; padding: 10px; background: var(--soft); display: flex; align-items: center;">
+                 <div style="font-style: italic; font-weight: 600; color: #555; font-size: 13px; line-height: 1.4;">
+                     # {{ ucwords($__words ?? 'Nol') }} Rupiah #
+                 </div>
+             </div>
+        </div>
+
         {{-- Tanda Tangan --}}
-        <div class="signatures">
-            <div class="sig">
-                <div class="role">Disetujui</div>
-                <div class="line"></div>
-                <div class="name">(.................................)</div>
+        <div class="signatures" style="margin-top: 16px; gap: 12px;">
+             <div class="sig" style="padding: 10px;">
+                <div class="role" style="font-size: 10px; top: -8px;">Disetujui</div>
+                <div class="line" style="margin-top: 40px;"></div>
+                <div class="name" style="font-size: 10px;">(...........................)</div>
             </div>
-            <div class="sig">
-                <div class="role">Dibuat</div>
-                <div class="line"></div>
-                <div class="name">
-                    ({{ $transaction->created_by_name ?? (auth()->user()->name ?? '........................') }})
+            <div class="sig" style="padding: 10px;">
+                <div class="role" style="font-size: 10px; top: -8px;">Dibuat</div>
+                <div class="line" style="margin-top: 40px;"></div>
+                <div class="name" style="font-size: 10px;">
+                    ({{ $transaction->created_by_name ?? (auth()->user()->name ?? '...........................') }})
                 </div>
             </div>
-            <div class="sig">
-                <div class="role">Diterima</div>
-                <div class="line"></div>
-                <div class="name">(.................................)</div>
+            <div class="sig" style="padding: 10px;">
+                <div class="role" style="font-size: 10px; top: -8px;">Diterima</div>
+                <div class="line" style="margin-top: 40px;"></div>
+                <div class="name" style="font-size: 10px;">(...........................)</div>
             </div>
         </div>
 
         {{-- Footer --}}
-        <div class="footer">
-            Dicetak pada: {{ now()->format('d/m/Y H:i:s') }} • {{ $company }} — {{ $address }}
+        <div class="footer" style="margin: 8px 0 0 0; padding-top: 6px; font-size: 9px;">
+            Dicetak: {{ now()->format('d/m/Y H:i') }} • {{ $company }}
         </div>
     </div>
 </div>
