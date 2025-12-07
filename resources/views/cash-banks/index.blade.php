@@ -179,6 +179,7 @@
                             Rp {{ number_format($currentBalance, 0, ',', '.') }}
                         </span>
                     </td>
+                    <td class="px-3 py-3">
                         @php
                             $catMap = [
                                 'customer_payment' => 'CustPay',
@@ -190,12 +191,12 @@
                             ];
                             $shortCat = $catMap[$t->sumber] ?? ucwords(str_replace('_', '', $t->sumber));
                         @endphp
-                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium border
-                            {{ $t->sumber === 'customer_payment' ? 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800' : '' }}
-                            {{ $t->sumber === 'vendor_payment' ? 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/50 dark:text-red-300 dark:border-red-800' : '' }}
-                            {{ ($t->sumber === 'expense' || $t->sumber === 'other_out') ? 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/50 dark:text-orange-300 dark:border-orange-800' : '' }}
-                            {{ $t->sumber === 'other_in' ? 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-800' : '' }}
-                            {{ $t->sumber === 'uang_jalan' ? 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/50 dark:text-purple-300 dark:border-purple-800' : '' }}">
+                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-bold border shadow-sm
+                            {{ $t->sumber === 'customer_payment' ? 'bg-green-100 text-green-800 border-green-200 dark:bg-green-600 dark:text-white dark:border-green-500' : '' }}
+                            {{ $t->sumber === 'vendor_payment' ? 'bg-red-100 text-red-800 border-red-200 dark:bg-red-600 dark:text-white dark:border-red-500' : '' }}
+                            {{ ($t->sumber === 'expense' || $t->sumber === 'other_out') ? 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-500 dark:text-white dark:border-orange-400' : '' }}
+                            {{ $t->sumber === 'other_in' ? 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-600 dark:text-white dark:border-blue-500' : '' }}
+                            {{ $t->sumber === 'uang_jalan' ? 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-600 dark:text-white dark:border-purple-500' : '' }}">
                             {{ $shortCat }}
                         </span>
                     </td>
