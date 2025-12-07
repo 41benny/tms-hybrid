@@ -65,6 +65,13 @@
                         </span>
                     </div>
 
+                    <div class="flex items-center justify-between gap-4">
+                        <span class="text-slate-500 dark:text-slate-400">Nama</span>
+                        <span class="font-medium text-slate-800 dark:text-slate-100">
+                            {{ $trx->recipient_name ?? optional($trx->vendor)->name ?? optional($trx->customer)->name ?? '-' }}
+                        </span>
+                    </div>
+
                     <div class="pt-2 border-t border-slate-100 dark:border-slate-700/60">
                         <div class="flex items-center justify-between gap-4">
                             <span class="text-slate-500 dark:text-slate-400">Nominal</span>
@@ -112,36 +119,54 @@
             <x-card title="Relasi" class="md:col-span-2">
                 <div class="space-y-3 text-sm">
                     @php
+                        // 1. Invoices (Direct or via Payments)
                         $invoices = $trx->invoicePayments->pluck('invoice')->filter();
                         if ($invoices->isEmpty() && $trx->invoice) {
                             $invoices = collect([$trx->invoice]);
                         }
 
+                        // 2. Vendor Bills (Direct or via Payments)
+                        $vendorBills = $trx->vendorBillPayments->pluck('vendorBill')->filter();
+                        if ($vendorBills->isEmpty() && $trx->vendorBill) {
+                            $vendorBills = collect([$trx->vendorBill]);
+                        }
+                        // Unique vendor bills
+                        $vendorBills = $vendorBills->unique('id');
+
+                        // 3. Collect Job Orders from ALL sources
                         $jobOrders = collect();
 
+                        // From Invoices
                         foreach($invoices as $invoice) {
-                            foreach($invoice->items as $item) {
-                                if($item->job_order_id) {
-                                    $jobOrders->push($item->jobOrder);
+                            // Check if relationship loaded
+                            if($invoice->relationLoaded('items')) {
+                                foreach($invoice->items as $item) {
+                                    if($item->job_order_id) {
+                                        $jobOrders->push($item->jobOrder);
+                                    }
                                 }
                             }
                         }
 
-                        if($trx->vendorBill) {
-                            foreach($trx->vendorBill->items as $item) {
+                        // From Vendor Bills (Iterate ALL identified bills)
+                        foreach($vendorBills as $bill) {
+                            // Ensure items relationship is loaded or accessible
+                            $items = $bill->items ?? collect(); 
+                            foreach($items as $item) {
                                 if($item->shipmentLeg && $item->shipmentLeg->jobOrder) {
                                     $jobOrders->push($item->shipmentLeg->jobOrder);
                                 }
                             }
                         }
 
+                        // From Driver Advances
                         foreach($trx->driverAdvancePayments as $payment) {
                             if($payment->driverAdvance && $payment->driverAdvance->shipmentLeg && $payment->driverAdvance->shipmentLeg->jobOrder) {
                                 $jobOrders->push($payment->driverAdvance->shipmentLeg->jobOrder);
                             }
                         }
 
-                        $jobOrders = $jobOrders->unique('id');
+                        $jobOrders = $jobOrders->unique('id')->filter();
                     @endphp
 
                     {{-- Invoice --}}
@@ -164,13 +189,21 @@
                     </div>
 
                     {{-- Vendor Bill --}}
-                    <div class="flex items-center justify-between gap-4">
+                    <div class="flex flex-col gap-1 pt-2 border-t border-slate-100 dark:border-slate-700/60">
                         <span class="text-xs font-medium tracking-wide text-slate-500 dark:text-slate-400 uppercase">
                             Vendor Bill
                         </span>
-                        <span class="text-sm font-medium text-slate-800 dark:text-slate-100">
-                            {{ optional($trx->vendorBill)->vendor_bill_number ?: '-' }}
-                        </span>
+                        <div class="text-sm">
+                            @if($vendorBills->isNotEmpty())
+                                @foreach($vendorBills as $bill)
+                                    <a href="#" class="inline-flex items-center rounded-full bg-orange-50 dark:bg-orange-900/40 px-3 py-1 text-xs font-medium text-orange-700 dark:text-orange-200 mr-1 mb-1">
+                                        {{ $bill->vendor_bill_number }}
+                                    </a>
+                                @endforeach
+                            @else
+                                <span class="text-slate-400 dark:text-slate-500">-</span>
+                            @endif
+                        </div>
                     </div>
 
                     {{-- Job Order --}}
