@@ -71,8 +71,12 @@ class InvoiceController extends Controller
             $query->whereDate('invoice_date', '<=', $to);
         }
         
+        
         // Minimum amount filter
         if ($minAmount = $request->get('min_amount')) {
+            // Convert to float to ensure proper comparison
+            $minAmount = (float) str_replace([',', '.'], ['', ''], $minAmount);
+            \Log::info('Min Amount Filter', ['input' => $request->get('min_amount'), 'converted' => $minAmount]);
             $query->where('total_amount', '>=', $minAmount);
         }
         
