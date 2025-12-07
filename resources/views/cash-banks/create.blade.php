@@ -169,7 +169,7 @@
                 >
                     <option value="customer_payment" @selected(in_array(old('sumber', $prefill['sumber'] ?? ''), ['customer_payment']))>Customer Payment</option>
                     <option value="vendor_payment" @selected(in_array(old('sumber', $prefill['sumber'] ?? ''), ['vendor_payment']))>Vendor Payment</option>
-                    <option value="general" @selected(in_array(old('sumber', $prefill['sumber'] ?? ''), ['expense', 'other_in', 'other_out']))>Transaksi Umum</option>
+                    <option value="general" @selected(in_array(old('sumber', $prefill['sumber'] ?? ''), ['expense', 'other_in', 'other_out']))>General Transaction</option>
                     <option value="uang_jalan" @selected(old('sumber', $prefill['sumber'] ?? '') == 'uang_jalan')>Driver Advance / Savings</option>
                 </select>
                 <input type="hidden" name="sumber" id="sumber" value="{{ old('sumber', $prefill['sumber'] ?? 'customer_payment') }}">
@@ -217,16 +217,23 @@
                 </button>
             </div>
             <div id="coa_field" style="display: none;">
-                <label class="block text-sm mb-1" id="coa_label">Akun Biaya</label>
-                <select
-                    name="coa_id"
-                    class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-                >
-                    <option value="">- Pilih Akun -</option>
-                    @foreach($coas as $c)
-                        <option value="{{ $c->id }}">{{ $c->code }} - {{ $c->name }}</option>
-                      @endforeach
-                  </select>
+                <label class="block text-sm mb-1" id="coa_label">Akun Biaya/Pendapatan</label>
+                <div class="relative">
+                    <input
+                        type="text"
+                        id="coa_search"
+                        placeholder="Ketik kode atau nama akun..."
+                        autocomplete="off"
+                        class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    >
+                    <input type="hidden" name="coa_id" id="coa_id">
+                    
+                    <!-- Autocomplete Dropdown -->
+                    <div id="coa_suggestions" class="absolute z-50 w-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg max-h-60 overflow-y-auto hidden">
+                        <!-- Suggestions will be populated by JavaScript -->
+                    </div>
+                </div>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Hanya akun 6xxx dan 7xxx</p>
               </div>
               <div id="driver_advance_field" style="display: none;">
                   <label class="block text-sm mb-1">Driver Advance</label>
@@ -1048,6 +1055,21 @@ function updateTransactionType() {
         recipientLabel.textContent = 'Nama Pengirim';
         recipientHint.textContent = 'Nama orang/perusahaan yang mengirim uang';
     }
+}
+
+function selectCoaAccount(id, code, name) {
+    const coaSearchInput = document.getElementById('coa_search');
+    const coaIdInput = document.getElementById('coa_id');
+    const coaSuggestionsDiv = document.getElementById('coa_suggestions');
+    
+    // Set the hidden input value
+    coaIdInput.value = id;
+    
+    // Display selected account in the search input
+    coaSearchInput.value = `${code} - ${name}`;
+    
+    // Hide suggestions
+    coaSuggestionsDiv.classList.add('hidden');
 }
 
 function populateInvoiceAmount() {
@@ -2324,6 +2346,94 @@ document.addEventListener('DOMContentLoaded', function() {
     if (jenisSelect) {
         jenisSelect.addEventListener('change', function() {
             updateTotalBank();
+        });
+    }
+    
+    // ===== COA AUTOCOMPLETE FUNCTIONALITY =====
+    const coaAccounts = @json($coas->map(function($coa) {
+        return [
+            'id' => $coa->id,
+            'code' => $coa->code,
+            'name' => $coa->name
+        ];
+    }));
+    
+    const coaSearchInput = document.getElementById('coa_search');
+    const coaSuggestionsDiv = document.getElementById('coa_suggestions');
+    const coaIdInput = document.getElementById('coa_id');
+    
+    if (coaSearchInput) {
+        // Show suggestions on input
+        coaSearchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            
+            if (searchTerm.length === 0) {
+                coaSuggestionsDiv.classList.add('hidden');
+                coaIdInput.value = '';
+                return;
+            }
+            
+            // Filter accounts by code or name
+            const filtered = coaAccounts.filter(account => {
+                return account.code.toLowerCase().includes(searchTerm) || 
+                       account.name.toLowerCase().includes(searchTerm);
+            });
+            
+            // Display suggestions (max 10)
+            if (filtered.length > 0) {
+                let html = '';
+                filtered.slice(0, 10).forEach(account => {
+                    // Highlight matching text
+                    const codeMatch = account.code.toLowerCase().includes(searchTerm);
+                    const nameMatch = account.name.toLowerCase().includes(searchTerm);
+                    
+                    html += `
+                        <div class="px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer border-b border-slate-100 dark:border-slate-800 last:border-b-0"
+                             onclick="selectCoaAccount(${account.id}, '${account.code}', '${account.name.replace(/'/g, "\\'")}')">
+                            <div class="font-medium text-sm text-slate-900 dark:text-slate-100">
+                                ${account.code}
+                            </div>
+                            <div class="text-xs text-slate-600 dark:text-slate-400">
+                                ${account.name}
+                            </div>
+                        </div>
+                    `;
+                });
+                coaSuggestionsDiv.innerHTML = html;
+                coaSuggestionsDiv.classList.remove('hidden');
+            } else {
+                coaSuggestionsDiv.innerHTML = '<div class="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">Tidak ada akun yang cocok</div>';
+                coaSuggestionsDiv.classList.remove('hidden');
+            }
+        });
+        
+        // Close suggestions when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!coaSearchInput.contains(e.target) && !coaSuggestionsDiv.contains(e.target)) {
+                coaSuggestionsDiv.classList.add('hidden');
+            }
+        });
+        
+        // Focus event - show all suggestions if input is empty
+        coaSearchInput.addEventListener('focus', function() {
+            if (this.value.trim().length === 0 && coaIdInput.value === '') {
+                let html = '';
+                coaAccounts.slice(0, 10).forEach(account => {
+                    html += `
+                        <div class="px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer border-b border-slate-100 dark:border-slate-800 last:border-b-0"
+                             onclick="selectCoaAccount(${account.id}, '${account.code}', '${account.name.replace(/'/g, "\\'")}')">
+                            <div class="font-medium text-sm text-slate-900 dark:text-slate-100">
+                                ${account.code}
+                            </div>
+                            <div class="text-xs text-slate-600 dark:text-slate-400">
+                                ${account.name}
+                            </div>
+                        </div>
+                    `;
+                });
+                coaSuggestionsDiv.innerHTML = html;
+                coaSuggestionsDiv.classList.remove('hidden');
+            }
         });
     }
     
