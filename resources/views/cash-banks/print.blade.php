@@ -302,8 +302,8 @@
 
         {{-- Amount --}}
         <div style="display:grid; grid-template-columns:200px 1fr; gap:12px; margin-top:12px;">
-            <div class="amount-split-box-num">
-                <div style="font-size:10px; color:var(--muted); letter-spacing:.1em;">JUMLAH</div>
+            <div class="amount-split-box-num" style="position: relative; padding-top: 18px;">
+                <div style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #fff; padding: 2px 8px; border-radius: 999px; font-size: 11px; border: 1px solid rgba(148,163,184,.6); color: var(--gold-deep); font-weight: 700; letter-spacing: .1em;">JUMLAH</div>
                 <div style="font-size:20px; font-weight:900;">
                     Rp {{ number_format($transaction->amount,0,',','.') }}
                 </div>
