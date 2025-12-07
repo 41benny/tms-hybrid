@@ -843,6 +843,9 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    // Flag to track if PPh23 comes from invoice
+    let isPPh23FromInvoice = false;
+
     // Format number with thousand separator
     function formatNumber(num) {
         return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -870,6 +873,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (callback) {
                 callback();
+            }
+            
+            // If user manually edits amount, reset the "from invoice" flag
+            if (displayId === 'amount_display') {
+                isPPh23FromInvoice = false;
             }
         });
 
@@ -1529,6 +1537,11 @@ function confirmInvoiceSelection() {
         
         // Show info notification
         showPPh23InfoNotification(totalPPh23);
+        
+        // Set flag
+        isPPh23FromInvoice = true;
+    } else {
+        isPPh23FromInvoice = false;
     }
     
     // Update display
@@ -1748,6 +1761,17 @@ function autoCalculatePPh23() {
         return;
     }
     
+    
+    // Check if PPh23 is currently from invoice
+    if (isPPh23FromInvoice) {
+        const confirmRecalc = confirm('PPh 23 saat ini sudah sesuai dengan data Invoice terpilih.\n\nApakah Anda yakin ingin menghitung ulang menjadi 2% dari Nominal? (Ini akan menimpa nilai PPh 23 dari Invoice)');
+        if (!confirmRecalc) {
+            return;
+        }
+        // If confirmed, reset flag so we can calculate manually
+        isPPh23FromInvoice = false;
+    }
+
     // Calculate 2% of amount (for manual entry)
     const pph23 = amount * 0.02;
     
@@ -1779,6 +1803,7 @@ function autoCalculatePPh23() {
 function clearPPh23() {
     document.getElementById('pph23_display').value = '';
     document.getElementById('pph23_input').value = '0';
+    isPPh23FromInvoice = false;
     updateTotalBank();
 }
 
