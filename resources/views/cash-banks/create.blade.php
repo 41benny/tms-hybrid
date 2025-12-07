@@ -206,7 +206,7 @@
                 </button>
             </div>
             <div id="coa_field" style="display: none;">
-                <label class="block text-sm mb-1">Akun Biaya</label>
+                <label class="block text-sm mb-1" id="coa_label">Akun Biaya</label>
                 <select
                     name="coa_id"
                     class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
@@ -1001,14 +1001,19 @@ function toggleFields() {
         recipientHint.textContent = 'Nama supir yang mencairkan tabungan';
     } else if (sumber === 'expense') {
         document.getElementById('coa_field').style.display = 'block';
+        document.getElementById('coa_label').textContent = 'Akun Biaya' + (sumber === 'expense' ? '' : ' (Wajib)');
         jenisSelect.value = 'cash_out';
         recipientLabel.textContent = 'Nama Penerima';
         recipientHint.textContent = 'Nama orang/perusahaan yang menerima pembayaran';
     } else if (sumber === 'other_in') {
+        document.getElementById('coa_field').style.display = 'block';
+        document.getElementById('coa_label').textContent = 'Akun Pendapatan (Opsional)';
         jenisSelect.value = 'cash_in';
         recipientLabel.textContent = 'Nama Pengirim';
         recipientHint.textContent = 'Nama orang/perusahaan yang mengirim uang';
     } else if (sumber === 'other_out') {
+        document.getElementById('coa_field').style.display = 'block';
+        document.getElementById('coa_label').textContent = 'Akun Biaya (Opsional)';
         jenisSelect.value = 'cash_out';
         recipientLabel.textContent = 'Nama Penerima';
         recipientHint.textContent = 'Nama orang/perusahaan yang menerima uang';
