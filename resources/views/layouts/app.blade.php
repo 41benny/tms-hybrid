@@ -69,7 +69,7 @@
                 $canAccessMenu = static fn (string $slug): bool => auth()->user()?->canAccessMenu($slug) ?? false;
             @endphp
 
-            <nav class="flex-1 px-4 space-y-1 pb-4 overflow-y-auto md:overflow-y-auto">
+            <nav id="sidebarScroll" class="flex-1 px-4 space-y-1 pb-4 overflow-y-auto md:overflow-y-auto">
                 @if($role === \App\Models\User::ROLE_SALES)
                     {{-- Minimal menu untuk Sales --}}
                     <a href="{{ route('dashboard') }}" class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
@@ -609,6 +609,7 @@
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 const sidebar = document.getElementById('sidebar');
+                const scrollArea = document.getElementById('sidebarScroll') || sidebar;
                 const toggleBtn = document.getElementById('sidebarToggle');
                 
                 // Load saved sidebar state
@@ -622,19 +623,19 @@
                 // ========================================
                 const savedScrollPos = sessionStorage.getItem('sidebar-scroll-position');
                 if (savedScrollPos) {
-                    sidebar.scrollTop = parseInt(savedScrollPos, 10);
+                    scrollArea.scrollTop = parseInt(savedScrollPos, 10);
                 }
 
                 // SAVE SIDEBAR SCROLL POSITION before navigation
-                sidebar.addEventListener('scroll', function() {
-                    sessionStorage.setItem('sidebar-scroll-position', sidebar.scrollTop);
+                scrollArea.addEventListener('scroll', function() {
+                    sessionStorage.setItem('sidebar-scroll-position', scrollArea.scrollTop);
                 });
 
                 // Also save scroll position when clicking any link
                 const allLinks = sidebar.querySelectorAll('a');
                 allLinks.forEach(link => {
                     link.addEventListener('click', function() {
-                        sessionStorage.setItem('sidebar-scroll-position', sidebar.scrollTop);
+                        sessionStorage.setItem('sidebar-scroll-position', scrollArea.scrollTop);
                     });
                 });
                 // ========================================

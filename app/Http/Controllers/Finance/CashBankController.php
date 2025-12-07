@@ -744,9 +744,18 @@ class CashBankController extends Controller
                     } else {
                         // Full payment or additional payment
                         $newDpAmount = $advance->dp_amount + $netAmount;
+                        
+                        // Calculate total net amount (gross - deductions)
+                        $mainCost = $advance->shipmentLeg->mainCost;
+                        $grossAmount = $mainCost->uang_jalan ?? $advance->amount;
+                        $totalSavingsDeduction = $mainCost->driver_savings_deduction ?? $advance->deduction_savings ?? 0;
+                        $totalGuaranteeDeduction = $mainCost->driver_guarantee_deduction ?? $advance->deduction_guarantee ?? 0;
+                        $totalNetAmount = $grossAmount - $totalSavingsDeduction - $totalGuaranteeDeduction;
+                        
+                        // Status is 'settled' if total paid >= total net amount
                         $advance->update([
                             'dp_amount' => $newDpAmount,
-                            'status' => ($newDpAmount >= $advance->amount) ? 'settled' : 'dp_paid'
+                            'status' => ($newDpAmount >= $totalNetAmount) ? 'settled' : 'dp_paid'
                         ]);
                     }
                     
