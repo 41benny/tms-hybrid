@@ -72,12 +72,12 @@ class InvoiceController extends Controller
         }
         
         
-        // Minimum amount filter
-        if ($minAmount = $request->get('min_amount')) {
-            // Convert to float to ensure proper comparison
-            $minAmount = (float) str_replace([',', '.'], ['', ''], $minAmount);
-            \Log::info('Min Amount Filter', ['input' => $request->get('min_amount'), 'converted' => $minAmount]);
-            $query->where('total_amount', '>=', $minAmount);
+        // Total amount filter (partial match like cash bank)
+        if ($amountSearch = $request->get('min_amount')) {
+            $val = preg_replace('/[^0-9]/', '', $amountSearch);
+            if (is_numeric($val)) {
+                $query->whereRaw("CAST(total_amount AS CHAR) LIKE ?", ["%{$val}%"]);
+            }
         }
         
         // Approval status filter
