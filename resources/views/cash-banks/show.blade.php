@@ -128,7 +128,7 @@
                         }
 
                         if($trx->vendorBill) {
-                            foreach($trx->vendorBill->vendorBillItems as $item) {
+                            foreach($trx->vendorBill->items as $item) {
                                 if($item->shipmentLeg && $item->shipmentLeg->jobOrder) {
                                     $jobOrders->push($item->shipmentLeg->jobOrder);
                                 }

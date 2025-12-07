@@ -880,7 +880,7 @@ class CashBankController extends Controller
             'account',
             'invoice',
             'invoice.items',
-            'vendorBill.vendorBillItems.shipmentLeg.jobOrder',
+            'vendorBill.items.shipmentLeg.jobOrder',
             'customer',
             'vendor',
             'accountCoa',
@@ -888,7 +888,7 @@ class CashBankController extends Controller
             'driverAdvancePayments.driverAdvance.shipmentLeg.jobOrder',
             'driverAdvancePayments.driverAdvance.shipmentLeg.mainCost',
             'driverAdvancePayments.driverAdvance.driver',
-            'vendorBillPayments.vendorBill.vendorBillItems.shipmentLeg.jobOrder',
+            'vendorBillPayments.vendorBill.items.shipmentLeg.jobOrder',
         ]);
 
         return view('cash-banks.show', ['trx' => $cash_bank]);
