@@ -59,18 +59,18 @@ class CashBankController extends Controller
         // User input likely contains dots for thousands (Indonesian format e.g. 8.702.400)
         // We strip non-numeric characters to get raw value.
         if ($debitSearch = $request->get('debit')) {
-            // Remove everything except digits and possibly decimal point (though usually IDR is integer in input)
-            // If user types "8.702.400", we want "8702400".
+            // Remove everything except digits.
+            // Using LIKE allows partial matches (e.g. searching "8702" finds "8.702.400")
             $val = preg_replace('/[^0-9]/', '', $debitSearch); 
             if (is_numeric($val)) {
-                $query->where('jenis', 'cash_in')->where('amount', $val);
+                $query->where('jenis', 'cash_in')->where('amount', 'like', "%{$val}%");
             }
         }
         
         if ($creditSearch = $request->get('credit')) {
             $val = preg_replace('/[^0-9]/', '', $creditSearch);
             if (is_numeric($val)) {
-                $query->where('jenis', 'cash_out')->where('amount', $val);
+                $query->where('jenis', 'cash_out')->where('amount', 'like', "%{$val}%");
             }
         }
 
