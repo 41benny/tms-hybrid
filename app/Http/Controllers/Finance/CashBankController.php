@@ -56,20 +56,19 @@ class CashBankController extends Controller
         }
 
         // Amount Filters (Debit/Credit)
-        // Assumption: User searches for the Amount value.
-        // We compare against 'amount' column (Gross). 
-        // If exact searching net amounts is needed, logic would be more complex.
+        // User input likely contains dots for thousands (Indonesian format e.g. 8.702.400)
+        // We strip non-numeric characters to get raw value.
         if ($debitSearch = $request->get('debit')) {
-            // Sanitize: remove non-numeric chars (e.g. dots, Rp) except comma/dot for decimal? 
-            // Let's assume input is integer-like "100000".
-            $val = str_replace(['.', ','], '', $debitSearch);
+            // Remove everything except digits and possibly decimal point (though usually IDR is integer in input)
+            // If user types "8.702.400", we want "8702400".
+            $val = preg_replace('/[^0-9]/', '', $debitSearch); 
             if (is_numeric($val)) {
                 $query->where('jenis', 'cash_in')->where('amount', $val);
             }
         }
         
         if ($creditSearch = $request->get('credit')) {
-            $val = str_replace(['.', ','], '', $creditSearch);
+            $val = preg_replace('/[^0-9]/', '', $creditSearch);
             if (is_numeric($val)) {
                 $query->where('jenis', 'cash_out')->where('amount', $val);
             }
