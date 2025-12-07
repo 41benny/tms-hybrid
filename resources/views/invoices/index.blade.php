@@ -50,11 +50,19 @@
                 </tr>
                 {{-- Row 2: Filters --}}
                 <tr class="bg-slate-100 dark:bg-slate-900/50 text-xs">
-                    <th class="px-1 py-1"></th>
+                    <th class="px-1 py-1">
+                        <select name="transaction_type" class="w-full px-1 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onchange="this.form.submit()">
+                            <option value="">All</option>
+                            <option value="cash" @selected(request('transaction_type')=='cash')>Cash</option>
+                            <option value="credit" @selected(request('transaction_type')=='credit')>Credit</option>
+                        </select>
+                    </th>
                     <th class="px-1 py-1">
                         <input type="text" name="invoice_number" value="{{ request('invoice_number') }}" placeholder="Cari..." class="w-full px-2 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onkeypress="if(event.keyCode==13){this.form.submit()}">
                     </th>
-                    <th class="px-1 py-1"></th>
+                    <th class="px-1 py-1">
+                        <input type="text" name="job_order" value="{{ request('job_order') }}" placeholder="Cari JO..." class="w-full px-2 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onkeypress="if(event.keyCode==13){this.form.submit()}">
+                    </th>
                     <th class="px-1 py-1">
                         <select name="customer_id" class="w-full px-1 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onchange="this.form.submit()">
                             <option value="">All</option>
@@ -66,7 +74,9 @@
                     <th class="px-1 py-1">
                         <input type="date" name="date" value="{{ request('date') }}" class="w-full px-1 py-1 text-[10px] rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onchange="this.form.submit()">
                     </th>
-                    <th class="px-1 py-1"></th>
+                    <th class="px-1 py-1">
+                        <input type="number" name="min_amount" value="{{ request('min_amount') }}" placeholder="Min..." class="w-full px-2 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onkeypress="if(event.keyCode==13){this.form.submit()}">
+                    </th>
                     <th class="px-1 py-1">
                         <select name="status" class="w-full px-1 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onchange="this.form.submit()">
                             <option value="">All</option>

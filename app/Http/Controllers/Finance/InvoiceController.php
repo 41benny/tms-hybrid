@@ -31,9 +31,21 @@ class InvoiceController extends Controller
 
         $query = Invoice::query()->with(['customer', 'items.jobOrder:id,job_number']);
         
+        // Transaction type filter
+        if ($transactionType = $request->get('transaction_type')) {
+            $query->where('transaction_type', $transactionType);
+        }
+        
         // Invoice number search
         if ($invoiceNumber = $request->get('invoice_number')) {
             $query->where('invoice_number', 'like', '%' . $invoiceNumber . '%');
+        }
+        
+        // Job Order search (search in related job orders)
+        if ($jobOrder = $request->get('job_order')) {
+            $query->whereHas('items.jobOrder', function($q) use ($jobOrder) {
+                $q->where('job_number', 'like', '%' . $jobOrder . '%');
+            });
         }
         
         // Status filter
@@ -57,6 +69,11 @@ class InvoiceController extends Controller
         }
         if ($to = $request->get('to')) {
             $query->whereDate('invoice_date', '<=', $to);
+        }
+        
+        // Minimum amount filter
+        if ($minAmount = $request->get('min_amount')) {
+            $query->where('total_amount', '>=', $minAmount);
         }
         
         // Approval status filter
