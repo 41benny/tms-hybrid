@@ -350,7 +350,7 @@ class CashBankController extends Controller
         
         // Eager load driver advances that are ready to be paid via Kas/Bank.
         // Payment Request is OPTIONAL - only as approval helper, not mandatory
-        // Rule: Status pending / dp_paid (belum settled)
+        // Rule: Status pending / dp_paid (belum settled), AND still has remaining amount to pay
         $driverAdvances = \App\Models\Operations\DriverAdvance::with([
             'driver:id,name',
             'shipmentLeg.jobOrder:id,job_number,origin,destination,customer_id',
@@ -364,7 +364,19 @@ class CashBankController extends Controller
                  'deduction_savings', 'deduction_guarantee')
         ->whereIn('status', ['pending', 'dp_paid'])
         ->latest()
-        ->get();
+        ->get()
+        ->filter(function ($da) {
+            // Calculate net amount (gross - deductions)
+            $mainCost = $da->shipmentLeg->mainCost ?? null;
+            $grossAmount = $mainCost->uang_jalan ?? $da->amount;
+            $savingsDeduction = $mainCost->driver_savings_deduction ?? $da->deduction_savings ?? 0;
+            $guaranteeDeduction = $mainCost->driver_guarantee_deduction ?? $da->deduction_guarantee ?? 0;
+            $netAmount = $grossAmount - $savingsDeduction - $guaranteeDeduction;
+            
+            // Only show if dp_amount < net amount (still has remaining to pay)
+            return ($da->dp_amount ?? 0) < $netAmount;
+        })
+        ->values();
         
         $coas = ChartOfAccount::orderBy('code')->get();
 
