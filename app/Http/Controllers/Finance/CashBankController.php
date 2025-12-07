@@ -877,15 +877,18 @@ class CashBankController extends Controller
     public function show(CashBankTransaction $cash_bank)
     {
         $cash_bank->load([
-            'account', 
-            'invoice', 
-            'vendorBill.vendorBillItems.shipmentLeg.jobOrder', 
-            'customer', 
-            'vendor', 
-            'accountCoa', 
-            'invoicePayments.invoice',
+            'account',
+            'invoice',
+            'invoice.items',
+            'vendorBill.vendorBillItems.shipmentLeg.jobOrder',
+            'customer',
+            'vendor',
+            'accountCoa',
+            'invoicePayments.invoice.items',
             'driverAdvancePayments.driverAdvance.shipmentLeg.jobOrder',
-            'vendorBillPayments.vendorBill.vendorBillItems.shipmentLeg.jobOrder'
+            'driverAdvancePayments.driverAdvance.shipmentLeg.mainCost',
+            'driverAdvancePayments.driverAdvance.driver',
+            'vendorBillPayments.vendorBill.vendorBillItems.shipmentLeg.jobOrder',
         ]);
 
         return view('cash-banks.show', ['trx' => $cash_bank]);
