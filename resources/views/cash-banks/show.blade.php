@@ -100,6 +100,16 @@
                                 {{ number_format($trx->withholding_pph23 ?? 0, 2, ',', '.') }}
                             </span>
                         </div>
+
+                        {{-- Total Aktual --}}
+                        <div class="mt-3 pt-2 border-t border-dashed border-slate-200 dark:border-slate-700/60 flex items-center justify-between gap-4">
+                            <span class="text-sm font-bold text-slate-700 dark:text-slate-200">
+                                Total {{ $trx->jenis === 'cash_in' ? 'Diterima' : 'Dibayar' }}
+                            </span>
+                            <span class="text-base font-bold text-emerald-600 dark:text-emerald-400">
+                                {{ number_format($trx->amount - ($trx->withholding_pph23 ?? 0) - ($trx->admin_fee ?? 0), 2, ',', '.') }}
+                            </span>
+                        </div>
                     </div>
 
                     <div class="pt-3 mt-1 space-y-2 border-t border-slate-100 dark:border-slate-700/60 text-xs">
