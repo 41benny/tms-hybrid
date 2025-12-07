@@ -188,9 +188,9 @@
 </head>
 <body>
 @php
-    $company   = $companyInfo['name']    ?? 'PT. Vintama Perkasa Nusantara';
-    $tagline   = $companyInfo['tagline'] ?? 'Cash & Finance Management System';
-    $address   = $companyInfo['address'] ?? 'Jl. Contoh No. 123, Jakarta';
+    $company   = 'PT. VINTAMA PERKASA NUSANTARA';
+    $tagline   = 'Heavy Equipment and Transportation Service';
+    $address   = 'Ruko Asia Tropis AT 16 No.39, Kab. Bekasi';
 
     $rekeningNama = optional($transaction->account)->name ?? '-';
     $rekeningNo   = optional($transaction->account)->account_number;
