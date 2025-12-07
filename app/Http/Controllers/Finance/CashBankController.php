@@ -938,12 +938,19 @@ class CashBankController extends Controller
         try {
             \DB::beginTransaction();
             
-            // 1. Delete journal entries
-            if (class_exists('App\Models\Accounting\Journal')) {
+            // 1. Delete journal entries (and their lines to avoid FK constraint)
+            if (class_exists('App\\Models\\Accounting\\Journal')) {
                 $sourceType = $this->mapSourceTypeForJournal($cashBankTransaction->sumber);
-                \App\Models\Accounting\Journal::where('source_type', $sourceType)
+                $journals = \App\Models\Accounting\Journal::where('source_type', $sourceType)
                     ->where('source_id', $cashBankTransaction->id)
-                    ->delete();
+                    ->get();
+                
+                foreach ($journals as $journal) {
+                    // Delete journal lines first
+                    $journal->lines()->delete();
+                    // Then delete the journal
+                    $journal->delete();
+                }
             }
             
             // 2. Get all payment records
