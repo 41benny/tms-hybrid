@@ -193,13 +193,17 @@
                     <th class="px-1 py-1">
                         <input type="date" name="order_date" value="{{ request('order_date') }}" class="w-full px-1 py-1 text-[10px] rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onchange="this.form.submit()">
                     </th>
-                    <th class="px-1 py-1">
-                        <select name="customer_id" class="w-full px-1 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onchange="this.form.submit()">
-                            <option value="">All</option>
-                            @foreach($customers as $c)
-                                <option value="{{ $c->id }}" @selected(request('customer_id')==$c->id)>{{ $c->name }}</option>
-                            @endforeach
-                        </select>
+                    <th class="px-1 py-1 relative">
+                        <input type="hidden" name="customer_id" id="filter_customer_id" value="{{ request('customer_id') }}">
+                        <input type="text" 
+                               id="filter_customer_search" 
+                               value="{{ request('customer_id') ? $customers->firstWhere('id', request('customer_id'))?->name : '' }}"
+                               placeholder="Cari customer..." 
+                               autocomplete="off"
+                               class="w-full px-2 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        <div id="filter_customer_suggestions" 
+                             class="hidden absolute z-50 left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg shadow-lg">
+                        </div>
                     </th>
                     <th class="px-1 py-1">
                         <input type="text" name="cargo_unit" value="{{ request('cargo_unit') }}" placeholder="Cari..." class="w-full px-2 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onkeypress="if(event.keyCode==13){this.form.submit()}">
@@ -398,6 +402,11 @@
 <script>
     // Sorting function
     function sortTable(column) {
+        // Prevent sorting if currently resizing
+        if (typeof isResizing !== 'undefined' && isResizing) {
+            return;
+        }
+        
         const sortByInput = document.getElementById('sort_by');
         const sortOrderInput = document.getElementById('sort_order');
         
@@ -415,6 +424,8 @@
     }
 
     // Resizable columns
+    let isResizing = false;
+    
     document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
             const table = document.getElementById('job-orders-table');
@@ -439,6 +450,7 @@
                     e.preventDefault();
                     e.stopPropagation();
                     
+                    isResizing = true;
                     startX = e.pageX;
                     startWidth = col.offsetWidth;
                     
@@ -454,12 +466,17 @@
                         }
                     };
                     
-                    const mouseUpHandler = function() {
+                    const mouseUpHandler = function(e) {
                         resizer.classList.remove('resizing');
                         document.body.style.cursor = '';
                         document.body.style.userSelect = '';
                         document.removeEventListener('mousemove', mouseMoveHandler);
                         document.removeEventListener('mouseup', mouseUpHandler);
+                        
+                        // Delay resetting isResizing to prevent click event from firing
+                        setTimeout(() => {
+                            isResizing = false;
+                        }, 100);
                     };
                     
                     document.addEventListener('mousemove', mouseMoveHandler);
@@ -467,5 +484,95 @@
                 });
             });
         }, 100);
+
+        // Customer filter autocomplete
+        const customerList = @json($customers->map(fn($c) => ['id' => $c->id, 'name' => $c->name]));
+        const filterCustomerSearch = document.getElementById('filter_customer_search');
+        const filterCustomerId = document.getElementById('filter_customer_id');
+        const filterCustomerSuggestions = document.getElementById('filter_customer_suggestions');
+
+        function hideCustomerSuggestions() {
+            if (filterCustomerSuggestions) {
+                filterCustomerSuggestions.innerHTML = '';
+                filterCustomerSuggestions.classList.add('hidden');
+            }
+        }
+
+        function showCustomerSuggestions(items) {
+            if (!filterCustomerSuggestions) return;
+            if (items.length === 0) {
+                filterCustomerSuggestions.innerHTML = '<div class="px-3 py-2 text-xs text-slate-500">Tidak ada hasil</div>';
+                filterCustomerSuggestions.classList.remove('hidden');
+                return;
+            }
+            
+            // Add "All" option at the top
+            let optionsHtml = '<button type="button" data-id="" class="w-full text-left px-3 py-2 text-xs hover:bg-blue-100 dark:hover:bg-blue-900/30 text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">Semua Customer</button>';
+            optionsHtml += items.map(c => 
+                '<button type="button" data-id="' + c.id + '" class="w-full text-left px-3 py-2 text-xs hover:bg-blue-100 dark:hover:bg-blue-900/30 text-slate-700 dark:text-slate-300">' + c.name + '</button>'
+            ).join('');
+            
+            filterCustomerSuggestions.innerHTML = optionsHtml;
+            filterCustomerSuggestions.classList.remove('hidden');
+
+            // Add click handlers
+            filterCustomerSuggestions.querySelectorAll('button[data-id]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    if (id === '') {
+                        // "All" selected - clear filter
+                        filterCustomerId.value = '';
+                        filterCustomerSearch.value = '';
+                    } else {
+                        const found = customerList.find(c => String(c.id) === String(id));
+                        if (!found) return;
+                        filterCustomerId.value = found.id;
+                        filterCustomerSearch.value = found.name;
+                    }
+                    hideCustomerSuggestions();
+                    document.getElementById('filter-form').submit();
+                });
+            });
+        }
+
+        if (filterCustomerSearch && filterCustomerSuggestions) {
+            filterCustomerSearch.addEventListener('input', function() {
+                const query = this.value.toLowerCase().trim();
+                if (query.length === 0) {
+                    filterCustomerId.value = '';
+                    // Show all customers when input is empty (limited to first 20)
+                    showCustomerSuggestions(customerList.slice(0, 20));
+                    return;
+                }
+                const results = customerList.filter(c => c.name.toLowerCase().includes(query)).slice(0, 15);
+                showCustomerSuggestions(results);
+            });
+
+            filterCustomerSearch.addEventListener('focus', function() {
+                const query = this.value.toLowerCase().trim();
+                if (query.length === 0) {
+                    showCustomerSuggestions(customerList.slice(0, 20));
+                } else {
+                    const results = customerList.filter(c => c.name.toLowerCase().includes(query)).slice(0, 15);
+                    showCustomerSuggestions(results);
+                }
+            });
+
+            // Close suggestions when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!filterCustomerSuggestions.contains(e.target) && e.target !== filterCustomerSearch) {
+                    hideCustomerSuggestions();
+                }
+            });
+
+            // Handle Enter key to submit
+            filterCustomerSearch.addEventListener('keypress', function(e) {
+                if (e.keyCode === 13) {
+                    e.preventDefault();
+                    hideCustomerSuggestions();
+                    document.getElementById('filter-form').submit();
+                }
+            });
+        }
     });
 </script>
