@@ -95,7 +95,7 @@
                     :required="true"
                 >
                     <option value="">Pilih Akun Aset</option>
-                    @foreach($accounts as $a)
+                    @foreach($assetAccounts as $a)
                         <option value="{{ $a->id }}" @selected(old('account_asset_id')==$a->id)>
                             {{ $a->code }} - {{ $a->name }}
                         </option>
@@ -109,7 +109,7 @@
                     :required="true"
                 >
                     <option value="">Pilih Akun Akumulasi</option>
-                    @foreach($accounts as $a)
+                    @foreach($accumAccounts as $a)
                         <option value="{{ $a->id }}" @selected(old('account_accum_id')==$a->id)>
                             {{ $a->code }} - {{ $a->name }}
                         </option>
@@ -123,7 +123,7 @@
                     :required="true"
                 >
                     <option value="">Pilih Akun Beban</option>
-                    @foreach($accounts as $a)
+                    @foreach($expenseAccounts as $a)
                         <option value="{{ $a->id }}" @selected(old('account_expense_id')==$a->id)>
                             {{ $a->code }} - {{ $a->name }}
                         </option>

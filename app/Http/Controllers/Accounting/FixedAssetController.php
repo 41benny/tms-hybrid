@@ -19,8 +19,33 @@ class FixedAssetController extends Controller
 
     public function create()
     {
-        $accounts = ChartOfAccount::query()->whereIn('code', ['1610','1620','6100','1630','1640'])->get();
-        return view('fixed-assets.create', compact('accounts'));
+        // Akun Aset Tetap (16xx, non-akumulasi)
+        $assetAccounts = ChartOfAccount::query()
+            ->where('code', 'like', '16%')
+            ->where('name', 'not like', '%Akumulasi%')
+            ->where('is_postable', true)
+            ->orderBy('code')
+            ->get();
+        
+        // Akun Akumulasi Penyusutan (16xx dengan "Akumulasi")
+        $accumAccounts = ChartOfAccount::query()
+            ->where('code', 'like', '16%')
+            ->where('name', 'like', '%Akumulasi%')
+            ->where('is_postable', true)
+            ->orderBy('code')
+            ->get();
+        
+        // Akun Beban Penyusutan (semua akun expense/6xxx)
+        $expenseAccounts = ChartOfAccount::query()
+            ->where(function($q) {
+                $q->where('type', 'expense')
+                  ->orWhere('code', 'like', '6%');
+            })
+            ->where('is_postable', true)
+            ->orderBy('code')
+            ->get();
+        
+        return view('fixed-assets.create', compact('assetAccounts', 'accumAccounts', 'expenseAccounts'));
     }
 
     public function store(Request $request)
