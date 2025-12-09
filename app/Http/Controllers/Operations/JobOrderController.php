@@ -58,6 +58,28 @@ class JobOrderController extends Controller
             $query->whereDate('order_date', '<=', $to);
         }
         
+        // New Filters for Table Columns
+        if ($jobNumber = $request->get('job_number')) {
+            $query->where('job_number', 'like', '%' . $jobNumber . '%');
+        }
+        
+        if ($orderDate = $request->get('order_date')) {
+            $query->whereDate('order_date', $orderDate);
+        }
+        
+        if ($createdAt = $request->get('created_at')) {
+            $query->whereDate('created_at', $createdAt);
+        }
+        
+        if ($cargoUnit = $request->get('cargo_unit')) {
+            $query->whereHas('items', function ($q) use ($cargoUnit) {
+                $q->where('cargo_type', 'like', "%{$cargoUnit}%")
+                  ->orWhereHas('equipment', function ($Eq) use ($cargoUnit) {
+                      $Eq->where('name', 'like', "%{$cargoUnit}%");
+                  });
+            });
+        }
+        
         // Filter by invoice status
         if ($invoiceStatus = $request->get('invoice_status')) {
             if ($invoiceStatus === 'not_invoiced') {
