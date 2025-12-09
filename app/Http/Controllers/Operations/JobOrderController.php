@@ -119,9 +119,28 @@ class JobOrderController extends Controller
 
         // Wrap in transaction to prevent race condition
         $job = DB::transaction(function () use ($data, $itemDataList) {
+            // Generate job number with lock INSIDE transaction
+            $d = new \DateTimeImmutable($data['order_date']);
+            $prefix = 'JOB-'.$d->format('ymd').'-';
+            
+            // Lock the table to prevent race condition
+            $last = JobOrder::whereDate('order_date', $d->format('Y-m-d'))
+                ->where('job_number', 'like', $prefix.'%')
+                ->lockForUpdate()  // This lock works because we're in a transaction
+                ->orderByDesc('id')
+                ->value('job_number');
+                
+            $seq = 1;
+            if ($last && preg_match('/(\d{3})$/', $last, $m)) {
+                $seq = (int) $m[1] + 1;
+            }
+            
+            $jobNumber = $prefix.str_pad((string) $seq, 3, '0', STR_PAD_LEFT);
+            
+            // Create job order
             $job = new JobOrder;
             $job->fill($data);
-            $job->job_number = $this->generateJobNumber($data['order_date']);
+            $job->job_number = $jobNumber;
             $job->status = 'draft';
             $job->save();
 
