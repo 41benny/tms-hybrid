@@ -90,12 +90,11 @@ class PaymentRequest extends Model
 
     /**
      * Generate automatic description for payment request notes.
-     * Format: "Pembayaran hutang vendor (VendorName) dari origin tujuan destination muat qty costCategory order customerName"
+     * Format: "Pembayaran hutang vendor (VendorName) dari origin tujuan destination muat qty costCategory order customerName - JO#"
      */
     public function generateAutoDescription(): string
     {
-        // Get vendor name
-        $vendorName = '-';
+        // Handle vendor_bill type
         if ($this->payment_type === 'vendor_bill' && $this->vendorBill) {
             $vendorName = $this->vendorBill->vendor?->name ?: '-';
             
@@ -109,6 +108,7 @@ class PaymentRequest extends Model
             $qty = $leg?->quantity;
             $costCategory = $leg?->cost_category ?: '';
             $customerName = $jobOrder?->customer?->name ?: '-';
+            $jobNumber = $jobOrder?->job_number ?: '';
             
             // Format quantity
             $qtyFormatted = '-';
@@ -122,15 +122,53 @@ class PaymentRequest extends Model
                 'dari ' . $origin,
                 'tujuan ' . $destination,
                 'muat ' . $qtyFormatted . ($costCategory ? ' ' . $costCategory : ''),
-                'order ' . $customerName
+                'order ' . $customerName,
             ];
+            
+            // Add JO number at the end
+            if ($jobNumber) {
+                $parts[] = $jobNumber;
+            }
+            
+            return trim(implode(' ', $parts));
+        }
+        
+        // Handle trucking type (driver advance)
+        if ($this->payment_type === 'trucking' && $this->driverAdvance) {
+            $advance = $this->driverAdvance;
+            $advance->load('driver', 'shipmentLeg.jobOrder.customer', 'shipmentLeg.truck');
+            
+            $driver = $advance->driver;
+            $leg = $advance->shipmentLeg;
+            $jobOrder = $leg?->jobOrder;
+            $truck = $leg?->truck;
+            
+            $driverName = $driver?->name ?: '-';
+            $plateNumber = $truck?->plate_number ?: '-';
+            $customerName = $jobOrder?->customer?->name ?: '-';
+            $origin = $jobOrder?->origin ?: '-';
+            $destination = $jobOrder?->destination ?: '-';
+            $jobNumber = $jobOrder?->job_number ?: '';
+            
+            $parts = [
+                'Pembayaran uang jalan',
+                $driverName,
+                $plateNumber,
+                'order ' . $customerName,
+                $origin . '-' . $destination,
+            ];
+            
+            // Add JO number at the end
+            if ($jobNumber) {
+                $parts[] = $jobNumber;
+            }
             
             return trim(implode(' ', $parts));
         }
 
         // For manual payment without vendor bill
         $vendorName = $this->vendor?->name ?: '-';
-        return trim("Pembayaran hutang vendor ({$vendorName}) manual");
+        return trim("Pembayaran manual vendor ({$vendorName})");
     }
 
     public function getAutoDescriptionAttribute(): string

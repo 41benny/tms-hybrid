@@ -384,10 +384,11 @@ class CashBankController extends Controller
 
         // Handle Payment Request prefill
         if ($requestId = $request->get('payment_request_id')) {
-            $paymentRequest = \App\Models\Operations\PaymentRequest::with(['vendor', 'driverAdvance.driver'])->find($requestId);
+            $paymentRequest = \App\Models\Operations\PaymentRequest::with(['vendor', 'driverAdvance.driver', 'driverAdvance.shipmentLeg.jobOrder'])->find($requestId);
             if ($paymentRequest) {
                 $prefill['amount'] = $paymentRequest->amount;
-                $prefill['description'] = $paymentRequest->description;
+                // Use notes (which contains auto-generated description with JO number)
+                $prefill['description'] = $paymentRequest->notes ?: $paymentRequest->description;
                 $prefill['payment_request_id'] = $paymentRequest->id;
                 
                 if ($paymentRequest->payment_type === 'vendor_bill') {
@@ -395,8 +396,8 @@ class CashBankController extends Controller
                     $prefill['vendor_bill_id'] = $paymentRequest->vendor_bill_id;
                     $prefill['recipient_name'] = $paymentRequest->vendor->name ?? '';
                 } elseif ($paymentRequest->payment_type === 'trucking') {
-                    // Driver Advance
-                    $prefill['sumber'] = 'other_out'; 
+                    // Driver Advance - use uang_jalan for proper journal posting
+                    $prefill['sumber'] = 'uang_jalan'; 
                     $prefill['recipient_name'] = $paymentRequest->driverAdvance->driver->name ?? '';
                 } else {
                     // Manual
@@ -806,9 +807,19 @@ class CashBankController extends Controller
                     'cash_bank_transaction_id' => $trx->id
                 ]);
 
-                // If it's a Driver Advance (trucking), update the advance status
+                // If it's a Driver Advance (trucking), update the advance status and create payment record
                 if ($pr->payment_type === 'trucking' && $pr->driver_advance_id) {
                     $advance = $pr->driverAdvance;
+                    
+                    // Create DriverAdvancePayment record for proper relational linking
+                    \App\Models\Operations\DriverAdvancePayment::create([
+                        'driver_advance_id' => $advance->id,
+                        'cash_bank_transaction_id' => $trx->id,
+                        'amount_paid' => $pr->amount,
+                        'payment_date' => $data['tanggal'],
+                        'notes' => 'Pembayaran via Payment Request ' . $pr->request_number,
+                    ]);
+                    
                     $advance->update([
                         'dp_amount' => $advance->dp_amount + $pr->amount,
                         'dp_paid_date' => $data['tanggal'],
