@@ -123,11 +123,11 @@ class JobOrderController extends Controller
             $d = new \DateTimeImmutable($data['order_date']);
             $prefix = 'JOB-'.$d->format('ymd').'-';
             
-            // Lock the table to prevent race condition
-            $last = JobOrder::whereDate('order_date', $d->format('Y-m-d'))
-                ->where('job_number', 'like', $prefix.'%')
-                ->lockForUpdate()  // This lock works because we're in a transaction
-                ->orderByDesc('id')
+            // Query by job_number prefix ONLY (not by order_date)
+            // This prevents conflicts when order_date is edited after creation
+            $last = JobOrder::where('job_number', 'like', $prefix.'%')
+                ->lockForUpdate()  // Lock to prevent race condition
+                ->orderByDesc('job_number')  // Order by job_number to get highest sequence
                 ->value('job_number');
                 
             $seq = 1;
