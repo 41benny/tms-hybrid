@@ -9,6 +9,7 @@ use App\Models\Operations\JobOrder;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class JobOrderController extends Controller
@@ -116,20 +117,25 @@ class JobOrderController extends Controller
 
         unset($data['items']);
 
-        $job = new JobOrder;
-        $job->fill($data);
-        $job->job_number = $this->generateJobNumber($data['order_date']);
-        $job->status = 'draft';
-        $job->save();
+        // Wrap in transaction to prevent race condition
+        $job = DB::transaction(function () use ($data, $itemDataList) {
+            $job = new JobOrder;
+            $job->fill($data);
+            $job->job_number = $this->generateJobNumber($data['order_date']);
+            $job->status = 'draft';
+            $job->save();
 
-        // Save cargo items
-        foreach ($itemDataList as $itemData) {
-            if (! empty($itemData['equipment_id']) || ! empty($itemData['cargo_type'])) {
-                $item = new \App\Models\Operations\JobOrderItem($itemData);
-                $item->job_order_id = $job->id;
-                $item->save();
+            // Save cargo items
+            foreach ($itemDataList as $itemData) {
+                if (! empty($itemData['equipment_id']) || ! empty($itemData['cargo_type'])) {
+                    $item = new \App\Models\Operations\JobOrderItem($itemData);
+                    $item->job_order_id = $job->id;
+                    $item->save();
+                }
             }
-        }
+
+            return $job;
+        });
 
         return redirect()
             ->route('job-orders.show', [$job, 'view' => $request->get('view')])
@@ -351,10 +357,14 @@ class JobOrderController extends Controller
     {
         $d = new \DateTimeImmutable($date);
         $prefix = 'JOB-'.$d->format('ymd').'-';
+        
+        // Use pessimistic locking to prevent race condition
         $last = JobOrder::whereDate('order_date', $d->format('Y-m-d'))
             ->where('job_number', 'like', $prefix.'%')
+            ->lockForUpdate()  // Lock rows to prevent concurrent reads
             ->orderByDesc('id')
             ->value('job_number');
+            
         $seq = 1;
         if ($last && preg_match('/(\d{3})$/', $last, $m)) {
             $seq = (int) $m[1] + 1;

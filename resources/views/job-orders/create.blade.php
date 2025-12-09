@@ -522,6 +522,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add first item by default
     addCargoItem();
+
+    // Prevent double submit
+    const form = document.querySelector('form');
+    const submitButton = form.querySelector('button[type="submit"]');
+    
+    form.addEventListener('submit', function(e) {
+        // Check if already submitting
+        if (submitButton.disabled) {
+            e.preventDefault();
+            return false;
+        }
+        
+        // Disable button and show loading state
+        submitButton.disabled = true;
+        submitButton.innerHTML = '⏳ Menyimpan...';
+        
+        // Re-enable after 5 seconds as fallback (in case of validation error)
+        setTimeout(() => {
+            submitButton.disabled = false;
+            submitButton.innerHTML = '💾 Save Order';
+        }, 5000);
+    });
 });
 
 // Modal functions
