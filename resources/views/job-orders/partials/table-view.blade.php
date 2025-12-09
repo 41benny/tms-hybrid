@@ -92,16 +92,61 @@
 
 {{-- Desktop table view --}}
 <div class="hidden md:block overflow-x-auto">
-    <table class="min-w-full divide-y divide-slate-200 dark:divide-[#2d2d2d]">
+    <table class="min-w-full divide-y divide-slate-200 dark:divide-[#2d2d2d] resizable-table">
         <thead class="bg-slate-50 dark:bg-[#252525]">
             <tr>
-                <th class="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-wider text-slate-600 dark:text-slate-400">Job Number</th>
-                <th class="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-wider text-slate-600 dark:text-slate-400">Customer</th>
-                <th class="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-wider text-slate-600 dark:text-slate-400">Cargo Unit</th>
-                <th class="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-wider text-slate-600 dark:text-slate-400">Sales</th>
-                <th class="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-wider text-slate-600 dark:text-slate-400">Legs</th>
-                <th class="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-wider text-slate-600 dark:text-slate-400">Status JO</th>
-                <th class="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-wider text-slate-600 dark:text-slate-400">Status Inv</th>
+                @php
+                    $sortBy = request('sort_by', 'created_at');
+                    $sortOrder = request('sort_order', 'desc');
+                    
+                    function getSortUrl($column) {
+                        $currentSort = request('sort_by', 'created_at');
+                        $currentOrder = request('sort_order', 'desc');
+                        $newOrder = ($currentSort === $column && $currentOrder === 'asc') ? 'desc' : 'asc';
+                        return request()->fullUrlWithQuery(['sort_by' => $column, 'sort_order' => $newOrder]);
+                    }
+                    
+                    function getSortIcon($column) {
+                        $currentSort = request('sort_by', 'created_at');
+                        $currentOrder = request('sort_order', 'desc');
+                        if ($currentSort !== $column) {
+                            return '<svg class="w-3 h-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>';
+                        }
+                        return $currentOrder === 'asc' 
+                            ? '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>'
+                            : '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>';
+                    }
+                @endphp
+                
+                <th class="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-wider text-slate-600 dark:text-slate-400 cursor-pointer hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors resize-handle" onclick="window.location.href='{{ getSortUrl('job_number') }}'">
+                    <div class="flex items-center gap-1">
+                        Job Number
+                        {!! getSortIcon('job_number') !!}
+                    </div>
+                </th>
+                <th class="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-wider text-slate-600 dark:text-slate-400 cursor-pointer hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors resize-handle" onclick="window.location.href='{{ getSortUrl('order_date') }}'">
+                    <div class="flex items-center gap-1">
+                        Order Date
+                        {!! getSortIcon('order_date') !!}
+                    </div>
+                </th>
+                <th class="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-wider text-slate-600 dark:text-slate-400 resize-handle">Customer</th>
+                <th class="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-wider text-slate-600 dark:text-slate-400 resize-handle">Cargo Unit</th>
+                <th class="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-wider text-slate-600 dark:text-slate-400 resize-handle">Sales</th>
+                <th class="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-wider text-slate-600 dark:text-slate-400 resize-handle">Legs</th>
+                <th class="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-wider text-slate-600 dark:text-slate-400 cursor-pointer hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors resize-handle" onclick="window.location.href='{{ getSortUrl('status') }}'">
+                    <div class="flex items-center gap-1">
+                        Status JO
+                        {!! getSortIcon('status') !!}
+                    </div>
+                </th>
+                <th class="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-wider text-slate-600 dark:text-slate-400 resize-handle">Status Inv</th>
+                <th class="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-wider text-slate-600 dark:text-slate-400 cursor-pointer hover:bg-slate-100 dark:hover:bg-[#2d2d2d] transition-colors resize-handle" onclick="window.location.href='{{ getSortUrl('created_at') }}'">
+                    <div class="flex items-center gap-1">
+                        Created At
+                        {!! getSortIcon('created_at') !!}
+                    </div>
+                </th>
                 <th class="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-wider text-slate-600 dark:text-slate-400">Aksi</th>
             </tr>
         </thead>
@@ -109,8 +154,13 @@
             @forelse($orders as $order)
                 <tr class="hover:bg-slate-50 dark:hover:bg-[#252525] transition-colors">
                     <td class="px-4 py-2 whitespace-nowrap">
-                        <div class="text-xs text-slate-900 dark:text-slate-100" data-tooltip="{{ $order->order_date->format('d M Y') }}">
+                        <div class="text-xs font-medium text-slate-900 dark:text-slate-100">
                             {{ $order->job_number }}
+                        </div>
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap">
+                        <div class="text-xs text-slate-600 dark:text-slate-400">
+                            {{ $order->order_date->format('d M Y') }}
                         </div>
                     </td>
                     <td class="px-4 py-2">
@@ -177,6 +227,11 @@
                             </x-badge>
                         @endif
                     </td>
+                    <td class="px-4 py-2 whitespace-nowrap">
+                        <div class="text-xs text-slate-500 dark:text-slate-400">
+                            {{ $order->created_at->format('d M Y H:i') }}
+                        </div>
+                    </td>
                     <td class="px-4 py-2">
                         <div class="flex items-center gap-1">
                             <x-button :href="route('job-orders.show', [$order, 'view' => 'table'])" variant="ghost" size="sm">
@@ -195,7 +250,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="9" class="px-4 py-6 text-center text-slate-500 dark:text-slate-400">
+                    <td colspan="10" class="px-4 py-6 text-center text-slate-500 dark:text-slate-400">
                         <div class="flex flex-col items-center gap-2">
                             <svg class="w-12 h-12 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M9 8h.01M7 20h10a2 2 0 002-2V6a2 2 0 00-2-2H9.5L7 6.5V18a2 2 0 002 2z" />

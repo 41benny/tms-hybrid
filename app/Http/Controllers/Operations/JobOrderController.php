@@ -67,8 +67,23 @@ class JobOrderController extends Controller
             }
         }
 
+        // Sorting
+        $sortBy = $request->get('sort_by', 'created_at'); // default: created_at
+        $sortOrder = $request->get('sort_order', 'desc'); // default: desc
+        
+        // Validate sort column
+        $allowedSorts = ['job_number', 'order_date', 'created_at', 'updated_at', 'status'];
+        if (!in_array($sortBy, $allowedSorts)) {
+            $sortBy = 'created_at';
+        }
+        
+        // Validate sort order
+        if (!in_array($sortOrder, ['asc', 'desc'])) {
+            $sortOrder = 'desc';
+        }
+
         $viewMode = $request->get('view', 'table'); // default: table
-        $orders = $query->latest()->paginate(15)->withQueryString();
+        $orders = $query->orderBy($sortBy, $sortOrder)->paginate(15)->withQueryString();
         $customers = Customer::orderBy('name')->get();
         $salesList = Sales::where('is_active', true)->orderBy('name')->get();
 
