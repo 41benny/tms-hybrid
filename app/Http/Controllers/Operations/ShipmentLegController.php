@@ -287,9 +287,9 @@ class ShipmentLegController extends Controller
             ]
         );
 
-        // Auto-create Driver Advance if trucking and doesn't exist yet
-        if ($validated['cost_category'] === 'trucking' && $leg->driver_id && ! $leg->driverAdvance()->exists()) {
-            $this->autoCreateDriverAdvance($leg);
+        // Sync Driver Advance for trucking category
+        if ($validated['cost_category'] === 'trucking' && $leg->driver_id) {
+            $this->syncDriverAdvance($leg);
         }
 
         return redirect()->route('job-orders.show', $jobOrder)->with('success', 'Leg berhasil diupdate');
@@ -396,6 +396,22 @@ class ShipmentLegController extends Controller
         $billMode = $request->input('bill_mode', 'combined'); // default to 'combined'
         if (! in_array($billMode, ['combined', 'separate'])) {
             return back()->with('error', 'Mode billing tidak valid');
+        }
+
+        // Check for existing OPEN vendor bill for this Leg (Combined Mode Only for now)
+        $existingBill = \App\Models\Finance\VendorBill::where('vendor_id', $leg->vendor_id)
+            ->whereIn('status', ['draft', 'received'])
+            ->whereHas('items', function ($q) use ($leg) {
+                $q->where('shipment_leg_id', $leg->id);
+            })
+            ->latest()
+            ->first();
+
+        if ($existingBill && $billMode === 'combined') {
+            $this->updateCombinedBill($existingBill, $leg, $mainCost, $additionalCosts);
+
+            return redirect()->route('vendor-bills.show', $existingBill)
+                ->with('success', "Vendor bill {$existingBill->vendor_bill_number} berhasil diperbarui (Mode: Gabung)!");
         }
 
         // Check total already generated vs leg total cost
@@ -508,6 +524,33 @@ class ShipmentLegController extends Controller
         $totalAmount += $this->addPph23Item($bill, $leg, $mainCost);
 
         $bill->update(['total_amount' => $totalAmount]);
+
+        return $bill;
+    }
+
+    protected function updateCombinedBill(\App\Models\Finance\VendorBill $bill, ShipmentLeg $leg, LegMainCost $mainCost, $additionalCosts)
+    {
+        // 1. Delete items linked to this leg
+        $bill->items()->where('shipment_leg_id', $leg->id)->delete();
+
+        // 2. Add items
+        $this->addMainCostItems($bill, $leg, $mainCost);
+
+        foreach ($additionalCosts as $cost) {
+            $bill->items()->create([
+                'shipment_leg_id' => $leg->id,
+                'description' => "{$cost->cost_type} - {$cost->description}",
+                'qty' => 1,
+                'unit_price' => $cost->amount,
+                'subtotal' => $cost->amount,
+            ]);
+        }
+
+        // 3. Add PPH23
+        $this->addPph23Item($bill, $leg, $mainCost);
+
+        // 4. Recalculate Total
+        $bill->update(['total_amount' => $bill->items()->sum('subtotal')]);
 
         return $bill;
     }
@@ -729,5 +772,66 @@ class ShipmentLegController extends Controller
             'status' => 'pending',
             'notes' => "Auto-generated from Leg {$leg->leg_code} - Job Order {$leg->jobOrder->job_number}",
         ]);
+    }
+
+    /**
+     * Sync Driver Advance amount when Shipment Leg costs are updated.
+     * If DA exists, update amount and repost journal (if period is open).
+     * If DA doesn't exist, create it.
+     */
+    protected function syncDriverAdvance(ShipmentLeg $leg): void
+    {
+        // Reload mainCost
+        $leg->load('mainCost');
+        $mainCost = $leg->mainCost;
+
+        if (!$mainCost) {
+            return;
+        }
+
+        // Calculate new total amount
+        $newAmount = (float) ($mainCost->uang_jalan ?? 0)
+            + (float) ($mainCost->bbm ?? 0)
+            + (float) ($mainCost->toll ?? 0)
+            + (float) ($mainCost->other_costs ?? 0);
+
+        // Get existing Driver Advance
+        $driverAdvance = $leg->driverAdvance;
+
+        if (!$driverAdvance) {
+            // Create new if doesn't exist
+            if ($newAmount > 0) {
+                $this->autoCreateDriverAdvance($leg);
+            }
+            return;
+        }
+
+        // Check if amount changed
+        $oldAmount = (float) $driverAdvance->amount;
+        if (abs($oldAmount - $newAmount) < 0.01) {
+            // No change, skip
+            return;
+        }
+
+        // Update DA amount
+        $driverAdvance->update([
+            'amount' => $newAmount,
+            'deduction_savings' => $mainCost->driver_savings_deduction ?? 0,
+            'deduction_guarantee' => $mainCost->driver_guarantee_deduction ?? 0,
+        ]);
+
+        // If journal is posted, try to repost with revision flag
+        if ($driverAdvance->journal_status === 'posted' && $driverAdvance->journal_id) {
+            try {
+                $journalService = app(\App\Services\Accounting\JournalService::class);
+                $journalService->repostDriverAdvance($driverAdvance);
+            } catch (\Exception $e) {
+                // Log error but don't fail the update
+                \Log::warning('Failed to repost Driver Advance journal', [
+                    'advance_id' => $driverAdvance->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
     }
 }

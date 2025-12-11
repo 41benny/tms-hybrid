@@ -21,6 +21,9 @@ class Journal extends Model
         'total_credit',
         'posted_by',
         'posted_at',
+        'is_revision',
+        'original_journal_id',
+        'revised_at',
     ];
 
     protected $casts = [

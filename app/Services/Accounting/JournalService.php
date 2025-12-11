@@ -479,6 +479,91 @@ class JournalService
     }
 
     /**
+     * Repost Driver Advance journal when amount is updated.
+     * Deletes old journal (if period is open) and creates new one with is_revision=true.
+     */
+    public function repostDriverAdvance(\App\Models\Operations\DriverAdvance $advance): Journal
+    {
+        // Load relationships
+        $advance->load(['shipmentLeg.jobOrder', 'shipmentLeg.mainCost', 'driver']);
+
+        $leg = $advance->shipmentLeg;
+        $mainCost = $leg->mainCost;
+
+        if (!$mainCost) {
+            throw new \Exception('Main cost not found for shipment leg');
+        }
+
+        // Check if we have an existing journal
+        $oldJournal = null;
+        if ($advance->journal_id) {
+            $oldJournal = Journal::find($advance->journal_id);
+        }
+
+        // Check period status
+        if ($oldJournal && $oldJournal->period && $oldJournal->period->status !== 'open') {
+            throw new \Exception("Tidak dapat melakukan repost karena periode akuntansi {$oldJournal->period->month}/{$oldJournal->period->year} sudah ditutup.");
+        }
+
+        // Delete old journal
+        if ($oldJournal) {
+            $oldJournal->lines()->delete();
+            $oldJournal->delete();
+        }
+
+        // Reset journal status temporarily
+        $advance->update(['journal_status' => 'unposted', 'journal_id' => null]);
+
+        // Calculate new gross amount
+        $grossAmount = (float) ($mainCost->uang_jalan ?? 0)
+            + (float) ($mainCost->bbm ?? 0)
+            + (float) ($mainCost->toll ?? 0)
+            + (float) ($mainCost->other_costs ?? 0);
+
+        if ($grossAmount <= 0) {
+            throw new \Exception('No uang jalan amount to post');
+        }
+
+        $prepaid = $this->map('prepaid_expense');
+        $driverPayable = $this->map('driver_payable');
+        $jobOrderId = $leg->job_order_id;
+
+        $lines = [
+            [
+                'account_code' => $prepaid,
+                'debit' => $grossAmount,
+                'credit' => 0,
+                'desc' => 'Biaya dimuka uang jalan - ' . $leg->jobOrder->job_number . ' (Revisi)',
+                'job_order_id' => $jobOrderId
+            ],
+            [
+                'account_code' => $driverPayable,
+                'debit' => 0,
+                'credit' => $grossAmount,
+                'desc' => 'Hutang uang jalan supir - ' . ($advance->driver->name ?? 'N/A') . ' (Revisi)',
+                'job_order_id' => $jobOrderId
+            ],
+        ];
+
+        $journal = $this->posting->postGeneral([
+            'journal_date' => $advance->advance_date,
+            'source_type' => 'driver_advance',
+            'source_id' => $advance->id,
+            'memo' => 'Biaya dimuka uang jalan ' . $advance->advance_number . ' (Revisi)',
+            'is_revision' => true,
+            'revised_at' => now(),
+        ], $lines);
+
+        // Update driver advance status
+        $advance->update([
+            'journal_status' => 'posted',
+            'journal_id' => $journal->id
+        ]);
+
+        return $journal;
+    }
+
+    /**
      * Post driver advance payment journal
      * Pays down the liability created when shipment leg was created
      * 

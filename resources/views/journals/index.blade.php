@@ -167,6 +167,9 @@
                             <x-badge :variant="$journal->status === 'posted' ? 'success' : ($journal->status === 'void' ? 'danger' : 'default')">
                                 {{ ucfirst($journal->status) }}
                             </x-badge>
+                            @if($journal->is_revision)
+                                <x-badge variant="warning" class="ml-1">Revisi</x-badge>
+                            @endif
                         </td>
                         <td class="px-4 py-2" @click.stop>
                             <div class="flex gap-2">
