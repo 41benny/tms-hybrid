@@ -229,32 +229,48 @@ class JournalController extends Controller
      */
     protected function getSourceReference(Journal $journal): ?array
     {
+        $result = null;
+        $jobOrderNumbers = [];
+
         if ($journal->source_type === 'invoice' && $journal->source_id) {
-            $invoice = Invoice::find($journal->source_id);
+            $invoice = Invoice::with('jobOrders')->find($journal->source_id);
             if ($invoice) {
-                return [
+                $result = [
                     'type' => 'Invoice',
                     'number' => $invoice->invoice_number,
                     'url' => route('invoices.show', $invoice),
                 ];
+                // Get related job orders
+                if ($invoice->jobOrders && $invoice->jobOrders->isNotEmpty()) {
+                    $jobOrderNumbers = $invoice->jobOrders->pluck('job_number')->toArray();
+                }
             }
         }
 
         if ($journal->source_type === 'vendor_bill' && $journal->source_id) {
-            $bill = VendorBill::find($journal->source_id);
+            $bill = VendorBill::with('items.shipmentLeg.jobOrder')->find($journal->source_id);
             if ($bill) {
-                return [
+                $result = [
                     'type' => 'Vendor Bill',
                     'number' => $bill->vendor_bill_number,
                     'url' => route('vendor-bills.show', $bill),
                 ];
+                // Get related job orders from vendor bill items
+                if ($bill->items && $bill->items->isNotEmpty()) {
+                    $jobOrderNumbers = $bill->items
+                        ->pluck('shipmentLeg.jobOrder.job_number')
+                        ->filter()
+                        ->unique()
+                        ->values()
+                        ->toArray();
+                }
             }
         }
 
         if (in_array($journal->source_type, ['customer_payment', 'vendor_payment', 'expense']) && $journal->source_id) {
             $trx = CashBankTransaction::find($journal->source_id);
             if ($trx) {
-                return [
+                $result = [
                     'type' => 'Transaksi Kas/Bank',
                     'number' => $trx->reference_number ?? '#'.$trx->id,
                     'url' => route('cash-banks.show', $trx),
@@ -265,7 +281,7 @@ class JournalController extends Controller
         if ($journal->source_type === 'part_purchase' && $journal->source_id) {
             $purchase = \App\Models\Inventory\PartPurchase::find($journal->source_id);
             if ($purchase) {
-                return [
+                $result = [
                     'type' => 'Pembelian Part',
                     'number' => $purchase->purchase_number,
                     'url' => route('part-purchases.show', $purchase),
@@ -276,7 +292,7 @@ class JournalController extends Controller
         if ($journal->source_type === 'part_usage' && $journal->source_id) {
             $usage = \App\Models\Inventory\PartUsage::find($journal->source_id);
             if ($usage) {
-                return [
+                $result = [
                     'type' => 'Pemakaian Part',
                     'number' => $usage->usage_number,
                     'url' => route('part-usages.show', $usage),
@@ -284,7 +300,12 @@ class JournalController extends Controller
             }
         }
 
-        return null;
+        // Add job order numbers to result if found
+        if ($result && !empty($jobOrderNumbers)) {
+            $result['job_orders'] = $jobOrderNumbers;
+        }
+
+        return $result;
     }
 
     /**

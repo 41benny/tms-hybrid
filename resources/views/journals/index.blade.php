@@ -125,6 +125,7 @@
                         <th class="px-4 py-2">Tanggal</th>
                         <th class="px-4 py-2">Sumber</th>
                         <th class="px-4 py-2">Referensi</th>
+                        <th class="px-4 py-2">Job Order</th>
                         <th class="px-4 py-2">Memo</th>
                         <th class="px-4 py-2 text-right">Total Debit</th>
                         <th class="px-4 py-2 text-right">Total Kredit</th>
@@ -156,6 +157,17 @@
                                 <a href="{{ $journal->source_reference['url'] }}" class="text-indigo-600 dark:text-indigo-400 hover:underline" @click.stop>
                                     {{ $journal->source_reference['type'] }}: {{ $journal->source_reference['number'] }}
                                 </a>
+                            @else
+                                <span class="text-slate-400">-</span>
+                            @endif
+                        </td>
+                        <td class="px-4 py-2">
+                            @if($journal->source_reference && isset($journal->source_reference['job_orders']) && !empty($journal->source_reference['job_orders']))
+                                <div class="flex flex-wrap gap-1">
+                                    @foreach($journal->source_reference['job_orders'] as $joNumber)
+                                        <x-badge variant="info" class="text-xs">{{ $joNumber }}</x-badge>
+                                    @endforeach
+                                </div>
                             @else
                                 <span class="text-slate-400">-</span>
                             @endif
@@ -194,7 +206,7 @@
                     <tr x-show="expandedJournals.includes({{ $journal->id }})" 
                         x-collapse
                         class="bg-slate-50 dark:bg-slate-900/50">
-                        <td colspan="10" class="px-4 py-3">
+                        <td colspan="11" class="px-4 py-3">
                             <div class="ml-8">
                                 <div class="text-xs font-semibold text-[var(--color-text-muted)] mb-2">DETAIL JURNAL ENTRY:</div>
                                 <table class="w-full text-xs">
@@ -238,7 +250,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="10" class="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
+                        <td colspan="11" class="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
                             Tidak ada jurnal ditemukan.
                         </td>
                     </tr>

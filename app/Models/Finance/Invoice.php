@@ -124,6 +124,16 @@ class Invoice extends Model
         return $this->belongsTo(\App\Models\Accounting\Journal::class, 'journal_id');
     }
 
+    public function jobOrders(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            \App\Models\Operations\JobOrder::class,
+            'invoice_items',
+            'invoice_id',
+            'job_order_id'
+        )->distinct();
+    }
+
     // Scopes
     public function scopeOverdue($query)
     {
