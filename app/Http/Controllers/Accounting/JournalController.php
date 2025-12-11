@@ -267,6 +267,21 @@ class JournalController extends Controller
             }
         }
 
+        if (in_array($journal->source_type, ['driver_advance', 'uang_jalan']) && $journal->source_id) {
+            $driverAdvance = \App\Models\Operations\DriverAdvance::with('shipmentLeg.jobOrder')->find($journal->source_id);
+            if ($driverAdvance) {
+                $result = [
+                    'type' => 'Driver Advance',
+                    'number' => $driverAdvance->advance_number,
+                    'url' => route('driver-advances.show', $driverAdvance),
+                ];
+                // Get related job order from driver advance
+                if ($driverAdvance->shipmentLeg && $driverAdvance->shipmentLeg->jobOrder) {
+                    $jobOrderNumbers = [$driverAdvance->shipmentLeg->jobOrder->job_number];
+                }
+            }
+        }
+
         if (in_array($journal->source_type, ['customer_payment', 'vendor_payment', 'expense']) && $journal->source_id) {
             $trx = CashBankTransaction::find($journal->source_id);
             if ($trx) {

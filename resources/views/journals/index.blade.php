@@ -163,11 +163,7 @@
                         </td>
                         <td class="px-4 py-2">
                             @if($journal->source_reference && isset($journal->source_reference['job_orders']) && !empty($journal->source_reference['job_orders']))
-                                <div class="flex flex-wrap gap-1">
-                                    @foreach($journal->source_reference['job_orders'] as $joNumber)
-                                        <x-badge variant="info" class="text-xs">{{ $joNumber }}</x-badge>
-                                    @endforeach
-                                </div>
+                                {{ implode(', ', $journal->source_reference['job_orders']) }}
                             @else
                                 <span class="text-slate-400">-</span>
                             @endif
