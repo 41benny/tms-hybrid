@@ -25,6 +25,6 @@ class EnsureUserHasPermission
             return $next($request);
         }
 
-        abort(403, 'Anda tidak memiliki izin untuk aksi ini.');
+        abort(403, 'Anda tidak memiliki izin untuk aksi ini. (Role: ' . $user->role . ', Permissions: ' . implode(',', $permissions) . ')');
     }
 }

@@ -32,6 +32,7 @@ class EnsureUserCanAccessMenu
         }
 
         // Tidak punya akses
-        abort(403, 'Anda tidak memiliki akses ke halaman ini.');
+        // Tidak punya akses
+        abort(403, 'Anda tidak memiliki akses ke halaman ini. (Role: ' . $user->role . ', ID: ' . $user->id . ', Menu: ' . $menuSlug . ')');
     }
 }
