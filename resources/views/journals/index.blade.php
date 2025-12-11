@@ -90,6 +90,8 @@
                     <option value="customer_payment" @selected(request('source_type')==='customer_payment')>Penjualan (Pembayaran)</option>
                     <option value="vendor_bill" @selected(request('source_type')==='vendor_bill')>Pembelian</option>
                     <option value="vendor_payment" @selected(request('source_type')==='vendor_payment')>Pembelian (Pembayaran)</option>
+                    <option value="driver_advance" @selected(request('source_type')==='driver_advance')>Uang Jalan</option>
+                    <option value="uang_jalan" @selected(request('source_type')==='uang_jalan')>Uang Jalan (Pembayaran)</option>
                     <option value="expense" @selected(request('source_type')==='expense')>Kas/Bank</option>
                     <option value="cash_in" @selected(request('source_type')==='cash_in')>Kas/Bank (Masuk)</option>
                     <option value="cash_out" @selected(request('source_type')==='cash_out')>Kas/Bank (Keluar)</option>

@@ -66,6 +66,8 @@ class JournalController extends Controller
             'customer_payment' => 'Penjualan',
             'vendor_bill' => 'Pembelian',
             'vendor_payment' => 'Pembelian',
+            'driver_advance' => 'Uang Jalan',
+            'uang_jalan' => 'Pembayaran Uang Jalan',
             'expense' => 'Kas/Bank',
             'cash_in' => 'Kas/Bank',
             'cash_out' => 'Kas/Bank',
@@ -267,7 +269,8 @@ class JournalController extends Controller
             }
         }
 
-        if (in_array($journal->source_type, ['driver_advance', 'uang_jalan']) && $journal->source_id) {
+        if ($journal->source_type === 'driver_advance' && $journal->source_id) {
+            // Initial driver advance journal (when shipment leg is created)
             $driverAdvance = \App\Models\Operations\DriverAdvance::with('shipmentLeg.jobOrder')->find($journal->source_id);
             if ($driverAdvance) {
                 $result = [
@@ -278,6 +281,27 @@ class JournalController extends Controller
                 // Get related job order from driver advance
                 if ($driverAdvance->shipmentLeg && $driverAdvance->shipmentLeg->jobOrder) {
                     $jobOrderNumbers = [$driverAdvance->shipmentLeg->jobOrder->job_number];
+                }
+            }
+        }
+
+        if ($journal->source_type === 'uang_jalan' && $journal->source_id) {
+            // Payment of driver advance (cash bank transaction)
+            $trx = CashBankTransaction::with('driverAdvancePayments.driverAdvance.shipmentLeg.jobOrder')->find($journal->source_id);
+            if ($trx) {
+                $result = [
+                    'type' => 'Pembayaran Uang Jalan',
+                    'number' => $trx->voucher_number ?? $trx->reference_number ?? '#'.$trx->id,
+                    'url' => route('cash-banks.show', $trx),
+                ];
+                // Get related job orders from driver advance payments
+                if ($trx->driverAdvancePayments && $trx->driverAdvancePayments->isNotEmpty()) {
+                    $jobOrderNumbers = $trx->driverAdvancePayments
+                        ->pluck('driverAdvance.shipmentLeg.jobOrder.job_number')
+                        ->filter()
+                        ->unique()
+                        ->values()
+                        ->toArray();
                 }
             }
         }
