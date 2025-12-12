@@ -435,6 +435,7 @@
                                             $advanceStatus = $driverAdvance?->status;
                                             $canRequestDp = $driverAdvance && $advanceStatus === 'pending';
                                             $canRequestSettlement = $driverAdvance && $advanceStatus === 'dp_paid';
+                                            $canRequestAdditional = $driverAdvance && $advanceStatus === 'settled' && $driverAdvance->remaining_to_request > 0;
                                         @endphp
 
                                         @if($isSalesUser && ($canRequestDp || $canRequestSettlement))
@@ -449,6 +450,22 @@
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                                                     </svg>
                                                     {{ $canRequestDp ? 'Ajukan DP' : 'Ajukan Pelunasan' }}
+                                                </a>
+                                            </div>
+                                        @endif
+
+                                        {{-- Request Additional Payment for settled advances with remaining --}}
+                                        @if($isSalesUser && $canRequestAdditional)
+                                            <div class="mt-2 flex justify-end">
+                                                <a
+                                                    href="{{ route('payment-requests.create', ['driver_advance_id' => $driverAdvance->id]) }}"
+                                                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-amber-600 hover:bg-amber-500 text-white shadow-sm"
+                                                    title="Leg costs updated after settlement - request the difference"
+                                                >
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                                    </svg>
+                                                    Ajukan Tambahan (Rp {{ number_format($driverAdvance->remaining_to_request, 0, ',', '.') }})
                                                 </a>
                                             </div>
                                         @endif

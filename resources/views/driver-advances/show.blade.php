@@ -255,6 +255,38 @@
         </x-card>
     @endif
 
+    {{-- Request Additional Payment (for settled advances with remaining amount) --}}
+    @if($advance->status === 'settled' && $advance->remaining_to_request > 0)
+        <x-card title="💵 Request Additional Payment" subtitle="Leg costs were updated after settlement - request the difference">
+            <div class="space-y-4">
+                <div class="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                    <div class="flex items-start gap-3">
+                        <svg class="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-amber-700 dark:text-amber-300">Additional Payment Required</p>
+                            <p class="text-sm text-amber-600 dark:text-amber-400 mt-1">
+                                Leg costs were updated after this advance was settled.<br>
+                                Remaining to request: <span class="font-bold">Rp {{ number_format($advance->remaining_to_request, 0, ',', '.') }}</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex md:justify-end">
+                    <a href="{{ route('payment-requests.create', ['driver_advance_id' => $advance->id]) }}"
+                       class="w-full md:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Request Additional Payment
+                    </a>
+                </div>
+            </div>
+        </x-card>
+    @endif
+
     {{-- Settlement Details (if settled) --}}
     @if($advance->status === 'settled' && ($advance->deduction_savings > 0 || $advance->deduction_guarantee > 0))
         <x-card title="Deduction Details">
