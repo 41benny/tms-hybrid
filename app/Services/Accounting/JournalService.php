@@ -761,8 +761,15 @@ class JournalService
                     $driverName = $advance->driver->name;
                 }
                 
-                // Check if this is settlement
-                if ($advance->dp_amount > 0 || $advance->status === 'dp_paid') {
+                // FIXED: Determine if this is settlement by checking if there are OTHER payments
+                // (not this one) for the same advance. If this is the only payment, it's DP.
+                // If there are prior payments, this is settlement.
+                $priorPaymentCount = \App\Models\Operations\DriverAdvancePayment::where('driver_advance_id', $advance->id)
+                    ->where('id', '!=', $payment->id)
+                    ->count();
+                
+                // It's a settlement if there are prior payments (meaning DP was already paid)
+                if ($priorPaymentCount > 0) {
                     $isSettlement = true;
                     
                     // Only add deductions during settlement
