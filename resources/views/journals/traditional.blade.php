@@ -166,6 +166,23 @@
                 </thead>
                 <tbody>
                     @forelse($entries as $entry)
+                    @php
+                        // Calculate nama once for both data attribute and display
+                        if (in_array($entry->journal->source_type, $cashBankSourceTypes) && $entry->journal->source_id) {
+                            $cashBankTrx = $cashBankTransactions[$entry->journal->source_id] ?? null;
+                            $entryNama = $cashBankTrx?->recipient_name 
+                                 ?? $entry->customer?->name 
+                                 ?? $entry->vendor?->name 
+                                 ?? $entry->transport?->driver?->name 
+                                 ?? '-';
+                        } else {
+                            $entryNama = $entry->customer?->name 
+                                 ?? $entry->vendor?->name 
+                                 ?? $entry->transport?->driver?->name 
+                                 ?? $entry->transport?->plate_number
+                                 ?? ($entry->journal->source_type === 'fixed_asset_depreciation' ? 'Sistem' : '-');
+                        }
+                    @endphp
                     <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900/50"
                         data-entry
                         data-class="{{ $classLabels[$entry->journal->source_type] ?? $entry->journal->source_type }}"
@@ -174,7 +191,7 @@
                         data-account-code="{{ $entry->account->code }}"
                         data-account-name="{{ $entry->account->name }}"
                         data-description="{{ $entry->journal->memo ?: $entry->description }}"
-                        data-nama="{{ $entry->customer?->name ?? $entry->vendor?->name ?? $entry->transport?->driver?->name ?? $entry->transport?->plate_number ?? ($entry->journal->source_type === 'fixed_asset_depreciation' ? 'Sistem' : '-') }}"
+                        data-nama="{{ $entryNama }}"
                         data-debit="{{ $entry->debit > 0 ? number_format($entry->debit, 2, ',', '.') : '-' }}"
                         data-credit="{{ $entry->credit > 0 ? number_format($entry->credit, 2, ',', '.') : '-' }}"
                         data-debit-raw="{{ $entry->debit }}"
@@ -195,14 +212,7 @@
                             @endif
                         </td>
                         <td class="px-3 py-2 text-xs text-[var(--color-text-muted)] line-clamp-2">
-                            @php
-                                $nama = $entry->customer?->name 
-                                     ?? $entry->vendor?->name 
-                                     ?? $entry->transport?->driver?->name 
-                                     ?? $entry->transport?->plate_number
-                                     ?? ($entry->journal->source_type === 'fixed_asset_depreciation' ? 'Sistem' : '-');
-                            @endphp
-                            {{ $nama }}
+                            {{ $entryNama }}
                         </td>
                         <td class="px-3 py-2 text-right font-medium {{ $entry->debit > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' }}">
                             {{ $entry->debit > 0 ? number_format($entry->debit, 2, ',', '.') : '-' }}

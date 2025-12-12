@@ -382,10 +382,12 @@ class JournalController extends Controller
             'cash_in' => 5,
             'cash_out' => 5,
             'expense' => 5,
-            'part_purchase' => 6,
-            'part_usage' => 6,
-            'fixed_asset_depreciation' => 7,
-            'adjustment' => 8,
+            'uang_jalan' => 5,
+            'driver_advance' => 6,
+            'part_purchase' => 7,
+            'part_usage' => 7,
+            'fixed_asset_depreciation' => 8,
+            'adjustment' => 9,
         ];
 
         // Sort entries by class order, then by date, then by journal number
@@ -411,22 +413,38 @@ class JournalController extends Controller
         $totalDebit = $entries->sum('debit');
         $totalCredit = $entries->sum('credit');
 
-        // Class labels
+        // Class labels - Standardize all cash/bank related to "Kas/Bank"
         $classLabels = [
             'vendor_bill' => 'Pembelian',
             'vendor_payment' => 'Pembayaran Pembelian',
             'invoice' => 'Penjualan',
             'customer_payment' => 'Pembayaran Penjualan',
-            'cash_in' => 'Kas/Bank Masuk',
-            'cash_out' => 'Kas/Bank Keluar',
+            'cash_in' => 'Kas/Bank',
+            'cash_out' => 'Kas/Bank',
             'expense' => 'Kas/Bank',
+            'uang_jalan' => 'Kas/Bank',
+            'driver_advance' => 'Uang Jalan',
             'part_purchase' => 'Pembelian Part',
             'part_usage' => 'Pemakaian Part (HPP)',
             'fixed_asset_depreciation' => 'Depresiasi Aset',
             'adjustment' => 'Adjustment Manual',
         ];
 
-        return view('journals.traditional', compact('entries', 'totalDebit', 'totalCredit', 'classLabels'));
+        // Load Cash/Bank transaction data for entries that need recipient_name
+        $cashBankSourceTypes = ['customer_payment', 'vendor_payment', 'expense', 'cash_in', 'cash_out', 'uang_jalan'];
+        $cashBankTransactions = [];
+        
+        $cashBankJournals = $entries->filter(function ($entry) use ($cashBankSourceTypes) {
+            return in_array($entry->journal->source_type, $cashBankSourceTypes) && $entry->journal->source_id;
+        })->pluck('journal.source_id')->unique()->values()->toArray();
+        
+        if (!empty($cashBankJournals)) {
+            $cashBankTransactions = CashBankTransaction::whereIn('id', $cashBankJournals)
+                ->get()
+                ->keyBy('id');
+        }
+
+        return view('journals.traditional', compact('entries', 'totalDebit', 'totalCredit', 'classLabels', 'cashBankSourceTypes', 'cashBankTransactions'));
     }
 
     /**
@@ -464,10 +482,12 @@ class JournalController extends Controller
             'cash_in' => 5,
             'cash_out' => 5,
             'expense' => 5,
-            'part_purchase' => 6,
-            'part_usage' => 6,
-            'fixed_asset_depreciation' => 7,
-            'adjustment' => 8,
+            'uang_jalan' => 5,
+            'driver_advance' => 6,
+            'part_purchase' => 7,
+            'part_usage' => 7,
+            'fixed_asset_depreciation' => 8,
+            'adjustment' => 9,
         ];
 
         // Sort entries
@@ -487,20 +507,36 @@ class JournalController extends Controller
             return strcmp($a->journal->journal_no, $b->journal->journal_no);
         });
 
-        // Class labels
+        // Class labels - Standardize all cash/bank related to "Kas/Bank"
         $classLabels = [
             'vendor_bill' => 'Pembelian',
             'vendor_payment' => 'Pembayaran Pembelian',
             'invoice' => 'Penjualan',
             'customer_payment' => 'Pembayaran Penjualan',
-            'cash_in' => 'Kas/Bank Masuk',
-            'cash_out' => 'Kas/Bank Keluar',
+            'cash_in' => 'Kas/Bank',
+            'cash_out' => 'Kas/Bank',
             'expense' => 'Kas/Bank',
+            'uang_jalan' => 'Kas/Bank',
+            'driver_advance' => 'Uang Jalan',
             'part_purchase' => 'Pembelian Part',
             'part_usage' => 'Pemakaian Part (HPP)',
             'fixed_asset_depreciation' => 'Depresiasi Aset',
             'adjustment' => 'Adjustment Manual',
         ];
+
+        // Load Cash/Bank transaction data for entries that need recipient_name
+        $cashBankSourceTypes = ['customer_payment', 'vendor_payment', 'expense', 'cash_in', 'cash_out', 'uang_jalan'];
+        $cashBankTransactions = [];
+        
+        $cashBankJournals = $entries->filter(function ($entry) use ($cashBankSourceTypes) {
+            return in_array($entry->journal->source_type, $cashBankSourceTypes) && $entry->journal->source_id;
+        })->pluck('journal.source_id')->unique()->values()->toArray();
+        
+        if (!empty($cashBankJournals)) {
+            $cashBankTransactions = CashBankTransaction::whereIn('id', $cashBankJournals)
+                ->get()
+                ->keyBy('id');
+        }
 
         // Create Spreadsheet
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
@@ -533,12 +569,21 @@ class JournalController extends Controller
                 $keterangan .= ' - JO: ' . $entry->jobOrder->job_number;
             }
             
-            // Nama
-            $nama = $entry->customer?->name 
-                 ?? $entry->vendor?->name 
-                 ?? $entry->transport?->driver?->name 
-                 ?? $entry->transport?->plate_number
-                 ?? ($entry->journal->source_type === 'fixed_asset_depreciation' ? 'Sistem' : '-');
+            // Nama - For Cash/Bank transactions, use recipient_name
+            if (in_array($entry->journal->source_type, $cashBankSourceTypes) && $entry->journal->source_id) {
+                $cashBankTrx = $cashBankTransactions[$entry->journal->source_id] ?? null;
+                $nama = $cashBankTrx?->recipient_name 
+                     ?? $entry->customer?->name 
+                     ?? $entry->vendor?->name 
+                     ?? $entry->transport?->driver?->name 
+                     ?? '-';
+            } else {
+                $nama = $entry->customer?->name 
+                     ?? $entry->vendor?->name 
+                     ?? $entry->transport?->driver?->name 
+                     ?? $entry->transport?->plate_number
+                     ?? ($entry->journal->source_type === 'fixed_asset_depreciation' ? 'Sistem' : '-');
+            }
 
             $sheet->setCellValue('A' . $row, $class);
             $sheet->setCellValue('B' . $row, $tanggal);
