@@ -350,7 +350,7 @@
     @endunless
 
     {{-- Desktop Table View: Pengajuan Saya --}}
-    <x-card :noPadding="true" class="mt-6 hidden md:block">
+    <x-card :noPadding="true" class="mt-6 hidden md:block" id="request-history">
         <div class="px-6 py-4 border-b border-slate-200 dark:border-[#2d2d2d] bg-slate-50 dark:bg-[#252525]">
             <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Request History</h2>
             <p class="text-sm text-slate-600 dark:text-slate-400 mt-0.5">All payment requests that have been created</p>
