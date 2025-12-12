@@ -21,4 +21,19 @@ class Driver extends Model
     {
         return $this->hasMany(Truck::class);
     }
+
+    public function driverAdvances(): HasMany
+    {
+        return $this->hasMany(\App\Models\Operations\DriverAdvance::class);
+    }
+
+    public function journalLines(): HasMany
+    {
+        return $this->hasMany(\App\Models\Accounting\JournalLine::class);
+    }
+
+    public function cashBankTransactions(): HasMany
+    {
+        return $this->hasMany(\App\Models\Finance\CashBankTransaction::class);
+    }
 }

@@ -18,6 +18,7 @@ class CashBankTransaction extends Model
         'coa_id',
         'customer_id',
         'vendor_id',
+        'driver_id',
         'amount',
         'admin_fee',
         'withholding_pph23',
@@ -55,6 +56,11 @@ class CashBankTransaction extends Model
     public function vendorBill(): BelongsTo
     {
         return $this->belongsTo(\App\Models\Finance\VendorBill::class);
+    }
+
+    public function driver(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Master\Driver::class);
     }
 
     public function customer(): BelongsTo

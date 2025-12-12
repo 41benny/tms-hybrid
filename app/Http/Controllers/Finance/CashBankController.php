@@ -325,6 +325,8 @@ class CashBankController extends Controller
     public function create(Request $request)
     {
         $accounts = CashBankAccount::orderBy('name')->get();
+        // Drivers for withdrawal selector
+        $drivers = \App\Models\Master\Driver::where('is_active', true)->orderBy('name')->get();
         
         // Eager load customer dan items untuk invoices
         $invoices = Invoice::with([
@@ -410,7 +412,7 @@ class CashBankController extends Controller
             }
         }
 
-        return view('cash-banks.create', compact('accounts', 'invoices', 'vendorBills', 'driverAdvances', 'coas', 'prefill'));
+        return view('cash-banks.create', compact('accounts', 'invoices', 'vendorBills', 'driverAdvances', 'coas', 'prefill', 'drivers'));
     }
 
     /**
@@ -434,6 +436,7 @@ class CashBankController extends Controller
             'coa_id' => ['nullable', 'exists:chart_of_accounts,id'],
             'customer_id' => ['nullable', 'exists:customers,id'],
             'vendor_id' => ['nullable', 'exists:vendors,id'],
+            'driver_id' => ['nullable', 'exists:drivers,id'],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'admin_fee' => ['nullable', 'numeric', 'min:0'],
             'withholding_pph23' => ['nullable', 'numeric', 'min:0'],
@@ -795,6 +798,25 @@ class CashBankController extends Controller
         );
         
         $trx = CashBankTransaction::create($data);
+
+        // Handle specific Journals logic based on source
+        if (class_exists('App\Services\Accounting\JournalService')) {
+            $svc = app('App\Services\Accounting\JournalService');
+            
+            if ($data['sumber'] === 'driver_withdrawal') {
+                $svc->postDriverWithdrawal($trx);
+            } elseif ($data['sumber'] === 'customer_payment') {
+                $svc->postCustomerPayment($trx);
+            } elseif ($data['sumber'] === 'vendor_payment') {
+                $svc->postVendorPayment($trx);
+            } elseif ($data['sumber'] === 'expense') {
+                $svc->postExpense($trx);
+            } elseif ($data['sumber'] === 'other_in') {
+                $svc->postOtherIncome($trx);
+            } elseif ($data['sumber'] === 'other_out') {
+                $svc->postOtherExpense($trx);
+            }
+        }
 
         // Handle Payment Request update
         if (!empty($data['payment_request_id'])) {

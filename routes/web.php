@@ -59,6 +59,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('legs/{leg}/job-order-items', [ShipmentLegController::class, 'getJobOrderItems'])->name('legs.job-order-items');
     Route::get('legs/{leg}/print-trucking', [ShipmentLegController::class, 'printTrucking'])->name('legs.print-trucking');
     Route::get('api/truck-driver', [ShipmentLegController::class, 'getDriverByTruck'])->name('api.truck-driver');
+    Route::get('api/driver-savings/{driver}/balance', [\App\Http\Controllers\Reports\DriverSavingsController::class, 'getBalance'])->name('api.driver-savings.balance');
 
     // Sales-friendly console (mobile first)
     Route::get('sales-console', [\App\Http\Controllers\SalesDashboardController::class, 'index'])
@@ -199,6 +200,11 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('profit-loss', [ReportAccountingController::class, 'profitLoss'])->name('profit-loss');
         Route::get('balance-sheet', [ReportAccountingController::class, 'balanceSheet'])->name('balance-sheet');
         Route::get('cash-flow', [ReportAccountingController::class, 'cashFlow'])->name('cash-flow');
+
+        // Driver Savings
+        Route::get('driver-savings', [\App\Http\Controllers\Reports\DriverSavingsController::class, 'index'])->name('driver-savings.index');
+        Route::get('driver-savings/{driver}', [\App\Http\Controllers\Reports\DriverSavingsController::class, 'show'])->name('driver-savings.show');
+
 
         // Tax Reports
         Route::prefix('tax')->name('tax.')->group(function () {

@@ -170,7 +170,8 @@
                     <option value="customer_payment" @selected(in_array(old('sumber', $prefill['sumber'] ?? ''), ['customer_payment']))>Customer Payment</option>
                     <option value="vendor_payment" @selected(in_array(old('sumber', $prefill['sumber'] ?? ''), ['vendor_payment']))>Vendor Payment</option>
                     <option value="general" @selected(in_array(old('sumber', $prefill['sumber'] ?? ''), ['expense', 'other_in', 'other_out']))>General Transaction</option>
-                    <option value="uang_jalan" @selected(old('sumber', $prefill['sumber'] ?? '') == 'uang_jalan')>Driver Advance / Savings</option>
+                    <option value="uang_jalan" @selected(old('sumber', $prefill['sumber'] ?? '') == 'uang_jalan')>Bayar Uang Jalan (Driver Advance)</option>
+                    <option value="driver_withdrawal" @selected(old('sumber', $prefill['sumber'] ?? '') == 'driver_withdrawal')>Pencairan Tabungan Supir</option>
                 </select>
                 <input type="hidden" name="sumber" id="sumber" value="{{ old('sumber', $prefill['sumber'] ?? 'customer_payment') }}">
                 @error('sumber')
@@ -247,6 +248,20 @@
                       </svg>
                       Select Driver Advance
                   </button>
+            </div>
+            <div id="driver_input_field" style="display: none;">
+                <label class="block text-sm mb-1">Supir <span class="text-red-500">*</span></label>
+                <select
+                    name="driver_id"
+                    id="driver_id"
+                    class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                >
+                    <option value="">Pilih Supir</option>
+                    @foreach($drivers as $drv)
+                        <option value="{{ $drv->id }}">{{ $drv->name }}</option>
+                    @endforeach
+                </select>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1" id="driver_balance_hint">Saldo Tabungan: -</p>
             </div>
         </div>
         {{-- Selected Invoices Display (Full Width) --}}
@@ -1029,6 +1044,12 @@ function toggleFields() {
         
         // Call updateTransactionType to set proper values
         updateTransactionType();
+    } else if (uiSource === 'driver_withdrawal') {
+        sumberInput.value = 'driver_withdrawal';
+        document.getElementById('driver_input_field').style.display = 'block';
+        jenisSelect.value = 'cash_out';
+        recipientLabel.textContent = 'Dibayarkan Kepada (Supir)';
+        recipientHint.textContent = 'Nama supir yang mencairkan tabungan';
     }
 }
 
@@ -2439,6 +2460,55 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initial calculation
     updateTotalBank();
+
+    // Driver Withdrawal Auto-fill
+    const driverSelect = document.getElementById('driver_id');
+    if (driverSelect) {
+        driverSelect.addEventListener('change', async function() {
+            const driverId = this.value;
+            const hint = document.getElementById('driver_balance_hint');
+            const amountInput = document.getElementById('amount_input');
+            const amountDisplay = document.getElementById('amount_display');
+            const recipientInput = document.getElementById('recipient_name');
+            const descriptionInput = document.getElementById('description');
+            
+            if (!driverId) {
+                hint.textContent = 'Saldo Tabungan: -';
+                return;
+            }
+            
+            hint.textContent = 'Mengambil data saldo...';
+            
+            try {
+                // Fetch balance API
+                const response = await fetch(`/api/driver-savings/${driverId}/balance`);
+                const data = await response.json();
+                const balance = parseFloat(data.balance) || 0;
+                
+                hint.textContent = `Saldo Tabungan Tersedia: Rp ${formatNumber(balance.toFixed(0))}`;
+                
+                // Only auto-fill if amount is 0 or empty
+                if (!amountInput.value || parseFloat(amountInput.value) === 0) {
+                     amountInput.value = balance;
+                     amountDisplay.value = formatNumber(balance.toFixed(0));
+                     updateTotalBank();
+                }
+                
+                // Set recipient name to driver name
+                const driverName = this.options[this.selectedIndex].text;
+                recipientInput.value = driverName;
+                
+                // Set description
+                if (!descriptionInput.value) {
+                    descriptionInput.value = `Pencairan tabungan supir ${driverName}`;
+                }
+                
+            } catch (error) {
+                console.error('Error fetching driver balance:', error);
+                hint.textContent = 'Gagal mengambil saldo tabungan';
+            }
+        });
+    }
 });
 </script>
 @endsection

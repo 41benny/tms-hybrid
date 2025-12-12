@@ -741,8 +741,9 @@ class JournalService
         $guaranteeDeduction = 0;
         $isSettlement = false;
         
-        // Track job_order_id and driver name from first advance
+        // Track job_order_id, driver name, and driver_id from first advance
         $jobOrderId = null;
+        $driverId = null;
         $driverName = 'N/A';
         
         // Load driver advance payment records with driver relation
@@ -759,6 +760,7 @@ class JournalService
                 }
                 if ($driverName === 'N/A' && $advance->driver) {
                     $driverName = $advance->driver->name;
+                    $driverId = $advance->driver->id;
                 }
                 
                 // FIXED: Determine if this is settlement by checking if there are OTHER payments
@@ -799,7 +801,8 @@ class JournalService
             'debit' => $grossPayable,
             'credit' => 0,
             'desc' => 'Pembayaran hutang uang jalan - ' . ($isSettlement ? 'Pelunasan' : 'DP') . ' - ' . $driverName,
-            'job_order_id' => $jobOrderId
+            'job_order_id' => $jobOrderId,
+            'driver_id' => $driverId
         ];
         
         // Cr. Kas/Bank
@@ -820,7 +823,8 @@ class JournalService
                     'debit' => 0,
                     'credit' => $savingsDeduction,
                     'desc' => 'Potongan tabungan supir - ' . $driverName,
-                    'job_order_id' => $jobOrderId
+                    'job_order_id' => $jobOrderId,
+                    'driver_id' => $driverId
                 ];
             }
             
@@ -831,7 +835,8 @@ class JournalService
                     'debit' => 0,
                     'credit' => $guaranteeDeduction,
                     'desc' => 'Potongan jaminan supir - ' . $driverName,
-                    'job_order_id' => $jobOrderId
+                    'job_order_id' => $jobOrderId,
+                    'driver_id' => $driverId
                 ];
             }
         }
@@ -841,6 +846,49 @@ class JournalService
             'source_type' => 'uang_jalan',
             'source_id' => $trx->id,
             'memo' => $trx->description ?? 'Pembayaran uang jalan driver',
+        ], $lines);
+    }
+
+    /**
+     * Post driver savings withdrawal
+     * 
+     * Dr. Hutang Tabungan Supir (Liability decrease)
+     *   Cr. Kas/Bank
+     */
+    public function postDriverWithdrawal(CashBankTransaction $trx): Journal
+    {
+        if ($j = $this->alreadyPosted('driver_withdrawal', $trx->id)) {
+            return $j;
+        }
+
+        $cash = $this->getCashAccountCode($trx);
+        $savings = $this->map('driver_savings'); // 2160
+        
+        $trx->load('driver');
+        $driverName = $trx->driver?->name ?? 'N/A';
+        $driverId = $trx->driver_id;
+
+        $lines = [
+            [
+                'account_code' => $savings, 
+                'debit' => $trx->amount, 
+                'credit' => 0, 
+                'desc' => 'Pencairan tabungan supir - ' . $driverName,
+                'driver_id' => $driverId
+            ],
+            [
+                'account_code' => $cash, 
+                'debit' => 0, 
+                'credit' => $trx->amount, 
+                'desc' => 'Pencairan tabungan - ' . $driverName
+            ],
+        ];
+
+        return $this->posting->postGeneral([
+            'journal_date' => $trx->tanggal->toDateString(),
+            'source_type' => 'driver_withdrawal',
+            'source_id' => $trx->id,
+            'memo' => $trx->description ?? 'Pencairan tabungan supir',
         ], $lines);
     }
 

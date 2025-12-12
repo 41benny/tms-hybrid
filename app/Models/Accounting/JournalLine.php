@@ -17,6 +17,7 @@ class JournalLine extends Model
         'transport_id',
         'customer_id',
         'vendor_id',
+        'driver_id',
     ];
 
     public function journal(): BelongsTo
@@ -27,6 +28,11 @@ class JournalLine extends Model
     public function account(): BelongsTo
     {
         return $this->belongsTo(ChartOfAccount::class, 'account_id');
+    }
+
+    public function driver(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Master\Driver::class);
     }
 
     public function customer(): BelongsTo
