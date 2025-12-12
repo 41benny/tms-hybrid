@@ -826,6 +826,37 @@ class CashBankController extends Controller
                         'status' => 'dp_paid'
                     ]);
                 }
+
+                // If it's a Vendor Bill payment, update the bill and create payment record
+                if ($pr->payment_type === 'vendor_bill' && $pr->vendor_bill_id) {
+                    $vendorBill = $pr->vendorBill;
+                    
+                    if ($vendorBill) {
+                        // Create VendorBillPayment record for proper relational linking
+                        \App\Models\Finance\VendorBillPayment::create([
+                            'vendor_bill_id' => $vendorBill->id,
+                            'cash_bank_transaction_id' => $trx->id,
+                            'amount_paid' => $pr->amount,
+                            'payment_date' => $data['tanggal'],
+                            'notes' => 'Pembayaran via Payment Request ' . $pr->request_number,
+                        ]);
+                        
+                        // Update vendor bill amount_paid
+                        $newAmountPaid = $vendorBill->amount_paid + $pr->amount;
+                        
+                        if ($newAmountPaid >= $vendorBill->total_amount) {
+                            $vendorBill->update([
+                                'amount_paid' => $vendorBill->total_amount,
+                                'status' => 'paid'
+                            ]);
+                        } else {
+                            $vendorBill->update([
+                                'amount_paid' => $newAmountPaid,
+                                'status' => 'partially_paid'
+                            ]);
+                        }
+                    }
+                }
             }
         }
 
