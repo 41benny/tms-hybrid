@@ -62,7 +62,7 @@ class PaymentRequestController extends Controller
             $query->whereDate('request_date', '<=', $to);
         }
 
-        $requests = $query->latest('request_date')->paginate(15)->withQueryString();
+        $requests = $query->latest('request_date')->paginate(8)->withQueryString();
 
         // Vendor bills outstanding (gunakan scope + accessor)
         $unpaidBills = VendorBill::with(['vendor', 'items', 'paymentRequests'])

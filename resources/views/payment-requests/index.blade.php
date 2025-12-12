@@ -66,7 +66,7 @@
         </x-slot:header>
 
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-slate-200 dark:divide-[#2d2d2d]">
+            <table id="vendorBillsTable" class="min-w-full divide-y divide-slate-200 dark:divide-[#2d2d2d]" data-per-page="8">
                 <thead class="bg-[var(--bg-surface-secondary)]">
                     <tr>
                         <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Vendor Bill</th>
@@ -87,7 +87,7 @@
                         <th scope="col" class="px-4 py-3 text-center text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Action</th>
                     </tr>
                 </thead>
-                <tbody class="bg-[var(--bg-panel)] divide-y divide-[var(--border-color)]">
+                <tbody id="vendorBillsBody" class="bg-[var(--bg-panel)] divide-y divide-[var(--border-color)]">
                 @foreach($unpaidBills as $bill)
                     <tr class="hover:bg-slate-50 dark:hover:bg-[#252525] transition-colors">
                         <td class="px-4 py-3 whitespace-nowrap">
@@ -140,6 +140,8 @@
                 </tbody>
             </table>
         </div>
+        <!-- Pagination for Vendor Bills -->
+        <div id="vendorBillsPagination" class="flex items-center justify-between px-4 py-3 border-t border-[var(--border-color)]"></div>
     </x-card>
     @endif
 
@@ -157,7 +159,7 @@
         </x-slot:header>
 
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-slate-200 dark:divide-[#2d2d2d]">
+            <table id="driverAdvancesTable" class="min-w-full divide-y divide-slate-200 dark:divide-[#2d2d2d]" data-per-page="8">
                 <thead class="bg-slate-50 dark:bg-[#252525]">
                     <tr>
                         <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Number</th>
@@ -179,7 +181,7 @@
                         <th scope="col" class="px-4 py-3 text-center text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Action</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white dark:bg-[#1e1e1e] divide-y divide-slate-200 dark:divide-[#2d2d2d]">
+                <tbody id="driverAdvancesBody" class="bg-white dark:bg-[#1e1e1e] divide-y divide-slate-200 dark:divide-[#2d2d2d]">
                 @foreach($outstandingAdvances as $advance)
                     <tr class="hover:bg-slate-50 dark:hover:bg-[#252525] transition-colors">
                         <td class="px-4 py-3 whitespace-nowrap">
@@ -260,6 +262,8 @@
                 </tbody>
             </table>
         </div>
+        <!-- Pagination for Driver Advances -->
+        <div id="driverAdvancesPagination" class="flex items-center justify-between px-4 py-3 border-t border-[var(--border-color)]"></div>
     </x-card>
     @endif
 
@@ -682,6 +686,106 @@
             }
             function showJobInfoPopup(id){
                 showPayablesPopup('jobInfoPopup', `/payment-requests/${id}/job-info`, renderJobOrders);
+            }
+        </script>
+
+        <script>
+            // Client-side pagination for outstanding tables
+            document.addEventListener('DOMContentLoaded', function() {
+                setupTablePagination('vendorBillsBody', 'vendorBillsPagination', 8);
+                setupTablePagination('driverAdvancesBody', 'driverAdvancesPagination', 8);
+            });
+
+            function setupTablePagination(tbodyId, paginationId, perPage) {
+                const tbody = document.getElementById(tbodyId);
+                const paginationContainer = document.getElementById(paginationId);
+                
+                if (!tbody || !paginationContainer) return;
+                
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                const totalRows = rows.length;
+                const totalPages = Math.ceil(totalRows / perPage);
+                let currentPage = 1;
+
+                if (totalRows <= perPage) {
+                    paginationContainer.style.display = 'none';
+                    return;
+                }
+
+                function showPage(page) {
+                    currentPage = page;
+                    const start = (page - 1) * perPage;
+                    const end = start + perPage;
+
+                    rows.forEach((row, index) => {
+                        row.style.display = (index >= start && index < end) ? '' : 'none';
+                    });
+
+                    renderPagination();
+                }
+
+                function renderPagination() {
+                    const start = (currentPage - 1) * perPage + 1;
+                    const end = Math.min(currentPage * perPage, totalRows);
+
+                    paginationContainer.innerHTML = `
+                        <div class="text-sm text-slate-600 dark:text-slate-400">
+                            Showing <span class="font-medium">${start}</span> to <span class="font-medium">${end}</span> of <span class="font-medium">${totalRows}</span> results
+                        </div>
+                        <div class="flex items-center gap-1">
+                            ${currentPage > 1 ? `
+                                <button type="button" onclick="window.paginateTo_${tbodyId}(${currentPage - 1})" 
+                                    class="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                                    Previous
+                                </button>
+                            ` : `
+                                <button type="button" disabled 
+                                    class="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed">
+                                    Previous
+                                </button>
+                            `}
+                            ${generatePageNumbers()}
+                            ${currentPage < totalPages ? `
+                                <button type="button" onclick="window.paginateTo_${tbodyId}(${currentPage + 1})" 
+                                    class="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                                    Next
+                                </button>
+                            ` : `
+                                <button type="button" disabled 
+                                    class="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed">
+                                    Next
+                                </button>
+                            `}
+                        </div>
+                    `;
+                }
+
+                function generatePageNumbers() {
+                    let html = '';
+                    const maxVisible = 5;
+                    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+                    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+                    
+                    if (endPage - startPage + 1 < maxVisible) {
+                        startPage = Math.max(1, endPage - maxVisible + 1);
+                    }
+
+                    for (let i = startPage; i <= endPage; i++) {
+                        if (i === currentPage) {
+                            html += `<span class="px-3 py-1.5 text-xs font-medium rounded-lg bg-indigo-600 text-white">${i}</span>`;
+                        } else {
+                            html += `<button type="button" onclick="window.paginateTo_${tbodyId}(${i})" 
+                                class="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">${i}</button>`;
+                        }
+                    }
+                    return html;
+                }
+
+                // Expose pagination function globally for onclick
+                window['paginateTo_' + tbodyId] = showPage;
+
+                // Initialize first page
+                showPage(1);
             }
         </script>
 @endsection
