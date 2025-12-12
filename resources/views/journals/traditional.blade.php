@@ -185,7 +185,7 @@
                         <td class="px-3 py-2 text-[var(--color-text-muted)]">
                             {{ $entry->journal->memo ?: $entry->description }}
                             @if($entry->jobOrder)
-                                <span class="text-indigo-600 font-medium"> - JO: {{ $entry->jobOrder->order_no }}</span>
+                                <span class="text-indigo-600 font-medium"> - JO: {{ $entry->jobOrder->job_number }}</span>
                             @endif
                         </td>
                         <td class="px-3 py-2 text-xs text-[var(--color-text-muted)] line-clamp-2">
