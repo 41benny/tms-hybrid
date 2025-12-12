@@ -30,10 +30,8 @@ class BackfillDriverIds extends Command
     {
         $this->info('Starting backfill of driver_id in journal_lines...');
 
-        // 1. Backfill from Driver Advance Settlements
-        // Journals with source_type = 'driver_advance'
+        // 1. Backfill from Driver Advance (Initial Liability)
         $journals = Journal::where('source_type', 'driver_advance')->get();
-        
         $bar = $this->output->createProgressBar(count($journals));
         $count = 0;
 
@@ -42,28 +40,52 @@ class BackfillDriverIds extends Command
             $advance = DriverAdvance::find($advanceId);
 
             if ($advance && $advance->driver_id) {
-                // Update specific lines (Savings & Guarantee)
-                // Codes: 2160 (Savings), 2170 (Guarantee)
-                // Actually, safer to update all lines for this journal? 
-                // No, usually only the liability lines belong to the driver personally?
-                // But generally, linking the LINE to the driver is safe if the whole transaction is about them.
-                // However, for strictness, let's update lines where account is 2160 or 2170.
-                
                 $affected = DB::table('journal_lines')
                     ->where('journal_id', $journal->id)
                     ->whereNull('driver_id')
                     ->update(['driver_id' => $advance->driver_id]);
                     
-                if ($affected > 0) {
-                    $count += $affected;
-                }
+                if ($affected > 0) $count += $affected;
             }
             $bar->advance();
         }
-
         $bar->finish();
         $this->newLine();
-        $this->info("Updated {$count} journal lines from Driver Advances.");
+        $this->info("Updated {$count} lines from 'driver_advance' source.");
+
+        // 2. Backfill from Settlement (Uang Jalan) - THIS IS WHERE SAVINGS ARE
+        $this->info('Starting backfill for Settlement (uang_jalan)...');
+        
+        $journals = Journal::where('source_type', 'uang_jalan')->get();
+        $bar = $this->output->createProgressBar(count($journals));
+        $countSettlement = 0;
+
+        foreach ($journals as $journal) {
+            // source_id is CashBankTransaction ID
+            // Find linked DriverAdvancePayment to get the Driver
+            $payment = \App\Models\Operations\DriverAdvancePayment::where('cash_bank_transaction_id', $journal->source_id)
+                ->with('driverAdvance')
+                ->first();
+
+            if ($payment && $payment->driverAdvance && $payment->driverAdvance->driver_id) {
+                $driverId = $payment->driverAdvance->driver_id;
+                
+                // Update lines with relevant accounts (Savings/Guarantee/Payable)
+                // Or just update all lines in this journal? 
+                // Updating all lines is safer for context, but specifically we need 2160/2170/2155
+                $affected = DB::table('journal_lines')
+                    ->where('journal_id', $journal->id)
+                    ->whereNull('driver_id')
+                    ->update(['driver_id' => $driverId]);
+                    
+                if ($affected > 0) $countSettlement += $affected;
+            }
+            $bar->advance();
+        }
+        
+        $bar->finish();
+        $this->newLine();
+        $this->info("Updated {$countSettlement} lines from 'uang_jalan' source.");
 
         // 2. Backfill from CashBankTransactions (Withdrawals)
         // If there were any old "manual" transactions that we can identify?
