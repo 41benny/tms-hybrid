@@ -768,11 +768,14 @@ class JournalService
                     ->where('id', '!=', $payment->id)
                     ->count();
                 
-                // It's a settlement if there are prior payments (meaning DP was already paid)
-                if ($priorPaymentCount > 0) {
+                // Deductions ONLY on the FIRST settlement (exactly 1 prior payment = the DP)
+                // If 0 prior = DP (no deductions)
+                // If 1 prior = first settlement (WITH deductions)
+                // If 2+ prior = additional payment after settlement (no deductions, already deducted)
+                if ($priorPaymentCount === 1) {
                     $isSettlement = true;
                     
-                    // Only add deductions during settlement
+                    // Only add deductions during FIRST settlement
                     if ($advance->shipmentLeg && $advance->shipmentLeg->mainCost) {
                         $mainCost = $advance->shipmentLeg->mainCost;
                         $savingsDeduction += (float) ($mainCost->driver_savings_deduction ?? 0);
