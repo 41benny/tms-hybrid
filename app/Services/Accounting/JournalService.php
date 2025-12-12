@@ -242,20 +242,27 @@ class JournalService
             $lines[] = ['account_code' => $exp, 'debit' => $dpp, 'credit' => 0, 'desc' => 'Biaya vendor bill '.$bill->vendor_bill_number, 'vendor_id' => $bill->vendor_id, 'job_order_id' => $jobOrderId];
         }
 
-        // Dr PPN Masukan (jika ada PPN)
+        // Dr PPN (jika ada PPN)
         if ($ppn > 0) {
             $useNonCredit = (bool) ($bill->ppn_noncreditable ?? false);
+            
             if ($useNonCredit) {
-                try {
-                    $vatAccount = $this->map('vat_in_noncreditable');
-                } catch (\InvalidArgumentException $e) {
+                // PPN tidak dikreditkan: masuk ke akun yang sama dengan DPP (biaya dimuka atau beban)
+                if ($hasShipmentLeg) {
+                    // By Dimuka: PPN tidak dikreditkan juga masuk ke Biaya Dimuka
+                    $vatAccount = $this->map('prepaid_expense');
+                } else {
+                    // Non-shipment: PPN tidak dikreditkan langsung ke Beban Vendor
                     $vatAccount = $this->map('expense_vendor');
                 }
+                $ppnDesc = 'PPN tidak dikreditkan vendor bill '.$bill->vendor_bill_number;
             } else {
+                // PPN dikreditkan: masuk ke PPN Masukan
                 $vatAccount = $this->map('vat_in');
+                $ppnDesc = 'PPN Masukan vendor bill '.$bill->vendor_bill_number;
             }
 
-            $lines[] = ['account_code' => $vatAccount, 'debit' => $ppn, 'credit' => 0, 'desc' => 'PPN Masukan vendor bill '.$bill->vendor_bill_number, 'vendor_id' => $bill->vendor_id, 'job_order_id' => $jobOrderId];
+            $lines[] = ['account_code' => $vatAccount, 'debit' => $ppn, 'credit' => 0, 'desc' => $ppnDesc, 'vendor_id' => $bill->vendor_id, 'job_order_id' => $jobOrderId];
         }
 
         // Cr Hutang PPh 23 (jika ada potongan PPh 23)
@@ -859,26 +866,43 @@ class JournalService
                 continue;
             }
 
-            // Hitung DPP dari vendor bill (total - PPN - PPh23)
+            // Hitung DPP dan PPN tidak dikreditkan dari vendor bill
             $dpp = 0;
+            $ppnNonCreditable = 0;
+            $isPpnNonCreditable = (bool) ($vendorBill->ppn_noncreditable ?? false);
+            
             foreach ($vendorBill->items as $item) {
                 $desc = strtolower($item->description);
-                if (!str_contains($desc, 'ppn') && !str_contains($desc, 'pph')) {
+                if (str_contains($desc, 'ppn')) {
+                    // Jika PPN tidak dikreditkan, ini akan dibalik juga
+                    if ($isPpnNonCreditable) {
+                        $ppnNonCreditable += $item->subtotal;
+                    }
+                } elseif (!str_contains($desc, 'pph')) {
                     $dpp += $item->subtotal;
                 }
             }
 
-            if ($dpp <= 0) {
+            if ($dpp <= 0 && $ppnNonCreditable <= 0) {
                 continue;
             }
 
             // Buat jurnal pembalik: Dr Beban Vendor, Cr Biaya Dimuka
             $expense = $this->map('expense_vendor');
 
-            $lines = [
-                ['account_code' => $expense, 'debit' => $dpp, 'credit' => 0, 'desc' => 'Pengakuan beban vendor bill '.$vendorBill->vendor_bill_number.' untuk invoice '.$invoice->invoice_number, 'vendor_id' => $vendorBill->vendor_id],
-                ['account_code' => $prepaidCode, 'debit' => 0, 'credit' => $dpp, 'desc' => 'Pembalikan biaya dimuka vendor bill '.$vendorBill->vendor_bill_number, 'vendor_id' => $vendorBill->vendor_id],
-            ];
+            $lines = [];
+            
+            // Balik DPP
+            if ($dpp > 0) {
+                $lines[] = ['account_code' => $expense, 'debit' => $dpp, 'credit' => 0, 'desc' => 'Pengakuan beban vendor bill '.$vendorBill->vendor_bill_number.' untuk invoice '.$invoice->invoice_number, 'vendor_id' => $vendorBill->vendor_id];
+                $lines[] = ['account_code' => $prepaidCode, 'debit' => 0, 'credit' => $dpp, 'desc' => 'Pembalikan biaya dimuka vendor bill '.$vendorBill->vendor_bill_number, 'vendor_id' => $vendorBill->vendor_id];
+            }
+            
+            // Balik PPN tidak dikreditkan (jika ada)
+            if ($ppnNonCreditable > 0) {
+                $lines[] = ['account_code' => $expense, 'debit' => $ppnNonCreditable, 'credit' => 0, 'desc' => 'Pengakuan beban PPN tidak dikreditkan vendor bill '.$vendorBill->vendor_bill_number.' untuk invoice '.$invoice->invoice_number, 'vendor_id' => $vendorBill->vendor_id];
+                $lines[] = ['account_code' => $prepaidCode, 'debit' => 0, 'credit' => $ppnNonCreditable, 'desc' => 'Pembalikan biaya dimuka PPN tidak dikreditkan vendor bill '.$vendorBill->vendor_bill_number, 'vendor_id' => $vendorBill->vendor_id];
+            }
 
             try {
                 $this->posting->postGeneral([
@@ -893,7 +917,8 @@ class JournalService
                     'invoice_number' => $invoice->invoice_number,
                     'vendor_bill_id' => $vendorBill->id,
                     'vendor_bill_number' => $vendorBill->vendor_bill_number,
-                    'amount' => $dpp
+                    'dpp_amount' => $dpp,
+                    'ppn_noncreditable_amount' => $ppnNonCreditable
                 ]);
             } catch (\Exception $e) {
                 // Log error but don't fail the transaction
