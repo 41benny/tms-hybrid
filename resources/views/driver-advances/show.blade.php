@@ -156,6 +156,11 @@
 
     {{-- Form Settlement --}}
     @if($advance->status === 'dp_paid')
+        @php
+            $legMainCost = $advance->shipmentLeg->mainCost;
+            $fixedSavings = $legMainCost ? (float) $legMainCost->driver_savings_deduction : 0;
+            $fixedGuarantee = $legMainCost ? (float) $legMainCost->driver_guarantee_deduction : 0;
+        @endphp
         <x-card title="🧾 Driver Settlement" subtitle="Process settlement after driver delivered with deductions">
             <form method="POST" action="{{ route('driver-advances.settlement', $advance)}}" id="settlementForm">
                 @csrf
@@ -172,14 +177,15 @@
                         <input
                             type="text"
                             id="deduction_savings_display"
-                            placeholder="500.000"
-                            class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            value="{{ number_format($fixedSavings, 0, ',', '.') }}"
+                            class="w-full rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-500 dark:text-slate-400 cursor-not-allowed focus:outline-none"
+                            readonly
                         >
-                        <input type="hidden" name="deduction_savings" id="deduction_savings_input" value="{{ old('deduction_savings', 0) }}">
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">Deduction for driver savings</p>
-                        @error('deduction_savings')
-                            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
+                        <input type="hidden" name="deduction_savings" id="deduction_savings_input" value="{{ $fixedSavings }}">
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5 flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                            Fixed from Leg Main Cost
+                        </p>
                     </div>
 
                     <div>
@@ -187,14 +193,15 @@
                         <input
                             type="text"
                             id="deduction_guarantee_display"
-                            placeholder="300.000"
-                            class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            value="{{ number_format($fixedGuarantee, 0, ',', '.') }}"
+                            class="w-full rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-500 dark:text-slate-400 cursor-not-allowed focus:outline-none"
+                            readonly
                         >
-                        <input type="hidden" name="deduction_guarantee" id="deduction_guarantee_input" value="{{ old('deduction_guarantee', 0) }}">
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">Deduction for guarantee</p>
-                        @error('deduction_guarantee')
-                            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
+                        <input type="hidden" name="deduction_guarantee" id="deduction_guarantee_input" value="{{ $fixedGuarantee }}">
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5 flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                            Fixed from Leg Main Cost
+                        </p>
                     </div>
 
                     <x-input
@@ -224,7 +231,10 @@
                                 <p class="text-xs text-green-600 dark:text-green-400 mt-1">Remaining - Total Deductions</p>
                             </div>
                             <p class="text-3xl font-bold text-green-600 dark:text-green-400" id="final_payment_preview">
-                                Rp {{ number_format($advance->remaining_amount, 0, ',', '.') }}
+                                @php
+                                    $finalPayment = $advance->remaining_amount - $fixedSavings - $fixedGuarantee;
+                                @endphp
+                                Rp {{ number_format($finalPayment, 0, ',', '.') }}
                             </p>
                         </div>
                     </div>
@@ -321,16 +331,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Setup Deductions with live calculation
-    const savingsDisplay = document.getElementById('deduction_savings_display');
-    const savingsInput = document.getElementById('deduction_savings_input');
-    const guaranteeDisplay = document.getElementById('deduction_guarantee_display');
-    const guaranteeInput = document.getElementById('deduction_guarantee_input');
+    // Note: Deductions are now READONLY and fixed from Leg Main Cost.
+    // No need for live calculation or input formatting listeners for deductions.
+
     const finalPaymentPreview = document.getElementById('final_payment_preview');
 
+    // Optional: If we ever need to update final payment dynamically based on other inputs (currently none)
     function updateFinalPayment() {
         const remaining = {{ $advance->remaining_amount }};
-        const savings = parseFloat(savingsInput?.value || 0);
-        const guarantee = parseFloat(guaranteeInput?.value || 0);
+        const savings = parseFloat(document.getElementById('deduction_savings_input')?.value || 0);
+        const guarantee = parseFloat(document.getElementById('deduction_guarantee_input')?.value || 0);
         const final = remaining - savings - guarantee;
 
         if (finalPaymentPreview) {
@@ -347,37 +357,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    if (savingsDisplay && savingsInput) {
-        savingsDisplay.addEventListener('input', function() {
-            let value = this.value.replace(/\./g, '');
-            value = value.replace(/[^\d]/g, '');
-
-            if (value) {
-                this.value = formatNumber(value);
-                savingsInput.value = value;
-            } else {
-                this.value = '';
-                savingsInput.value = '0';
-            }
-            updateFinalPayment();
-        });
-    }
-
-    if (guaranteeDisplay && guaranteeInput) {
-        guaranteeDisplay.addEventListener('input', function() {
-            let value = this.value.replace(/\./g, '');
-            value = value.replace(/[^\d]/g, '');
-
-            if (value) {
-                this.value = formatNumber(value);
-                guaranteeInput.value = value;
-            } else {
-                this.value = '';
-                guaranteeInput.value = '0';
-            }
-            updateFinalPayment();
-        });
-    }
+    // Initial check (optional, as blade already renders it correctly)
+    updateFinalPayment();
 });
 </script>
 @endsection
