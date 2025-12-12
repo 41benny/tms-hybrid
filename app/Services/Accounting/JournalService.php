@@ -35,8 +35,11 @@ class JournalService
             return $j;
         }
 
-        // Load items untuk breakdown DPP, PPN
-        $invoice->load('items');
+        // Load items dan customer untuk breakdown DPP, PPN
+        $invoice->load(['items', 'customer']);
+        
+        // Get customer name for description
+        $customerName = $invoice->customer?->name ?? 'N/A';
 
         // Gunakan tax_amount dari invoice untuk PPN
         $ppn = (float) ($invoice->tax_amount ?? 0);
@@ -66,17 +69,17 @@ class JournalService
         $lines = [];
 
         // Dr. Piutang Usaha (total yang akan diterima dari customer)
-        $lines[] = ['account_code' => $ar, 'debit' => $totalReceivable, 'credit' => 0, 'desc' => 'Piutang Invoice '.$invoice->invoice_number, 'customer_id' => $invoice->customer_id, 'job_order_id' => $jobOrderId];
+        $lines[] = ['account_code' => $ar, 'debit' => $totalReceivable, 'credit' => 0, 'desc' => 'Piutang Invoice '.$invoice->invoice_number.' - '.$customerName, 'customer_id' => $invoice->customer_id, 'job_order_id' => $jobOrderId];
 
         // Cek apakah ini invoice DP atau Normal
         if ($invoice->invoice_type === 'down_payment') {
             // INVOICE DP: Cr. Hutang Uang Muka (bukan pendapatan)
             $customerDeposit = $this->map('customer_deposit');
-            $lines[] = ['account_code' => $customerDeposit, 'debit' => 0, 'credit' => $dpp, 'desc' => 'Uang Muka Customer Invoice '.$invoice->invoice_number, 'customer_id' => $invoice->customer_id, 'job_order_id' => $jobOrderId];
+            $lines[] = ['account_code' => $customerDeposit, 'debit' => 0, 'credit' => $dpp, 'desc' => 'Uang Muka Customer Invoice '.$invoice->invoice_number.' - '.$customerName, 'customer_id' => $invoice->customer_id, 'job_order_id' => $jobOrderId];
         } else {
             // INVOICE NORMAL/FINAL: Cr. Pendapatan (DPP)
             $revenue = $this->map('revenue');
-            $lines[] = ['account_code' => $revenue, 'debit' => 0, 'credit' => $dpp, 'desc' => 'Pendapatan Invoice '.$invoice->invoice_number, 'customer_id' => $invoice->customer_id, 'job_order_id' => $jobOrderId];
+            $lines[] = ['account_code' => $revenue, 'debit' => 0, 'credit' => $dpp, 'desc' => 'Pendapatan Invoice '.$invoice->invoice_number.' - '.$customerName, 'customer_id' => $invoice->customer_id, 'job_order_id' => $jobOrderId];
             
             // Jika invoice final dengan DP, balik hutang uang muka
             if ($invoice->invoice_type === 'final' && $invoice->related_invoice_id) {
@@ -86,17 +89,17 @@ class JournalService
                     $customerDeposit = $this->map('customer_deposit');
                     
                     // Dr. Hutang Uang Muka (mengurangi hutang)
-                    $lines[] = ['account_code' => $customerDeposit, 'debit' => $dpAmount, 'credit' => 0, 'desc' => 'Pembalikan DP dari Invoice '.$relatedInvoice->invoice_number, 'customer_id' => $invoice->customer_id, 'job_order_id' => $jobOrderId];
+                    $lines[] = ['account_code' => $customerDeposit, 'debit' => $dpAmount, 'credit' => 0, 'desc' => 'Pembalikan DP dari Invoice '.$relatedInvoice->invoice_number.' - '.$customerName, 'customer_id' => $invoice->customer_id, 'job_order_id' => $jobOrderId];
                     
                     // Cr. Pendapatan (mengakui pendapatan DP)
-                    $lines[] = ['account_code' => $revenue, 'debit' => 0, 'credit' => $dpAmount, 'desc' => 'Pengakuan Pendapatan DP dari Invoice '.$relatedInvoice->invoice_number, 'customer_id' => $invoice->customer_id, 'job_order_id' => $jobOrderId];
+                    $lines[] = ['account_code' => $revenue, 'debit' => 0, 'credit' => $dpAmount, 'desc' => 'Pengakuan Pendapatan DP dari Invoice '.$relatedInvoice->invoice_number.' - '.$customerName, 'customer_id' => $invoice->customer_id, 'job_order_id' => $jobOrderId];
                 }
             }
         }
 
         // Cr. PPN Keluaran (jika ada PPN)
         if ($ppn > 0) {
-            $lines[] = ['account_code' => $vatOut, 'debit' => 0, 'credit' => $ppn, 'desc' => 'PPN Keluaran Invoice '.$invoice->invoice_number, 'customer_id' => $invoice->customer_id, 'job_order_id' => $jobOrderId];
+            $lines[] = ['account_code' => $vatOut, 'debit' => 0, 'credit' => $ppn, 'desc' => 'PPN Keluaran Invoice '.$invoice->invoice_number.' - '.$customerName, 'customer_id' => $invoice->customer_id, 'job_order_id' => $jobOrderId];
         }
 
         \Log::info('Invoice Journal Breakdown', [
@@ -192,8 +195,11 @@ class JournalService
             return $j;
         }
 
-        // Load items untuk breakdown DPP, PPN, PPh 23
-        $bill->load('items.shipmentLeg');
+        // Load items dan vendor untuk breakdown DPP, PPN, PPh 23
+        $bill->load(['items.shipmentLeg', 'vendor']);
+        
+        // Get vendor name for description
+        $vendorName = $bill->vendor?->name ?? 'N/A';
 
         $dpp = 0;
         $ppn = 0;
@@ -235,11 +241,11 @@ class JournalService
         if ($hasShipmentLeg) {
             // Untuk vendor bill shipment leg: Dr Biaya Dimuka
             $prepaid = $this->map('prepaid_expense');
-            $lines[] = ['account_code' => $prepaid, 'debit' => $dpp, 'credit' => 0, 'desc' => 'Biaya dimuka vendor bill '.$bill->vendor_bill_number, 'vendor_id' => $bill->vendor_id, 'job_order_id' => $jobOrderId];
+            $lines[] = ['account_code' => $prepaid, 'debit' => $dpp, 'credit' => 0, 'desc' => 'Biaya dimuka vendor bill '.$bill->vendor_bill_number.' - '.$vendorName, 'vendor_id' => $bill->vendor_id, 'job_order_id' => $jobOrderId];
         } else {
             // Untuk vendor bill non-shipment: Dr Beban Vendor (langsung expense)
             $exp = $this->map('expense_vendor');
-            $lines[] = ['account_code' => $exp, 'debit' => $dpp, 'credit' => 0, 'desc' => 'Biaya vendor bill '.$bill->vendor_bill_number, 'vendor_id' => $bill->vendor_id, 'job_order_id' => $jobOrderId];
+            $lines[] = ['account_code' => $exp, 'debit' => $dpp, 'credit' => 0, 'desc' => 'Biaya vendor bill '.$bill->vendor_bill_number.' - '.$vendorName, 'vendor_id' => $bill->vendor_id, 'job_order_id' => $jobOrderId];
         }
 
         // Dr PPN (jika ada PPN)
@@ -255,11 +261,11 @@ class JournalService
                     // Non-shipment: PPN tidak dikreditkan langsung ke Beban Vendor
                     $vatAccount = $this->map('expense_vendor');
                 }
-                $ppnDesc = 'PPN tidak dikreditkan vendor bill '.$bill->vendor_bill_number;
+                $ppnDesc = 'PPN tidak dikreditkan vendor bill '.$bill->vendor_bill_number.' - '.$vendorName;
             } else {
                 // PPN dikreditkan: masuk ke PPN Masukan
                 $vatAccount = $this->map('vat_in');
-                $ppnDesc = 'PPN Masukan vendor bill '.$bill->vendor_bill_number;
+                $ppnDesc = 'PPN Masukan vendor bill '.$bill->vendor_bill_number.' - '.$vendorName;
             }
 
             $lines[] = ['account_code' => $vatAccount, 'debit' => $ppn, 'credit' => 0, 'desc' => $ppnDesc, 'vendor_id' => $bill->vendor_id, 'job_order_id' => $jobOrderId];
@@ -268,11 +274,11 @@ class JournalService
         // Cr Hutang PPh 23 (jika ada potongan PPh 23)
         if ($pph23 > 0) {
             $pph23Payable = $this->map('pph23');
-            $lines[] = ['account_code' => $pph23Payable, 'debit' => 0, 'credit' => $pph23, 'desc' => 'PPh 23 dipotong vendor bill '.$bill->vendor_bill_number, 'vendor_id' => $bill->vendor_id, 'job_order_id' => $jobOrderId];
+            $lines[] = ['account_code' => $pph23Payable, 'debit' => 0, 'credit' => $pph23, 'desc' => 'PPh 23 dipotong vendor bill '.$bill->vendor_bill_number.' - '.$vendorName, 'vendor_id' => $bill->vendor_id, 'job_order_id' => $jobOrderId];
         }
 
         // Cr Hutang Usaha (net payable)
-        $lines[] = ['account_code' => $ap, 'debit' => 0, 'credit' => $netPayable, 'desc' => 'Hutang vendor bill '.$bill->vendor_bill_number, 'vendor_id' => $bill->vendor_id, 'job_order_id' => $jobOrderId];
+        $lines[] = ['account_code' => $ap, 'debit' => 0, 'credit' => $netPayable, 'desc' => 'Hutang vendor bill '.$bill->vendor_bill_number.' - '.$vendorName, 'vendor_id' => $bill->vendor_id, 'job_order_id' => $jobOrderId];
 
         \Log::info('Vendor Bill Journal Breakdown', [
             'vendor_bill_id' => $bill->id,
@@ -452,19 +458,22 @@ class JournalService
         // Get job_order_id for tracking
         $jobOrderId = $leg->job_order_id;
         
+        // Get driver name for description
+        $driverName = $advance->driver?->name ?? 'N/A';
+        
         $lines = [
             [
                 'account_code' => $prepaid,
                 'debit' => $grossAmount,
                 'credit' => 0,
-                'desc' => 'Biaya dimuka uang jalan - ' . $leg->jobOrder->job_number,
+                'desc' => 'Biaya dimuka uang jalan ' . $advance->advance_number . ' - ' . $driverName,
                 'job_order_id' => $jobOrderId
             ],
             [
                 'account_code' => $driverPayable,
                 'debit' => 0,
                 'credit' => $grossAmount,
-                'desc' => 'Hutang uang jalan supir - ' . ($advance->driver->name ?? 'N/A'),
+                'desc' => 'Hutang uang jalan supir ' . $advance->advance_number . ' - ' . $driverName,
                 'job_order_id' => $jobOrderId
             ],
         ];
@@ -535,19 +544,22 @@ class JournalService
         $driverPayable = $this->map('driver_payable');
         $jobOrderId = $leg->job_order_id;
 
+        // Get driver name for description
+        $driverName = $advance->driver?->name ?? 'N/A';
+
         $lines = [
             [
                 'account_code' => $prepaid,
                 'debit' => $grossAmount,
                 'credit' => 0,
-                'desc' => 'Biaya dimuka uang jalan - ' . $leg->jobOrder->job_number . ' (Revisi)',
+                'desc' => 'Biaya dimuka uang jalan ' . $advance->advance_number . ' - ' . $driverName . ' (Revisi)',
                 'job_order_id' => $jobOrderId
             ],
             [
                 'account_code' => $driverPayable,
                 'debit' => 0,
                 'credit' => $grossAmount,
-                'desc' => 'Hutang uang jalan supir - ' . ($advance->driver->name ?? 'N/A') . ' (Revisi)',
+                'desc' => 'Hutang uang jalan supir ' . $advance->advance_number . ' - ' . $driverName . ' (Revisi)',
                 'job_order_id' => $jobOrderId
             ],
         ];
