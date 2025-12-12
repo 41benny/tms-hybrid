@@ -415,6 +415,11 @@
                     </thead>
                     <tbody>
                     @foreach($bill->items as $it)
+                        @php
+                            $desc = strtolower($it->description);
+                            $isTaxItem = str_contains($desc, 'ppn') || str_contains($desc, 'pph');
+                        @endphp
+                        @if($isTaxItem) @continue @endif
                         <tr>
                             <td>
                                 <div>{{ $it->description }}</div>

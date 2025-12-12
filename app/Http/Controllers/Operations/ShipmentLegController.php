@@ -694,7 +694,7 @@ class ShipmentLegController extends Controller
         if ($mainCost->vendor_cost > 0) {
             $bill->items()->create([
                 'shipment_leg_id' => $leg->id,
-                'description' => "Jasa angkut {$cargoDescription} dari {$origin} ke {$destination}",
+                'description' => "Leg {$leg->leg_number} - Jasa angkut {$cargoDescription} dari {$origin} ke {$destination}",
                 'qty' => $qty,
                 'unit_price' => $mainCost->vendor_cost,
                 'subtotal' => $mainCost->vendor_cost,
@@ -706,7 +706,7 @@ class ShipmentLegController extends Controller
         if ($mainCost->freight_cost > 0) {
             $bill->items()->create([
                 'shipment_leg_id' => $leg->id,
-                'description' => "Jasa angkut laut {$cargoDescription} - {$mainCost->shipping_line} - dari {$origin} ke {$destination}",
+                'description' => "Leg {$leg->leg_number} - Jasa angkut laut {$cargoDescription} via {$mainCost->shipping_line}",
                 'qty' => $qty,
                 'unit_price' => $mainCost->freight_cost,
                 'subtotal' => $mainCost->freight_cost,
