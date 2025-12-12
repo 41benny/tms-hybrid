@@ -208,6 +208,9 @@ class VendorBillController extends Controller
             'items.*.transport_id' => ['nullable', 'exists:transports,id'],
         ]);
 
+        // Check if bill was already journaled - if so, mark for revision
+        $wasJournaled = $vendor_bill->journal_id !== null;
+
         $vendor_bill->update($data);
 
         $vendor_bill->items()->delete();
@@ -217,9 +220,21 @@ class VendorBillController extends Controller
             $total += $row['subtotal'];
             $vendor_bill->items()->create($row);
         }
-        $vendor_bill->update(['total_amount' => $total]);
+        
+        // Update total and set revision flag if already journaled
+        $updateData = ['total_amount' => $total];
+        if ($wasJournaled) {
+            $updateData['needs_revision'] = true;
+            $updateData['revised_at'] = now();
+        }
+        $vendor_bill->update($updateData);
 
-        return redirect()->route('vendor-bills.show', $vendor_bill)->with('success', 'Vendor bill diperbarui.');
+        $message = 'Vendor bill diperbarui.';
+        if ($wasJournaled) {
+            $message .= ' Bill ini sudah pernah di-jurnal, silakan re-post jurnal untuk memperbarui.';
+        }
+
+        return redirect()->route('vendor-bills.show', $vendor_bill)->with('success', $message);
     }
 
     /**
@@ -269,9 +284,19 @@ class VendorBillController extends Controller
 
         if (class_exists(JournalService::class)) {
             try {
-                \Log::info('Attempting to post to journal');
-                app(JournalService::class)->postVendorBill($vendor_bill);
-                \Log::info('Journal posted successfully');
+                $journalService = app(JournalService::class);
+                
+                // Check if this is a revision (bill already has journal but needs_revision is true)
+                if ($vendor_bill->needs_revision && $vendor_bill->journal_id) {
+                    \Log::info('Reposting vendor bill journal (revision)', ['bill_id' => $vendor_bill->id]);
+                    $journalService->repostVendorBill($vendor_bill);
+                    \Log::info('Journal reposted successfully');
+                    return back()->with('success', 'Jurnal vendor bill berhasil direvisi.');
+                } else {
+                    \Log::info('Posting vendor bill to journal (new)');
+                    $journalService->postVendorBill($vendor_bill);
+                    \Log::info('Journal posted successfully');
+                }
             } catch (\Exception $e) {
                 \Log::error('Journal posting failed', [
                     'error' => $e->getMessage(),

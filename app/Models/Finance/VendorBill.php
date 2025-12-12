@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class VendorBill extends Model
 {
     protected $fillable = [
-        'vendor_id', 'vendor_bill_number', 'bill_date', 'due_date', 'total_amount', 'amount_paid', 'status', 'notes', 'journal_id', 'ppn_noncreditable',
+        'vendor_id', 'vendor_bill_number', 'bill_date', 'due_date', 'total_amount', 'amount_paid', 'status', 'notes', 'journal_id', 'ppn_noncreditable', 'needs_revision', 'revised_at',
     ];
 
     protected $casts = [
@@ -18,6 +18,8 @@ class VendorBill extends Model
         'total_amount' => 'decimal:2',
         'amount_paid' => 'decimal:2',
         'ppn_noncreditable' => 'boolean',
+        'needs_revision' => 'boolean',
+        'revised_at' => 'datetime',
     ];
     
     protected $appends = ['outstanding_balance'];
@@ -171,9 +173,12 @@ class VendorBill extends Model
 
     public function scopeUnposted($query)
     {
-        // Consider all bills without journal_id as "unposted" (pending),
-        // regardless of current status. This makes Pending Journal more
-        // robust even jika status masih draft/received/partial/paid.
-        return $query->whereNull('journal_id');
+        // Consider bills as "unposted" (pending) if:
+        // 1. No journal_id (never posted), OR
+        // 2. needs_revision = true (edited after journal posting)
+        return $query->where(function ($q) {
+            $q->whereNull('journal_id')
+              ->orWhere('needs_revision', true);
+        });
     }
 }

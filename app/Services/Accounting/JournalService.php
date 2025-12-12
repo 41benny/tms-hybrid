@@ -304,6 +304,129 @@ class JournalService
         return $journal;
     }
 
+    /**
+     * Repost Vendor Bill journal when bill is updated after initial posting.
+     * Deletes old journal (if period is open) and creates new one with is_revision=true.
+     * Also clears the needs_revision flag.
+     */
+    public function repostVendorBill(VendorBill $bill): Journal
+    {
+        // Load items dan vendor untuk breakdown DPP, PPN, PPh 23
+        $bill->load(['items.shipmentLeg', 'vendor']);
+
+        // Check if we have an existing journal
+        $oldJournal = null;
+        if ($bill->journal_id) {
+            $oldJournal = Journal::find($bill->journal_id);
+        }
+
+        // Check period status
+        if ($oldJournal && $oldJournal->period && $oldJournal->period->status !== 'open') {
+            throw new \Exception("Tidak dapat melakukan repost karena periode akuntansi {$oldJournal->period->month}/{$oldJournal->period->year} sudah ditutup.");
+        }
+
+        // Delete old journal
+        if ($oldJournal) {
+            $oldJournal->lines()->delete();
+            $oldJournal->delete();
+        }
+
+        // Reset journal_id temporarily
+        $bill->update(['journal_id' => null]);
+
+        // Get vendor name for description
+        $vendorName = $bill->vendor?->name ?? 'N/A';
+
+        $dpp = 0;
+        $ppn = 0;
+        $pph23 = 0;
+
+        // Hitung dari items
+        foreach ($bill->items as $item) {
+            $desc = strtolower($item->description);
+            if (str_contains($desc, 'ppn')) {
+                $ppn += $item->subtotal;
+            } elseif (str_contains($desc, 'pph') || str_contains($desc, 'pph23')) {
+                $pph23 += abs($item->subtotal);
+            } else {
+                $dpp += $item->subtotal;
+            }
+        }
+
+        $netPayable = $bill->total_amount;
+        $ap = $this->map('ap');
+        $lines = [];
+
+        // Cek apakah vendor bill terkait shipment leg
+        $hasShipmentLeg = $bill->items()->whereNotNull('shipment_leg_id')->exists();
+
+        // Extract job_order_id
+        $jobOrderId = null;
+        if ($hasShipmentLeg) {
+            $firstLegItem = $bill->items->whereNotNull('shipment_leg_id')->first();
+            if ($firstLegItem && $firstLegItem->shipmentLeg) {
+                $jobOrderId = $firstLegItem->shipmentLeg->job_order_id;
+            }
+        }
+
+        if ($hasShipmentLeg) {
+            $prepaid = $this->map('prepaid_expense');
+            $lines[] = ['account_code' => $prepaid, 'debit' => $dpp, 'credit' => 0, 'desc' => 'Biaya dimuka vendor bill '.$bill->vendor_bill_number.' - '.$vendorName.' (Revisi)', 'vendor_id' => $bill->vendor_id, 'job_order_id' => $jobOrderId];
+        } else {
+            $exp = $this->map('expense_vendor');
+            $lines[] = ['account_code' => $exp, 'debit' => $dpp, 'credit' => 0, 'desc' => 'Biaya vendor bill '.$bill->vendor_bill_number.' - '.$vendorName.' (Revisi)', 'vendor_id' => $bill->vendor_id, 'job_order_id' => $jobOrderId];
+        }
+
+        // Dr PPN (jika ada)
+        if ($ppn > 0) {
+            $useNonCredit = (bool) ($bill->ppn_noncreditable ?? false);
+            if ($useNonCredit) {
+                $vatAccount = $hasShipmentLeg ? $this->map('prepaid_expense') : $this->map('expense_vendor');
+                $ppnDesc = 'PPN tidak dikreditkan vendor bill '.$bill->vendor_bill_number.' - '.$vendorName.' (Revisi)';
+            } else {
+                $vatAccount = $this->map('vat_in');
+                $ppnDesc = 'PPN Masukan vendor bill '.$bill->vendor_bill_number.' - '.$vendorName.' (Revisi)';
+            }
+            $lines[] = ['account_code' => $vatAccount, 'debit' => $ppn, 'credit' => 0, 'desc' => $ppnDesc, 'vendor_id' => $bill->vendor_id, 'job_order_id' => $jobOrderId];
+        }
+
+        // Cr Hutang PPh 23 (jika ada)
+        if ($pph23 > 0) {
+            $pph23Payable = $this->map('pph23');
+            $lines[] = ['account_code' => $pph23Payable, 'debit' => 0, 'credit' => $pph23, 'desc' => 'PPh 23 dipotong vendor bill '.$bill->vendor_bill_number.' - '.$vendorName.' (Revisi)', 'vendor_id' => $bill->vendor_id, 'job_order_id' => $jobOrderId];
+        }
+
+        // Cr Hutang Usaha
+        $lines[] = ['account_code' => $ap, 'debit' => 0, 'credit' => $netPayable, 'desc' => 'Hutang vendor bill '.$bill->vendor_bill_number.' - '.$vendorName.' (Revisi)', 'vendor_id' => $bill->vendor_id, 'job_order_id' => $jobOrderId];
+
+        \Log::info('Vendor Bill Journal Repost', [
+            'vendor_bill_id' => $bill->id,
+            'vendor_bill_number' => $bill->vendor_bill_number,
+            'total_amount' => $bill->total_amount,
+            'dpp' => $dpp,
+            'ppn' => $ppn,
+            'pph23' => $pph23,
+        ]);
+
+        $journal = $this->posting->postGeneral([
+            'journal_date' => $bill->bill_date->toDateString(),
+            'source_type' => 'vendor_bill',
+            'source_id' => $bill->id,
+            'memo' => 'Vendor bill '.$bill->vendor_bill_number.' (Revisi)',
+            'is_revision' => true,
+            'revised_at' => now(),
+        ], $lines);
+
+        // Update vendor bill: save journal_id and clear revision flag
+        $bill->update([
+            'journal_id' => $journal->id,
+            'needs_revision' => false,
+            'revised_at' => now(),
+        ]);
+
+        return $journal;
+    }
+
     public function postVendorPayment(CashBankTransaction $trx): Journal
     {
         if ($j = $this->alreadyPosted('vendor_payment', $trx->id)) {
