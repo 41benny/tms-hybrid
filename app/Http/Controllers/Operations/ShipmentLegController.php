@@ -376,6 +376,54 @@ class ShipmentLegController extends Controller
         return $prefix.$random;
     }
 
+    /**
+     * Get Job Order items for cargo selector modal.
+     */
+    public function getJobOrderItems(ShipmentLeg $leg)
+    {
+        $jobOrder = $leg->jobOrder;
+        if (!$jobOrder) {
+            return response()->json(['items' => [], 'qty_from_leg' => $leg->quantity]);
+        }
+
+        $items = $jobOrder->items()->with('equipment')->get();
+        
+        $formattedItems = $items->map(function ($item) {
+            $name = $item->cargo_type ?: ($item->equipment?->name ?? 'Muatan');
+            return [
+                'id' => $item->id,
+                'name' => $name,
+                'quantity' => (float) $item->quantity,
+                'label' => "{$name} ({$item->quantity} unit)",
+            ];
+        });
+
+        // Add "Semua muatan" option if more than 1 item
+        $allItemsOption = null;
+        if ($items->count() > 1) {
+            $totalQty = $items->sum('quantity');
+            $allLabels = $items->map(function ($item) {
+                $name = $item->cargo_type ?: ($item->equipment?->name ?? 'Muatan');
+                return "{$name} ({$item->quantity} unit)";
+            })->implode(' + ');
+            
+            $allItemsOption = [
+                'id' => 'all',
+                'name' => 'Semua muatan',
+                'quantity' => $totalQty,
+                'label' => $allLabels,
+            ];
+        }
+
+        return response()->json([
+            'items' => $formattedItems,
+            'all_items_option' => $allItemsOption,
+            'qty_from_leg' => $leg->quantity,
+            'origin' => $jobOrder->origin,
+            'destination' => $jobOrder->destination,
+        ]);
+    }
+
     public function generateVendorBill(Request $request, ShipmentLeg $leg)
     {
         // Validasi
@@ -398,6 +446,10 @@ class ShipmentLegController extends Controller
             return back()->with('error', 'Mode billing tidak valid');
         }
 
+        // Get cargo description and qty from request (from cargo selector modal)
+        $cargoDescription = $request->input('cargo_description');
+        $cargoQty = $request->input('cargo_qty', $leg->quantity);
+
         // Check for existing OPEN vendor bill for this Leg (Combined Mode Only for now)
         $existingBill = \App\Models\Finance\VendorBill::where('vendor_id', $leg->vendor_id)
             ->whereIn('status', ['draft', 'received'])
@@ -407,8 +459,11 @@ class ShipmentLegController extends Controller
             ->latest()
             ->first();
 
+        // Get additional costs
+        $additionalCosts = $leg->additionalCosts()->get();
+
         if ($existingBill && $billMode === 'combined') {
-            $this->updateCombinedBill($existingBill, $leg, $mainCost, $additionalCosts);
+            $this->updateCombinedBill($existingBill, $leg, $mainCost, $additionalCosts, $cargoDescription, $cargoQty);
 
             return redirect()->route('vendor-bills.show', $existingBill)
                 ->with('success', "Vendor bill {$existingBill->vendor_bill_number} berhasil diperbarui (Mode: Gabung)!");
@@ -423,18 +478,15 @@ class ShipmentLegController extends Controller
             return back()->with('error', 'Leg ini sudah fully billed. Total: Rp '.number_format($legTotalCost, 0, ',', '.'));
         }
 
-        // Get additional costs
-        $additionalCosts = $leg->additionalCosts()->get();
-
         if ($billMode === 'combined') {
             // Mode GABUNG: 1 vendor bill untuk semua
-            $bill = $this->createCombinedBill($leg, $mainCost, $additionalCosts);
+            $bill = $this->createCombinedBill($leg, $mainCost, $additionalCosts, $cargoDescription, $cargoQty);
 
             return redirect()->route('vendor-bills.show', $bill)
                 ->with('success', "Vendor bill {$bill->vendor_bill_number} berhasil dibuat (Mode: Gabung)!");
         } else {
             // Mode PISAH: 2 vendor bills
-            $bills = $this->createSeparateBills($leg, $mainCost, $additionalCosts);
+            $bills = $this->createSeparateBills($leg, $mainCost, $additionalCosts, $cargoDescription, $cargoQty);
 
             return redirect()->route('vendor-bills.index')
                 ->with('success', count($bills)." vendor bill berhasil dibuat (Mode: Pisah)! Main Cost: {$bills[0]->vendor_bill_number}".
@@ -490,7 +542,7 @@ class ShipmentLegController extends Controller
             ->with('success', "Vendor bill {$bill->vendor_bill_number} dibuat. Silakan lengkapi pengajuan pembayaran.");
     }
 
-    protected function createCombinedBill(ShipmentLeg $leg, LegMainCost $mainCost, $additionalCosts)
+    protected function createCombinedBill(ShipmentLeg $leg, LegMainCost $mainCost, $additionalCosts, ?string $cargoDescription = null, ?float $cargoQty = null)
     {
         $bill = \App\Models\Finance\VendorBill::create([
             'vendor_id' => $leg->vendor_id,
@@ -506,7 +558,7 @@ class ShipmentLegController extends Controller
         $totalAmount = 0;
 
         // Add all main cost items
-        $totalAmount += $this->addMainCostItems($bill, $leg, $mainCost);
+        $totalAmount += $this->addMainCostItems($bill, $leg, $mainCost, $cargoDescription, $cargoQty);
 
         // Add all additional costs
         foreach ($additionalCosts as $cost) {
@@ -528,13 +580,13 @@ class ShipmentLegController extends Controller
         return $bill;
     }
 
-    protected function updateCombinedBill(\App\Models\Finance\VendorBill $bill, ShipmentLeg $leg, LegMainCost $mainCost, $additionalCosts)
+    protected function updateCombinedBill(\App\Models\Finance\VendorBill $bill, ShipmentLeg $leg, LegMainCost $mainCost, $additionalCosts, ?string $cargoDescription = null, ?float $cargoQty = null)
     {
         // 1. Delete items linked to this leg
         $bill->items()->where('shipment_leg_id', $leg->id)->delete();
 
         // 2. Add items
-        $this->addMainCostItems($bill, $leg, $mainCost);
+        $this->addMainCostItems($bill, $leg, $mainCost, $cargoDescription, $cargoQty);
 
         foreach ($additionalCosts as $cost) {
             $bill->items()->create([
@@ -555,7 +607,7 @@ class ShipmentLegController extends Controller
         return $bill;
     }
 
-    protected function createSeparateBills(ShipmentLeg $leg, LegMainCost $mainCost, $additionalCosts)
+    protected function createSeparateBills(ShipmentLeg $leg, LegMainCost $mainCost, $additionalCosts, ?string $cargoDescription = null, ?float $cargoQty = null)
     {
         $bills = [];
 
@@ -572,7 +624,7 @@ class ShipmentLegController extends Controller
         ]);
 
         $mainTotalAmount = 0;
-        $mainTotalAmount += $this->addMainCostItems($mainBill, $leg, $mainCost);
+        $mainTotalAmount += $this->addMainCostItems($mainBill, $leg, $mainCost, $cargoDescription, $cargoQty);
         $mainTotalAmount += $this->addPph23Item($mainBill, $leg, $mainCost);
 
         $mainBill->update(['total_amount' => $mainTotalAmount]);
@@ -609,16 +661,41 @@ class ShipmentLegController extends Controller
         return $bills;
     }
 
-    protected function addMainCostItems($bill, ShipmentLeg $leg, LegMainCost $mainCost): float
+    protected function addMainCostItems($bill, ShipmentLeg $leg, LegMainCost $mainCost, ?string $cargoDescription = null, ?float $cargoQty = null): float
     {
         $totalAmount = 0;
+        $jobOrder = $leg->jobOrder;
+        $origin = $jobOrder?->origin ?? '-';
+        $destination = $jobOrder?->destination ?? '-';
+        
+        // Build cargo description if not provided
+        if (!$cargoDescription) {
+            // Auto-detect from JO items
+            $items = $jobOrder?->items ?? collect();
+            if ($items->count() === 1) {
+                $item = $items->first();
+                $name = $item->cargo_type ?: ($item->equipment?->name ?? 'Muatan');
+                $cargoDescription = "{$name} ({$item->quantity} unit)";
+                $cargoQty = $cargoQty ?? $item->quantity;
+            } elseif ($items->count() > 1) {
+                // Multiple items - just use leg quantity
+                $cargoDescription = "Muatan ({$leg->quantity} unit)";
+                $cargoQty = $cargoQty ?? $leg->quantity;
+            } else {
+                $cargoDescription = "Muatan ({$leg->quantity} unit)";
+                $cargoQty = $cargoQty ?? $leg->quantity;
+            }
+        }
+        
+        // Use cargo qty or leg qty
+        $qty = $cargoQty ?? $leg->quantity;
 
         // Add Main Cost Items - Vendor
         if ($mainCost->vendor_cost > 0) {
             $bill->items()->create([
                 'shipment_leg_id' => $leg->id,
-                'description' => "Vendor Cost - Leg #{$leg->leg_number} ({$leg->leg_code})",
-                'qty' => 1,
+                'description' => "Jasa angkut {$cargoDescription} dari {$origin} ke {$destination}",
+                'qty' => $qty,
                 'unit_price' => $mainCost->vendor_cost,
                 'subtotal' => $mainCost->vendor_cost,
             ]);
@@ -629,8 +706,8 @@ class ShipmentLegController extends Controller
         if ($mainCost->freight_cost > 0) {
             $bill->items()->create([
                 'shipment_leg_id' => $leg->id,
-                'description' => "Freight Cost - {$mainCost->shipping_line} - Leg #{$leg->leg_number}",
-                'qty' => 1,
+                'description' => "Jasa angkut laut {$cargoDescription} - {$mainCost->shipping_line} - dari {$origin} ke {$destination}",
+                'qty' => $qty,
                 'unit_price' => $mainCost->freight_cost,
                 'subtotal' => $mainCost->freight_cost,
             ]);
@@ -654,7 +731,7 @@ class ShipmentLegController extends Controller
         if ($mainCost->premium_cost > 0) {
             $bill->items()->create([
                 'shipment_leg_id' => $leg->id,
-                'description' => "Insurance Premium - {$mainCost->insurance_provider} - Leg #{$leg->leg_number}",
+                'description' => "Insurance Premium - {$mainCost->insurance_provider} - {$cargoDescription}",
                 'qty' => 1,
                 'unit_price' => $mainCost->premium_cost,
                 'subtotal' => $mainCost->premium_cost,

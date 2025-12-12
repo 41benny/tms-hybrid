@@ -327,6 +327,28 @@ class VendorBillController extends Controller
     {
         $vendor_bill->load(['vendor', 'items.shipmentLeg.jobOrder.customer']);
 
+        // Calculate DPP, PPN, PPH
+        $dpp = 0;
+        $ppn = 0;
+        $pph = 0;
+
+        foreach ($vendor_bill->items as $item) {
+            $desc = strtolower($item->description);
+            if (str_contains($desc, 'ppn')) {
+                $ppn += abs($item->subtotal);
+            } elseif (str_contains($desc, 'pph') || str_contains($desc, 'pph23')) {
+                $pph += abs($item->subtotal);
+            } else {
+                if (! str_contains($desc, 'ppn') && ! str_contains($desc, 'pph')) {
+                    $dpp += $item->subtotal;
+                }
+            }
+        }
+
+        $vendor_bill->dpp = $dpp;
+        $vendor_bill->ppn = $ppn;
+        $vendor_bill->pph = $pph;
+
         return view('vendor-bills.print', ['bill' => $vendor_bill]);
     }
 

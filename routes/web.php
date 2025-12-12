@@ -56,6 +56,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::delete('additional-costs/{cost}', [ShipmentLegController::class, 'destroyAdditionalCost'])->name('additional-costs.destroy');
     Route::post('legs/{leg}/generate-vendor-bill', [ShipmentLegController::class, 'generateVendorBill'])->name('legs.generate-vendor-bill');
     Route::post('legs/{leg}/sales-quick-vendor-request', [ShipmentLegController::class, 'salesQuickVendorRequest'])->name('legs.sales-quick-vendor-request');
+    Route::get('legs/{leg}/job-order-items', [ShipmentLegController::class, 'getJobOrderItems'])->name('legs.job-order-items');
     Route::get('legs/{leg}/print-trucking', [ShipmentLegController::class, 'printTrucking'])->name('legs.print-trucking');
     Route::get('api/truck-driver', [ShipmentLegController::class, 'getDriverByTruck'])->name('api.truck-driver');
 

@@ -1358,12 +1358,26 @@ document.getElementById('editCostModal')?.addEventListener('click', function(e) 
 
 // Generate Vendor Bill Modal Functions
 let currentLegIdForGenerate = null;
+let cargoItemsData = [];
+let selectedCargoDescription = null;
+let selectedCargoQty = null;
 
 function openGenerateBillModal(legId, additionalCostsCount) {
     currentLegIdForGenerate = legId;
     const modal = document.getElementById('generateBillModal');
     const additionalCostsInfo = document.getElementById('additionalCostsInfo');
     const separateOption = document.getElementById('separateOption');
+    const cargoSelectorSection = document.getElementById('cargoSelectorSection');
+    const cargoSelector = document.getElementById('cargoSelector');
+    const cargoQtySection = document.getElementById('cargoQtySection');
+
+    // Reset cargo selection
+    cargoItemsData = [];
+    selectedCargoDescription = null;
+    selectedCargoQty = null;
+    cargoSelector.innerHTML = '<option value="">Memuat data...</option>';
+    cargoSelectorSection.classList.add('hidden');
+    cargoQtySection.classList.add('hidden');
 
     // Show/hide "separate" option based on additional costs
     if (additionalCostsCount > 0) {
@@ -1378,6 +1392,66 @@ function openGenerateBillModal(legId, additionalCostsCount) {
 
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+
+    // Fetch JO items for cargo selector
+    fetch(`/legs/${legId}/job-order-items`)
+        .then(response => response.json())
+        .then(data => {
+            cargoItemsData = data;
+            
+            if (data.items && data.items.length > 1) {
+                // Multiple cargo items - show selector
+                cargoSelectorSection.classList.remove('hidden');
+                cargoSelector.innerHTML = '<option value="">-- Pilih Muatan --</option>';
+                
+                // Add individual items
+                data.items.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = JSON.stringify({ description: item.label, qty: item.quantity });
+                    option.textContent = item.label;
+                    cargoSelector.appendChild(option);
+                });
+                
+                // Add "all items" option
+                if (data.all_items_option) {
+                    const allOption = document.createElement('option');
+                    allOption.value = JSON.stringify({ description: data.all_items_option.label, qty: data.all_items_option.quantity });
+                    allOption.textContent = `Semua: ${data.all_items_option.label}`;
+                    cargoSelector.appendChild(allOption);
+                }
+            } else if (data.items && data.items.length === 1) {
+                // Single cargo item - auto-select
+                selectedCargoDescription = data.items[0].label;
+                selectedCargoQty = data.items[0].quantity;
+            }
+        })
+        .catch(err => {
+            console.error('Failed to fetch JO items:', err);
+            cargoSelector.innerHTML = '<option value="">Error memuat data</option>';
+        });
+}
+
+function onCargoSelected() {
+    const cargoSelector = document.getElementById('cargoSelector');
+    const cargoQtySection = document.getElementById('cargoQtySection');
+    const cargoQtyInput = document.getElementById('cargoQtyInput');
+    
+    const value = cargoSelector.value;
+    if (value) {
+        try {
+            const parsed = JSON.parse(value);
+            selectedCargoDescription = parsed.description;
+            selectedCargoQty = parsed.qty;
+            cargoQtyInput.value = parsed.qty;
+            cargoQtySection.classList.remove('hidden');
+        } catch (e) {
+            console.error('Failed to parse cargo selection', e);
+        }
+    } else {
+        selectedCargoDescription = null;
+        selectedCargoQty = null;
+        cargoQtySection.classList.add('hidden');
+    }
 }
 
 function closeGenerateBillModal() {
@@ -1385,15 +1459,29 @@ function closeGenerateBillModal() {
     modal.classList.add('hidden');
     document.body.style.overflow = '';
     currentLegIdForGenerate = null;
+    cargoItemsData = [];
+    selectedCargoDescription = null;
+    selectedCargoQty = null;
 }
 
 function submitGenerateBill() {
     const billMode = document.querySelector('input[name="bill_mode"]:checked').value;
+    const cargoQtyInput = document.getElementById('cargoQtyInput');
 
     if (!currentLegIdForGenerate) {
         alert('Error: Leg ID tidak ditemukan');
         return;
     }
+
+    // Check if cargo selection is required
+    const cargoSelectorSection = document.getElementById('cargoSelectorSection');
+    if (!cargoSelectorSection.classList.contains('hidden') && !selectedCargoDescription) {
+        alert('Silakan pilih muatan yang diangkut terlebih dahulu');
+        return;
+    }
+
+    // Get qty from input (user may have edited it)
+    const finalQty = cargoQtyInput.value ? parseFloat(cargoQtyInput.value) : selectedCargoQty;
 
     // Create and submit form
     const form = document.createElement('form');
@@ -1413,6 +1501,24 @@ function submitGenerateBill() {
     billModeInput.name = 'bill_mode';
     billModeInput.value = billMode;
     form.appendChild(billModeInput);
+
+    // Add cargo_description if selected
+    if (selectedCargoDescription) {
+        const cargoDescInput = document.createElement('input');
+        cargoDescInput.type = 'hidden';
+        cargoDescInput.name = 'cargo_description';
+        cargoDescInput.value = selectedCargoDescription;
+        form.appendChild(cargoDescInput);
+    }
+
+    // Add cargo_qty if available
+    if (finalQty) {
+        const cargoQtyHidden = document.createElement('input');
+        cargoQtyHidden.type = 'hidden';
+        cargoQtyHidden.name = 'cargo_qty';
+        cargoQtyHidden.value = finalQty;
+        form.appendChild(cargoQtyHidden);
+    }
 
     document.body.appendChild(form);
     form.submit();
@@ -1447,6 +1553,33 @@ document.getElementById('generateBillModal')?.addEventListener('click', function
 
             {{-- Body --}}
             <div class="p-6 space-y-4">
+                {{-- Cargo Selector Section --}}
+                <div id="cargoSelectorSection" class="hidden">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Pilih Muatan yang Diangkut
+                    </label>
+                    <select 
+                        id="cargoSelector" 
+                        class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm"
+                        onchange="onCargoSelected()"
+                    >
+                        <option value="">-- Pilih Muatan --</option>
+                    </select>
+                    <div id="cargoQtySection" class="mt-3 hidden">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                            Qty yang Diangkut
+                        </label>
+                        <input 
+                            type="number" 
+                            id="cargoQtyInput" 
+                            step="0.01"
+                            min="0.01"
+                            class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm"
+                        >
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Default dari data muatan, bisa diubah jika vendor hanya angkut sebagian</p>
+                    </div>
+                </div>
+
                 <div id="additionalCostsInfo" class="hidden bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-sm text-blue-800 dark:text-blue-200">
                     <div class="flex items-start gap-2">
                         <svg class="w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
