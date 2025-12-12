@@ -97,7 +97,7 @@
         @php
             $mainCost = $advance->shipmentLeg->mainCost;
         @endphp
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
                 <p class="text-sm text-slate-500 dark:text-slate-400">Trip Money</p>
                 <p class="text-xl font-semibold text-slate-900 dark:text-slate-100 mt-1">
@@ -114,6 +114,12 @@
                 <p class="text-sm text-slate-500 dark:text-slate-400">Tol</p>
                 <p class="text-xl font-semibold text-slate-900 dark:text-slate-100 mt-1">
                     Rp {{ number_format($mainCost->toll ?? 0, 0, ',', '.') }}
+                </p>
+            </div>
+            <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                <p class="text-sm text-slate-500 dark:text-slate-400">Other Costs</p>
+                <p class="text-xl font-semibold text-slate-900 dark:text-slate-100 mt-1">
+                    Rp {{ number_format($mainCost->other_costs ?? 0, 0, ',', '.') }}
                 </p>
             </div>
         </div>
