@@ -693,6 +693,110 @@
                                     </div>
                                     @endif
 
+                                    {{-- Driver Advance Details (untuk Trucking Own Fleet) --}}
+                                    @if($leg->cost_category === 'trucking' && $leg->executor_type === 'own_fleet' && $leg->driverAdvance)
+                                    @php
+                                        $da = $leg->driverAdvance;
+                                        $mc = $leg->mainCost;
+                                        // Use mainCost values for display since DriverAdvance.amount is total advance
+                                        $grossUangJalan = $mc ? (float) $mc->uang_jalan : 0;
+                                        $savingsDeduction = $mc ? (float) $mc->driver_savings_deduction : 0;
+                                        $guaranteeDeduction = $mc ? (float) $mc->driver_guarantee_deduction : 0;
+                                        $totalDeductions = $savingsDeduction + $guaranteeDeduction;
+                                        $netUangJalan = $grossUangJalan - $totalDeductions;
+                                        
+                                        // Status badge variant
+                                        $statusVariant = match($da->status) {
+                                            'pending' => 'warning',
+                                            'dp_paid' => 'info',
+                                            'settled' => 'success',
+                                            default => 'default'
+                                        };
+                                        $statusLabel = match($da->status) {
+                                            'pending' => 'Pending',
+                                            'dp_paid' => 'DP Dibayar',
+                                            'settled' => 'Lunas',
+                                            default => ucfirst($da->status)
+                                        };
+                                    @endphp
+                                    <div class="bg-cyan-50 dark:bg-cyan-950/20 rounded-lg p-4 mb-3 border border-cyan-200 dark:border-cyan-800">
+                                        <div class="font-semibold text-cyan-900 dark:text-cyan-100 mb-3 text-sm flex items-center justify-between gap-2">
+                                            <div class="flex items-center gap-2">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                </svg>
+                                                <span>DRIVER ADVANCE DETAILS</span>
+                                                <x-badge :variant="$statusVariant" class="text-[10px]">{{ $statusLabel }}</x-badge>
+                                            </div>
+                                            <a href="{{ route('driver-advances.show', $da) }}" class="text-xs text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-1">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                </svg>
+                                                {{ $da->advance_number }}
+                                            </a>
+                                        </div>
+                                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                                            {{-- Uang Jalan Kotor --}}
+                                            <div>
+                                                <div class="text-xs text-cyan-600 dark:text-cyan-400">Uang Jalan (Kotor)</div>
+                                                <div class="font-medium text-cyan-900 dark:text-cyan-100">Rp {{ number_format($grossUangJalan, 0, ',', '.') }}</div>
+                                            </div>
+                                            {{-- Potongan Tabungan --}}
+                                            <div>
+                                                <div class="text-xs text-rose-600 dark:text-rose-400">- Pot. Tabungan</div>
+                                                <div class="font-medium text-rose-900 dark:text-rose-100">
+                                                    @if($savingsDeduction > 0)
+                                                        Rp {{ number_format($savingsDeduction, 0, ',', '.') }}
+                                                    @else
+                                                        -
+                                                    @endif
+                                                </div>
+                                            </div>
+                                            {{-- Potongan Jaminan --}}
+                                            <div>
+                                                <div class="text-xs text-rose-600 dark:text-rose-400">- Pot. Jaminan</div>
+                                                <div class="font-medium text-rose-900 dark:text-rose-100">
+                                                    @if($guaranteeDeduction > 0)
+                                                        Rp {{ number_format($guaranteeDeduction, 0, ',', '.') }}
+                                                    @else
+                                                        -
+                                                    @endif
+                                                </div>
+                                            </div>
+                                            {{-- Uang Jalan Bersih --}}
+                                            <div class="bg-green-100 dark:bg-green-900/30 rounded-lg p-2 -m-1">
+                                                <div class="text-xs text-green-600 dark:text-green-400 font-medium">= Diterima Supir</div>
+                                                <div class="font-bold text-green-700 dark:text-green-300 text-base">Rp {{ number_format($netUangJalan, 0, ',', '.') }}</div>
+                                            </div>
+                                        </div>
+                                        @if($mc && (($mc->bbm ?? 0) > 0 || ($mc->toll ?? 0) > 0 || ($mc->other_costs ?? 0) > 0))
+                                        <div class="mt-3 pt-3 border-t border-cyan-200 dark:border-cyan-700">
+                                            <div class="text-xs text-cyan-600 dark:text-cyan-400 mb-2">Biaya Variabel Lainnya:</div>
+                                            <div class="flex flex-wrap gap-4 text-sm">
+                                                @if(($mc->bbm ?? 0) > 0)
+                                                <div class="flex items-center gap-1">
+                                                    <span class="text-xs text-slate-500 dark:text-slate-400">BBM:</span>
+                                                    <span class="font-medium text-slate-700 dark:text-slate-300">Rp {{ number_format($mc->bbm, 0, ',', '.') }}</span>
+                                                </div>
+                                                @endif
+                                                @if(($mc->toll ?? 0) > 0)
+                                                <div class="flex items-center gap-1">
+                                                    <span class="text-xs text-slate-500 dark:text-slate-400">Tol:</span>
+                                                    <span class="font-medium text-slate-700 dark:text-slate-300">Rp {{ number_format($mc->toll, 0, ',', '.') }}</span>
+                                                </div>
+                                                @endif
+                                                @if(($mc->other_costs ?? 0) > 0)
+                                                <div class="flex items-center gap-1">
+                                                    <span class="text-xs text-slate-500 dark:text-slate-400">Lainnya:</span>
+                                                    <span class="font-medium text-slate-700 dark:text-slate-300">Rp {{ number_format($mc->other_costs, 0, ',', '.') }}</span>
+                                                </div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                        @endif
+                                    </div>
+                                    @endif
+
                                     {{-- Vendor Bills Generated from This Leg --}}
                                     @if($leg->vendorBillItems()->exists())
                                     @php
