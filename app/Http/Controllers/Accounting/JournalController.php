@@ -428,4 +428,162 @@ class JournalController extends Controller
 
         return view('journals.traditional', compact('entries', 'totalDebit', 'totalCredit', 'classLabels'));
     }
+
+    /**
+     * Export traditional journal ledger to Excel
+     */
+    public function exportTraditional(Request $request)
+    {
+        $query = JournalLine::query()
+            ->with(['journal', 'account', 'customer', 'vendor', 'transport.driver', 'jobOrder'])
+            ->whereHas('journal', function ($q) {
+                $q->where('status', 'posted');
+            });
+
+        // Filter by date range
+        if ($from = $request->get('from')) {
+            $query->whereHas('journal', function ($q) use ($from) {
+                $q->whereDate('journal_date', '>=', $from);
+            });
+        }
+        if ($to = $request->get('to')) {
+            $query->whereHas('journal', function ($q) use ($to) {
+                $q->whereDate('journal_date', '<=', $to);
+            });
+        }
+
+        // Get all entries
+        $entries = $query->get();
+
+        // Define class order for sorting
+        $classOrder = [
+            'vendor_bill' => 1,
+            'vendor_payment' => 2,
+            'invoice' => 3,
+            'customer_payment' => 4,
+            'cash_in' => 5,
+            'cash_out' => 5,
+            'expense' => 5,
+            'part_purchase' => 6,
+            'part_usage' => 6,
+            'fixed_asset_depreciation' => 7,
+            'adjustment' => 8,
+        ];
+
+        // Sort entries
+        $entries = $entries->sort(function ($a, $b) use ($classOrder) {
+            $classA = $classOrder[$a->journal->source_type] ?? 99;
+            $classB = $classOrder[$b->journal->source_type] ?? 99;
+
+            if ($classA !== $classB) {
+                return $classA <=> $classB;
+            }
+
+            $dateCompare = $a->journal->journal_date <=> $b->journal->journal_date;
+            if ($dateCompare !== 0) {
+                return $dateCompare;
+            }
+
+            return strcmp($a->journal->journal_no, $b->journal->journal_no);
+        });
+
+        // Class labels
+        $classLabels = [
+            'vendor_bill' => 'Pembelian',
+            'vendor_payment' => 'Pembayaran Pembelian',
+            'invoice' => 'Penjualan',
+            'customer_payment' => 'Pembayaran Penjualan',
+            'cash_in' => 'Kas/Bank Masuk',
+            'cash_out' => 'Kas/Bank Keluar',
+            'expense' => 'Kas/Bank',
+            'part_purchase' => 'Pembelian Part',
+            'part_usage' => 'Pemakaian Part (HPP)',
+            'fixed_asset_depreciation' => 'Depresiasi Aset',
+            'adjustment' => 'Adjustment Manual',
+        ];
+
+        // Create Spreadsheet
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Buku Besar');
+
+        // Header row
+        $headers = ['Class', 'Tanggal', 'No Jurnal', 'Kode Akun', 'Nama Akun', 'Keterangan', 'Nama', 'Debit', 'Kredit'];
+        $col = 'A';
+        foreach ($headers as $header) {
+            $sheet->setCellValue($col . '1', $header);
+            $sheet->getStyle($col . '1')->getFont()->setBold(true);
+            $sheet->getStyle($col . '1')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('4F46E5');
+            $sheet->getStyle($col . '1')->getFont()->getColor()->setRGB('FFFFFF');
+            $col++;
+        }
+
+        // Data rows
+        $row = 2;
+        foreach ($entries as $entry) {
+            $class = $classLabels[$entry->journal->source_type] ?? $entry->journal->source_type;
+            $tanggal = $entry->journal->journal_date->format('d/m/Y');
+            $noJurnal = $entry->journal->journal_no;
+            $kodeAkun = $entry->account->code;
+            $namaAkun = $entry->account->name;
+            
+            // Keterangan with JO
+            $keterangan = $entry->journal->memo ?: $entry->description;
+            if ($entry->jobOrder) {
+                $keterangan .= ' - JO: ' . $entry->jobOrder->job_number;
+            }
+            
+            // Nama
+            $nama = $entry->customer?->name 
+                 ?? $entry->vendor?->name 
+                 ?? $entry->transport?->driver?->name 
+                 ?? $entry->transport?->plate_number
+                 ?? ($entry->journal->source_type === 'fixed_asset_depreciation' ? 'Sistem' : '-');
+
+            $sheet->setCellValue('A' . $row, $class);
+            $sheet->setCellValue('B' . $row, $tanggal);
+            $sheet->setCellValue('C' . $row, $noJurnal);
+            $sheet->setCellValue('D' . $row, $kodeAkun);
+            $sheet->setCellValue('E' . $row, $namaAkun);
+            $sheet->setCellValue('F' . $row, $keterangan);
+            $sheet->setCellValue('G' . $row, $nama);
+            
+            // Set numeric values for Debit and Kredit
+            $sheet->setCellValue('H' . $row, (float) $entry->debit);
+            $sheet->setCellValue('I' . $row, (float) $entry->credit);
+            
+            $row++;
+        }
+
+        // Add totals row
+        $totalRow = $row;
+        $sheet->setCellValue('A' . $totalRow, 'TOTAL');
+        $sheet->getStyle('A' . $totalRow)->getFont()->setBold(true);
+        $sheet->setCellValue('H' . $totalRow, $entries->sum('debit'));
+        $sheet->setCellValue('I' . $totalRow, $entries->sum('credit'));
+        $sheet->getStyle('H' . $totalRow . ':I' . $totalRow)->getFont()->setBold(true);
+
+        // Format number columns (Debit and Kredit)
+        $lastRow = $totalRow;
+        $numberFormat = '#,##0.00';
+        $sheet->getStyle('H2:H' . $lastRow)->getNumberFormat()->setFormatCode($numberFormat);
+        $sheet->getStyle('I2:I' . $lastRow)->getNumberFormat()->setFormatCode($numberFormat);
+
+        // Auto-size columns
+        foreach (range('A', 'I') as $columnID) {
+            $sheet->getColumnDimension($columnID)->setAutoSize(true);
+        }
+
+        // Generate filename
+        $filename = 'buku_besar_' . date('Y-m-d_His') . '.xlsx';
+
+        // Output
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
 }

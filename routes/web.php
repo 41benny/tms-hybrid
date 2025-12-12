@@ -150,6 +150,7 @@ Route::middleware(['auth', 'active'])->group(function () {
 
     Route::resource('journals', JournalController::class)->except(['destroy']);
     Route::get('journals-traditional', [JournalController::class, 'traditional'])->name('journals.traditional');
+    Route::get('journals-traditional/export', [JournalController::class, 'exportTraditional'])->name('journals.traditional.export');
 
     // User Profile
     Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
