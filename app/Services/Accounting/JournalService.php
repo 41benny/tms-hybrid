@@ -157,6 +157,10 @@ class JournalService
         $cash = $this->getCashAccountCode($trx);
         $ar = $this->map('ar');
         
+        // Load customer for journal description
+        $trx->load(['customer', 'invoice']);
+        $customerName = $trx->customer?->name ?? 'N/A';
+        
         // Amount di sini adalah Total Invoice yang dilunasi (AR)
         $arAmount = (float) $trx->amount;
         $withholding = (float) ($trx->withholding_pph23 ?? 0);
@@ -166,12 +170,12 @@ class JournalService
         $cashReceived = $arAmount - $withholding - $adminFee;
 
         $lines = [
-            ['account_code' => $cash, 'debit' => $cashReceived, 'credit' => 0, 'desc' => 'Penerimaan invoice '.$trx->invoice?->invoice_number, 'customer_id' => $trx->customer_id],
+            ['account_code' => $cash, 'debit' => $cashReceived, 'credit' => 0, 'desc' => 'Penerimaan invoice '.$trx->invoice?->invoice_number.' - '.$customerName, 'customer_id' => $trx->customer_id],
         ];
 
         if ($withholding > 0) {
             $pph23Claim = $this->map('pph23_claim');
-            $lines[] = ['account_code' => $pph23Claim, 'debit' => $withholding, 'credit' => 0, 'desc' => 'Piutang PPh 23 invoice '.$trx->invoice?->invoice_number, 'customer_id' => $trx->customer_id];
+            $lines[] = ['account_code' => $pph23Claim, 'debit' => $withholding, 'credit' => 0, 'desc' => 'Piutang PPh 23 invoice '.$trx->invoice?->invoice_number.' - '.$customerName, 'customer_id' => $trx->customer_id];
         }
         
         if ($adminFee > 0) {
@@ -179,13 +183,13 @@ class JournalService
             $lines[] = ['account_code' => $adminExp, 'debit' => $adminFee, 'credit' => 0, 'desc' => 'Biaya admin bank', 'customer_id' => $trx->customer_id];
         }
 
-        $lines[] = ['account_code' => $ar, 'debit' => 0, 'credit' => $arAmount, 'desc' => 'Pelunasan invoice '.$trx->invoice?->invoice_number, 'customer_id' => $trx->customer_id];
+        $lines[] = ['account_code' => $ar, 'debit' => 0, 'credit' => $arAmount, 'desc' => 'Pelunasan invoice '.$trx->invoice?->invoice_number.' - '.$customerName, 'customer_id' => $trx->customer_id];
 
         return $this->posting->postGeneral([
             'journal_date' => $trx->tanggal->toDateString(),
             'source_type' => 'customer_payment',
             'source_id' => $trx->id,
-            'memo' => 'Penerimaan pembayaran',
+            'memo' => 'Penerimaan pembayaran - '.$customerName,
         ], $lines);
     }
 
@@ -435,6 +439,10 @@ class JournalService
         $ap = $this->map('ap');
         $cash = $this->getCashAccountCode($trx);
         
+        // Load vendor for journal description
+        $trx->load('vendor');
+        $vendorName = $trx->vendor?->name ?? 'N/A';
+        
         // Amount di sini adalah Total Hutang yang dibayar (AP)
         $apAmount = (float) $trx->amount;
         $withholding = (float) ($trx->withholding_pph23 ?? 0);
@@ -453,7 +461,7 @@ class JournalService
         $cashPaid = $apAmount - $withholding + $adminFee;
         
         $lines = [
-            ['account_code' => $ap, 'debit' => $apAmount, 'credit' => 0, 'desc' => 'Pelunasan hutang vendor', 'vendor_id' => $trx->vendor_id],
+            ['account_code' => $ap, 'debit' => $apAmount, 'credit' => 0, 'desc' => 'Pelunasan hutang vendor - '.$vendorName, 'vendor_id' => $trx->vendor_id],
         ];
         
         if ($adminFee > 0) {
@@ -468,13 +476,13 @@ class JournalService
             $lines[] = ['account_code' => $pph23Payable, 'debit' => 0, 'credit' => $withholding, 'desc' => 'PPh 23 dipotong saat pembayaran', 'vendor_id' => $trx->vendor_id];
         }
         
-        $lines[] = ['account_code' => $cash, 'debit' => 0, 'credit' => $cashPaid, 'desc' => 'Pembayaran hutang vendor', 'vendor_id' => $trx->vendor_id];
+        $lines[] = ['account_code' => $cash, 'debit' => 0, 'credit' => $cashPaid, 'desc' => 'Pembayaran hutang vendor - '.$vendorName, 'vendor_id' => $trx->vendor_id];
 
         return $this->posting->postGeneral([
             'journal_date' => $trx->tanggal->toDateString(),
             'source_type' => 'vendor_payment',
             'source_id' => $trx->id,
-            'memo' => 'Pembayaran vendor',
+            'memo' => 'Pembayaran vendor - '.$vendorName,
         ], $lines);
     }
 
@@ -733,20 +741,24 @@ class JournalService
         $guaranteeDeduction = 0;
         $isSettlement = false;
         
-        // Track job_order_id from first advance
+        // Track job_order_id and driver name from first advance
         $jobOrderId = null;
+        $driverName = 'N/A';
         
-        // Load driver advance payment records
+        // Load driver advance payment records with driver relation
         $driverAdvancePayments = \App\Models\Operations\DriverAdvancePayment::where('cash_bank_transaction_id', $trx->id)
-            ->with(['driverAdvance.shipmentLeg.mainCost'])
+            ->with(['driverAdvance.shipmentLeg.mainCost', 'driverAdvance.driver'])
             ->get();
         
         foreach ($driverAdvancePayments as $payment) {
             $advance = $payment->driverAdvance;
             if ($advance) {
-                // Get job_order_id from first advance
+                // Get job_order_id and driver name from first advance
                 if (!$jobOrderId && $advance->shipmentLeg) {
                     $jobOrderId = $advance->shipmentLeg->job_order_id;
+                }
+                if ($driverName === 'N/A' && $advance->driver) {
+                    $driverName = $advance->driver->name;
                 }
                 
                 // Check if this is settlement
@@ -776,7 +788,7 @@ class JournalService
             'account_code' => $driverPayable,
             'debit' => $grossPayable,
             'credit' => 0,
-            'desc' => 'Pembayaran hutang uang jalan - ' . ($isSettlement ? 'Pelunasan' : 'DP'),
+            'desc' => 'Pembayaran hutang uang jalan - ' . ($isSettlement ? 'Pelunasan' : 'DP') . ' - ' . $driverName,
             'job_order_id' => $jobOrderId
         ];
         
@@ -785,7 +797,7 @@ class JournalService
             'account_code' => $cash,
             'debit' => 0,
             'credit' => $netAmount,
-            'desc' => 'Pembayaran uang jalan driver',
+            'desc' => 'Pembayaran uang jalan - ' . $driverName,
             'job_order_id' => $jobOrderId
         ];
         
@@ -797,7 +809,7 @@ class JournalService
                     'account_code' => $driverSavings,
                     'debit' => 0,
                     'credit' => $savingsDeduction,
-                    'desc' => 'Potongan tabungan supir',
+                    'desc' => 'Potongan tabungan supir - ' . $driverName,
                     'job_order_id' => $jobOrderId
                 ];
             }
@@ -808,7 +820,7 @@ class JournalService
                     'account_code' => $driverGuarantee,
                     'debit' => 0,
                     'credit' => $guaranteeDeduction,
-                    'desc' => 'Potongan jaminan supir',
+                    'desc' => 'Potongan jaminan supir - ' . $driverName,
                     'job_order_id' => $jobOrderId
                 ];
             }
