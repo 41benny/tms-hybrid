@@ -298,17 +298,27 @@ class Invoice extends Model
     
     public function isAccountingPeriodClosed(): bool
     {
-        // If invoice_date is null, period is not closed
-        if (!$this->invoice_date) {
+        // If invoice_date is null or empty, period is not closed
+        if (empty($this->invoice_date)) {
             return false;
         }
         
-        // Check if accounting period for this invoice date is closed
-        $period = \App\Models\Accounting\AccountingPeriod::where('year', $this->invoice_date->year)
-            ->where('month', $this->invoice_date->month)
-            ->first();
-        
-        return $period && $period->is_closed;
+        try {
+            // Ensure we have a Carbon instance
+            $date = $this->invoice_date instanceof \Carbon\Carbon 
+                ? $this->invoice_date 
+                : \Carbon\Carbon::parse($this->invoice_date);
+            
+            // Check if accounting period for this invoice date is closed
+            $period = \App\Models\Accounting\AccountingPeriod::where('year', $date->year)
+                ->where('month', $date->month)
+                ->first();
+            
+            return $period && $period->is_closed;
+        } catch (\Exception $e) {
+            // If any error occurs, consider period as not closed
+            return false;
+        }
     }
     
     public function getBaseInvoiceNumber(): string
