@@ -120,7 +120,7 @@
                 </table>
             </div>
             <div class="text-right">
-                <p class="text-xs uppercase text-slate-500 mb-1">PT. TRANSPORINDO AGUNG SEJAHTERA</p>
+                <p class="text-xs uppercase mb-1">PT. TRANSPORINDO AGUNG SEJAHTERA</p>
             </div>
         </div>
     </div>
@@ -203,11 +203,25 @@
 <style>
     @media print {
         @page { size: A4 landscape; margin: 10mm; }
-        body { background: white !important; font-family: 'Courier New', Courier, monospace; color: black !important; }
+        body { 
+            background: white !important; 
+            font-family: 'Courier New', Courier, monospace; 
+            color: #000000 !important; 
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
         .screen-only, nav, header, aside, .no-print { display: none !important; }
         .print-only { display: block !important; }
         .print-only table { width: 100%; border-collapse: collapse; }
-        .print-only th, .print-only td { border: 1px solid #000 !important; color: #000 !important; }
+        .print-only th, .print-only td { 
+            border: 1px solid #000 !important; 
+            color: #000000 !important; 
+            text-shadow: none !important;
+        }
+        /* Make all text in print view black explicitly */
+        .print-only * {
+            color: #000000 !important;
+        }
         tr { page-break-inside: avoid; }
     }
 </style>
