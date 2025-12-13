@@ -105,17 +105,16 @@ class DriverSavingsController extends Controller
                 $driverLeg = $jobOrder->shipmentLegs()->where('driver_id', $driver->id)->first();
                 // Use Schedule Date as main date, fallback to Journal Date
                 $tripDate = $driverLeg?->schedule_date ?? $journal->journal_date;
-                $routeInfo = ($jobOrder->origin ?? '?') . ' - ' . ($jobOrder->destination ?? '?');
+                
+                // Get truck name for description
+                $truckName = $driverLeg?->truck?->name ?? 'Unit N/A';
                 $nopol = $driverLeg?->truck?->plate_number ?? '-';
+                
+                // Format: [Truck Name] - Origin - Destination
+                $routeInfo = $truckName . ' - ' . ($jobOrder->origin ?? '?') . ' - ' . ($jobOrder->destination ?? '?');
                 $joNumber = $jobOrder->job_number;
             } elseif ($journal->source_type === 'driver_withdrawal') {
-                $routeInfo = 'Penarikan Tabungan - ' . $journal->source_id; // Or use memo if it contains voucher no
-                // If memo contains meaningful info, prefer it. Usually source_id is just ID.
-                // Let's rely on memo or description.
-                // For cash_bank_transaction, the voucher number is generated.
-                // Let's assume journal memo has relevant info or we construct it.
-                // The user specifically asked for "no voucher kasbank".
-                // We might need to fetch the CashBankTransaction to get the real voucher number if memo is just generic.
+                // For withdrawal, get the voucher number
                 if ($journal->source_type === 'driver_withdrawal' && $journal->source_id) {
                      $cbTrx = \App\Models\Finance\CashBankTransaction::find($journal->source_id);
                      if ($cbTrx) {
