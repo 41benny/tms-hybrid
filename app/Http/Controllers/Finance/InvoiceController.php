@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Finance;
 
 use App\Http\Controllers\Controller;
+use App\Models\Accounting\Journal;
 use App\Models\Finance\Invoice;
 use App\Models\Master\Customer;
 use App\Models\Operations\JobOrder;
@@ -693,6 +694,36 @@ class InvoiceController extends Controller
             return back()->withErrors(['confirm_period_closed' => 'Anda harus mengkonfirmasi bahwa sudah koordinasi dengan accounting.']);
         }
         
+        // Handle journal based on period status
+        $periodClosed = false;
+        if ($invoice->journal_id) {
+            try {
+                $journalService = app(JournalService::class);
+                
+                // Check if period is closed
+                $journal = Journal::find($invoice->journal_id);
+                $periodClosed = $journal && $journal->period && $journal->period->status !== 'open';
+                
+                if ($periodClosed) {
+                    // Period closed: Keep old journal, will create correction later
+                    \Log::info("Invoice revision with closed period", [
+                        'invoice_id' => $invoice->id,
+                        'period' => $journal->period->month . '/' . $journal->period->year,
+                        'action' => 'Will create correction journal when re-posted'
+                    ]);
+                } else {
+                    // Period open: Delete old journal
+                    $journalService->unpostInvoice($invoice);
+                    \Log::info("Invoice revision - old journal deleted", [
+                        'invoice_id' => $invoice->id,
+                        'action' => 'Old journal deleted, will create new when re-posted'
+                    ]);
+                }
+            } catch (\Exception $e) {
+                return back()->with('error', 'Gagal memproses jurnal: ' . $e->getMessage());
+            }
+        }
+        
         // Update invoice for revision
         $invoice->update([
             // Increment revision number
@@ -718,6 +749,9 @@ class InvoiceController extends Controller
             
             // Keep original invoice reference (if first revision, set to self)
             'original_invoice_id' => $invoice->original_invoice_id ?? $invoice->id,
+            
+            // Keep journal_id if period closed, clear if period open
+            'journal_id' => $periodClosed ? $invoice->journal_id : null,
         ]);
         
         return redirect()->route('invoices.edit', $invoice)
@@ -945,7 +979,19 @@ class InvoiceController extends Controller
 
         if (class_exists(JournalService::class)) {
             try {
-                app(JournalService::class)->postInvoice($invoice);
+                $journalService = app(JournalService::class);
+                
+                // Check if this is a revised invoice
+                if ($invoice->revision_number > 0) {
+                    // Use repostInvoice for revised invoices (handles period-aware logic)
+                    $journal = $journalService->repostInvoice($invoice);
+                } else {
+                    // Normal posting for new invoices
+                    $journal = $journalService->postInvoice($invoice);
+                }
+                
+                // Update journal_id
+                $invoice->update(['journal_id' => $journal->id]);
             } catch (\Exception $e) {
                 // Rollback status jika posting gagal
                 $invoice->update(['status' => 'draft']);

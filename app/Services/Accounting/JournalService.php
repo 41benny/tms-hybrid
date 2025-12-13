@@ -1006,6 +1006,179 @@ class JournalService
         return true;
     }
 
+    /**
+     * Repost Invoice journal when invoice is revised.
+     * - If period is OPEN: Delete old journal and will create new when mark as sent
+     * - If period is CLOSED: Create correction journal in current period
+     */
+    public function repostInvoice(Invoice $invoice): Journal
+    {
+        $oldJournal = Journal::where('source_type', 'invoice')
+            ->where('source_id', $invoice->id)
+            ->first();
+        
+        if (!$oldJournal) {
+            // No old journal, just post normally
+            return $this->postInvoice($invoice);
+        }
+        
+        // Check if period is open
+        $periodOpen = !$oldJournal->period || $oldJournal->period->status === 'open';
+        
+        if ($periodOpen) {
+            // Period OPEN: Delete old journal and create new
+            $this->unpostInvoice($invoice);
+            return $this->postInvoice($invoice);
+        } else {
+            // Period CLOSED: Create correction journal
+            return $this->createInvoiceCorrectionJournal($invoice, $oldJournal);
+        }
+    }
+
+    /**
+     * Create correction journal for invoice revision when period is closed.
+     * Posts the DIFFERENCE between old and new invoice amounts.
+     */
+    protected function createInvoiceCorrectionJournal(Invoice $invoice, Journal $oldJournal): Journal
+    {
+        // Load old journal lines to calculate difference
+        $oldJournal->load('lines.account');
+        
+        // Calculate new amounts
+        $invoice->load(['items', 'customer']);
+        $customerName = $invoice->customer?->name ?? 'N/A';
+        
+        $newDpp = (float) $invoice->subtotal;
+        $newPpn = (float) $invoice->tax_amount;
+        $newTotal = (float) $invoice->total_amount;
+        
+        // Get old amounts from journal lines
+        $arCode = $this->map('ar');
+        $revenueCode = $this->map('revenue');
+        $vatOutCode = $this->map('vat_out');
+        
+        $oldArLine = $oldJournal->lines->first(function($line) use ($arCode) {
+            return $line->account && $line->account->code === $arCode;
+        });
+        $oldRevenueLine = $oldJournal->lines->first(function($line) use ($revenueCode) {
+            return $line->account && $line->account->code === $revenueCode;
+        });
+        $oldVatLine = $oldJournal->lines->first(function($line) use ($vatOutCode) {
+            return $line->account && $line->account->code === $vatOutCode;
+        });
+        
+        $oldTotal = $oldArLine ? $oldArLine->debit : 0;
+        $oldDpp = $oldRevenueLine ? $oldRevenueLine->credit : 0;
+        $oldPpn = $oldVatLine ? $oldVatLine->credit : 0;
+        
+        // Calculate differences
+        $diffTotal = $newTotal - $oldTotal;
+        $diffDpp = $newDpp - $oldDpp;
+        $diffPpn = $newPpn - $oldPpn;
+        
+        // If no difference, no need to post
+        if (abs($diffTotal) < 0.01) {
+            \Log::info('Invoice revision: No amount change, skipping correction journal', [
+                'invoice_id' => $invoice->id,
+                'invoice_number' => $invoice->invoice_number,
+            ]);
+            return $oldJournal;
+        }
+        
+        // Build correction journal lines
+        $lines = [];
+        $jobOrderId = $invoice->items->first()?->job_order_id;
+        
+        // Correction entries
+        if ($diffTotal > 0) {
+            // Invoice amount increased
+            $lines[] = [
+                'account_code' => $arCode,
+                'debit' => $diffTotal,
+                'credit' => 0,
+                'desc' => "Koreksi Piutang Invoice {$invoice->invoice_number} (Revisi) - {$customerName}",
+                'customer_id' => $invoice->customer_id,
+                'job_order_id' => $jobOrderId
+            ];
+        } else {
+            // Invoice amount decreased
+            $lines[] = [
+                'account_code' => $arCode,
+                'debit' => 0,
+                'credit' => abs($diffTotal),
+                'desc' => "Koreksi Piutang Invoice {$invoice->invoice_number} (Revisi) - {$customerName}",
+                'customer_id' => $invoice->customer_id,
+                'job_order_id' => $jobOrderId
+            ];
+        }
+        
+        if (abs($diffDpp) >= 0.01) {
+            if ($diffDpp > 0) {
+                $lines[] = [
+                    'account_code' => $revenueCode,
+                    'debit' => 0,
+                    'credit' => $diffDpp,
+                    'desc' => "Koreksi Pendapatan Invoice {$invoice->invoice_number} (Revisi) - {$customerName}",
+                    'customer_id' => $invoice->customer_id,
+                    'job_order_id' => $jobOrderId
+                ];
+            } else {
+                $lines[] = [
+                    'account_code' => $revenueCode,
+                    'debit' => abs($diffDpp),
+                    'credit' => 0,
+                    'desc' => "Koreksi Pendapatan Invoice {$invoice->invoice_number} (Revisi) - {$customerName}",
+                    'customer_id' => $invoice->customer_id,
+                    'job_order_id' => $jobOrderId
+                ];
+            }
+        }
+        
+        if (abs($diffPpn) >= 0.01) {
+            if ($diffPpn > 0) {
+                $lines[] = [
+                    'account_code' => $vatOutCode,
+                    'debit' => 0,
+                    'credit' => $diffPpn,
+                    'desc' => "Koreksi PPN Keluaran Invoice {$invoice->invoice_number} (Revisi) - {$customerName}",
+                    'customer_id' => $invoice->customer_id,
+                    'job_order_id' => $jobOrderId
+                ];
+            } else {
+                $lines[] = [
+                    'account_code' => $vatOutCode,
+                    'debit' => abs($diffPpn),
+                    'credit' => 0,
+                    'desc' => "Koreksi PPN Keluaran Invoice {$invoice->invoice_number} (Revisi) - {$customerName}",
+                    'customer_id' => $invoice->customer_id,
+                    'job_order_id' => $jobOrderId
+                ];
+            }
+        }
+        
+        \Log::info('Invoice revision correction journal', [
+            'invoice_id' => $invoice->id,
+            'invoice_number' => $invoice->invoice_number,
+            'old_total' => $oldTotal,
+            'new_total' => $newTotal,
+            'diff_total' => $diffTotal,
+            'diff_dpp' => $diffDpp,
+            'diff_ppn' => $diffPpn,
+        ]);
+        
+        // Post correction journal in current period
+        $journal = $this->posting->postGeneral([
+            'journal_date' => now()->toDateString(),
+            'source_type' => 'invoice',
+            'source_id' => $invoice->id,
+            'memo' => "Koreksi Invoice {$invoice->invoice_number} (Revisi)",
+            'is_revision' => true,
+        ], $lines);
+        
+        return $journal;
+    }
+
+
     protected function reversePrepaidsForInvoice(Invoice $invoice): void
     {
         // Ambil shipment_leg_ids dari invoice items

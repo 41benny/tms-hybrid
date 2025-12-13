@@ -280,5 +280,6 @@
         window.INVOICE_CREATE_ROUTE = @json(route('invoices.create'));
     </script>
     <script src="{{ asset('js/invoice-create.js') }}"></script>
+    <script src="{{ asset('js/invoice-number-format.js') }}"></script>
 </div>
 @endsection
