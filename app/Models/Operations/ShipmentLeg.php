@@ -18,6 +18,7 @@ class ShipmentLeg extends Model
         'vendor_id',
         'truck_id',
         'driver_id',
+        'equipment_id',
         'vessel_name',
         'load_date',
         'unload_date',
@@ -54,6 +55,11 @@ class ShipmentLeg extends Model
     public function driver(): BelongsTo
     {
         return $this->belongsTo(\App\Models\Master\Driver::class)->withDefault();
+    }
+
+    public function equipment(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Master\Equipment::class);
     }
 
     public function mainCost(): HasOne

@@ -186,6 +186,39 @@
                     size="sm"
                 />
 
+                {{-- Equipment Field (Smart Auto-Select) --}}
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                        Unit/Equipment yang Dimuat
+                        @if($equipments->count() > 1)
+                            <span class="text-red-500">*</span>
+                        @endif
+                    </label>
+                    
+                    @if($equipments->count() === 0)
+                        <p class="text-sm text-slate-500">Belum ada equipment untuk JO ini</p>
+                    @elseif($autoSelectedEquipment)
+                        {{-- Auto-selected, show as readonly with hidden input --}}
+                        <input type="text" 
+                               class="w-full rounded-lg bg-gray-50 dark:bg-gray-700 border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-slate-900 dark:text-slate-100" 
+                               value="{{ $autoSelectedEquipment->name }}" 
+                               readonly>
+                        <input type="hidden" name="equipment_id" value="{{ old('equipment_id', $leg->equipment_id ?? $autoSelectedEquipment->id) }}">
+                        <p class="text-xs text-slate-500 mt-1">Auto-dipilih (hanya 1 equipment di JO ini)</p>
+                    @else
+                        {{-- Multiple equipment: show dropdown --}}
+                        <select name="equipment_id" 
+                                class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                                required>
+                            <option value="">-- Pilih Unit --</option>
+                            @foreach($equipments as $eq)
+                                <option value="{{ $eq->id }}" @selected(old('equipment_id', $leg->equipment_id)==$eq->id)>{{ $eq->name }}</option>
+                            @endforeach
+                        </select>
+                        <p class="text-xs text-slate-500 mt-1">Pilih unit yang dibawa di leg ini</p>
+                    @endif
+                </div>
+
                 <x-select
                     name="status"
                     label="Status"

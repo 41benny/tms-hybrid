@@ -102,19 +102,29 @@ class DriverSavingsController extends Controller
             $voucherNo = $journal->memo; // Default memo (usually holds voucher no or desc)
             
             if ($jobOrder) {
-                $driverLeg = $jobOrder->shipmentLegs()->where('driver_id', $driver->id)->first();
+                $driverLeg = $jobOrder->shipmentLegs()
+                    ->where('driver_id', $driver->id)
+                    ->with('equipment')
+                    ->first();
+                    
                 // Use Schedule Date as main date, fallback to Journal Date
                 $tripDate = $driverLeg?->schedule_date ?? $journal->journal_date;
                 
-                // Get cargo/equipment names (unit yang dimuat)
-                $equipmentNames = $jobOrder->items()
-                    ->with('equipment')
-                    ->get()
-                    ->pluck('equipment.name')
-                    ->filter()
-                    ->implode(', ');
+                // Get equipment: prioritize from leg, fallback to all JO equipment
+                if ($driverLeg?->equipment) {
+                    // Equipment assigned to this leg
+                    $cargoInfo = $driverLeg->equipment->name;
+                } else {
+                    // Fallback: get all equipment from JO (for backward compatibility)
+                    $equipmentNames = $jobOrder->items()
+                        ->with('equipment')
+                        ->get()
+                        ->pluck('equipment.name')
+                        ->filter()
+                        ->implode(', ');
+                    $cargoInfo = $equipmentNames ?: 'Muatan N/A';
+                }
                 
-                $cargoInfo = $equipmentNames ?: 'Muatan N/A';
                 $nopol = $driverLeg?->truck?->plate_number ?? '-';
                 
                 // Format: [Cargo/Equipment] - Origin - Destination

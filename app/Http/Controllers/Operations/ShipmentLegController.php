@@ -34,8 +34,12 @@ class ShipmentLegController extends Controller
         $vendors = Vendor::where('is_active', true)->orderBy('name')->get();
         $trucks = Truck::with('driver')->where('is_active', true)->orderBy('plate_number')->get();
         $drivers = Driver::where('is_active', true)->orderBy('name')->get();
+        
+        // Get equipment from JO items for smart selection
+        $equipments = $jobOrder->items()->with('equipment')->get()->pluck('equipment')->filter()->unique('id');
+        $autoSelectedEquipment = $equipments->count() === 1 ? $equipments->first() : null;
 
-        return view('job-orders.legs.create', compact('jobOrder', 'vendors', 'trucks', 'drivers'));
+        return view('job-orders.legs.create', compact('jobOrder', 'vendors', 'trucks', 'drivers', 'equipments', 'autoSelectedEquipment'));
     }
 
     public function store(Request $request, JobOrder $jobOrder)
@@ -45,6 +49,7 @@ class ShipmentLegController extends Controller
             'vendor_id' => ['nullable', 'exists:vendors,id'], // Optional untuk trucking, required untuk kategori lainnya
             'truck_id' => ['nullable', 'exists:trucks,id'],
             'driver_id' => ['nullable', 'exists:drivers,id'],
+            'equipment_id' => ['nullable', 'exists:equipments,id'],
             'vessel_name' => ['nullable', 'string', 'max:255'],
             'load_date' => ['required', 'date'],
             'unload_date' => ['nullable', 'date'],
@@ -102,6 +107,7 @@ class ShipmentLegController extends Controller
             'vendor_id' => $validated['vendor_id'] ?? null,
             'truck_id' => $validated['truck_id'] ?? null,
             'driver_id' => $validated['driver_id'] ?? null,
+            'equipment_id' => $validated['equipment_id'] ?? null,
             'vessel_name' => $validated['vessel_name'] ?? null,
             'load_date' => $validated['load_date'],
             'unload_date' => $validated['unload_date'] ?? null,
@@ -174,12 +180,16 @@ class ShipmentLegController extends Controller
 
     public function edit(JobOrder $jobOrder, ShipmentLeg $leg)
     {
-        $leg->load('mainCost');
+        $leg->load('mainCost', 'equipment');
         $vendors = Vendor::where('is_active', true)->orderBy('name')->get();
         $trucks = Truck::with('driver')->where('is_active', true)->orderBy('plate_number')->get();
         $drivers = Driver::where('is_active', true)->orderBy('name')->get();
+        
+        // Get equipment from JO items
+        $equipments = $jobOrder->items()->with('equipment')->get()->pluck('equipment')->filter()->unique('id');
+        $autoSelectedEquipment = $equipments->count() === 1 ? $equipments->first() : null;
 
-        return view('job-orders.legs.edit', compact('jobOrder', 'leg', 'vendors', 'trucks', 'drivers'));
+        return view('job-orders.legs.edit', compact('jobOrder', 'leg', 'vendors', 'trucks', 'drivers', 'equipments', 'autoSelectedEquipment'));
     }
 
     public function update(Request $request, JobOrder $jobOrder, ShipmentLeg $leg)
@@ -189,6 +199,7 @@ class ShipmentLegController extends Controller
             'vendor_id' => ['nullable', 'exists:vendors,id'], // Optional untuk trucking, required untuk kategori lainnya
             'truck_id' => ['nullable', 'exists:trucks,id'],
             'driver_id' => ['nullable', 'exists:drivers,id'],
+            'equipment_id' => ['nullable', 'exists:equipments,id'],
             'vessel_name' => ['nullable', 'string', 'max:255'],
               'load_date' => ['required', 'date'],
               'unload_date' => ['nullable', 'date'],
@@ -243,6 +254,7 @@ class ShipmentLegController extends Controller
               'vendor_id' => $validated['vendor_id'] ?? null,
               'truck_id' => $validated['truck_id'] ?? null,
               'driver_id' => $validated['driver_id'] ?? null,
+              'equipment_id' => $validated['equipment_id'] ?? null,
               'vessel_name' => $validated['vessel_name'] ?? null,
               'load_date' => $validated['load_date'],
               'unload_date' => $validated['unload_date'] ?? null,
