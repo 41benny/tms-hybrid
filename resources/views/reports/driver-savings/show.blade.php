@@ -110,6 +110,17 @@
                         <td class="px-2">:</td>
                         <td>{{ now()->format('d/m/Y H:i') }}</td>
                     </tr>
+                    <tr>
+                        <td class="pr-4 py-1">Periode Data</td>
+                        <td class="px-2">:</td>
+                        <td>
+                            @if($formattedMutations->count() > 0)
+                                {{ $formattedMutations->first()->date->format('d/m/Y') }} s/d {{ $formattedMutations->last()->date->format('d/m/Y') }}
+                            @else
+                                -
+                            @endif
+                        </td>
+                    </tr>
                 </table>
             </div>
             <div class="text-right">
