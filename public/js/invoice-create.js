@@ -22,9 +22,10 @@ window.recalcTotals = function () {
     const displayNetPayable = document.getElementById('display_net_payable');
 
     const subtotal = parseFloat(subtotalHidden?.value || '0') || 0;
-    let tax = parseFloat(taxInput?.value || '0') || 0;
-    const discount = parseFloat(discountInput?.value || '0') || 0;
-    const pph23 = parseFloat(pph23Input?.value || '0') || 0;
+    // Parse Indonesian format: remove dots (thousand sep), replace comma with dot (decimal)
+    let tax = parseFloat((taxInput?.value || '0').replace(/\./g, '').replace(',', '.')) || 0;
+    const discount = parseFloat((discountInput?.value || '0').replace(/\./g, '').replace(',', '.')) || 0;
+    const pph23 = parseFloat((pph23Input?.value || '0').replace(/\./g, '').replace(',', '.')) || 0;
 
     console.log(`Values: Subtotal=${subtotal}, Tax=${tax}, Discount=${discount}, PPh23=${pph23}`);
 
@@ -121,7 +122,7 @@ window.recalcPpn = function () {
 
         // Only update tax input if it exists
         if (taxInput) {
-            taxInput.value = tax.toFixed(2);
+            taxInput.value = tax.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
         console.log('Calculated Tax:', tax);
 
@@ -761,6 +762,21 @@ document.addEventListener('DOMContentLoaded', function () {
     // Clear saved data on successful form submission
     if (invoiceForm) {
         invoiceForm.addEventListener('submit', function () {
+            // Convert formatted values back to raw numbers for backend
+            const taxInput = document.getElementById('tax_amount_input');
+            const discountInput = document.getElementById('discount_amount_input');
+            const pph23Input = document.getElementById('pph23_amount_input');
+
+            // Helper function to convert Indonesian format to raw number
+            const toRawNumber = (value) => {
+                if (!value) return '0';
+                return value.replace(/\./g, '').replace(',', '.');
+            };
+
+            if (taxInput) taxInput.value = toRawNumber(taxInput.value);
+            if (discountInput) discountInput.value = toRawNumber(discountInput.value);
+            if (pph23Input) pph23Input.value = toRawNumber(pph23Input.value);
+
             // Clear after a short delay to ensure form is submitted
             setTimeout(clearSavedFormData, 100);
         });
