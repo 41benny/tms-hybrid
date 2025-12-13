@@ -57,72 +57,98 @@ class DriverSavingsController extends Controller
             ->with(['journal', 'jobOrder', 'account'])
             ->where('driver_id', $driver->id)
             ->whereHas('account', fn($a) => $a->whereIn('code', [$savingsCode, $guaranteeCode]))
-            ->orderBy('journal_id', 'asc') // Order by insertion sequence usually correlates with time
+            ->orderBy('journal_id', 'asc')
             ->get();
-            
+        
+        // Group by journal_id to combine savings + guarantee in one row
+        $groupedByJournal = $mutations->groupBy('journal_id');
+        
         // Calculate running balances
         $savingsBalance = 0;
         $guaranteeBalance = 0;
         
-        $formattedMutations = $mutations->map(function($line) use (&$savingsBalance, &$guaranteeBalance, $savingsCode, $guaranteeCode) {
-            $credit = (float) $line->credit; // In
-            $debit = (float) $line->debit;   // Out
-            $balanceChange = $credit - $debit;
-            
-            $isSavings = $line->account->code == $savingsCode;
-            
-            // Mutation values for display
+        $formattedMutations = collect();
+        
+        foreach ($groupedByJournal as $journalId => $lines) {
+            // Calculate savings and guarantee amounts for this journal
             $savingsIn = 0; $savingsOut = 0;
             $guaranteeIn = 0; $guaranteeOut = 0;
             
-            if ($isSavings) {
-                $savingsBalance += $balanceChange;
-                if ($balanceChange >= 0) $savingsIn = $balanceChange;
-                else $savingsOut = abs($balanceChange);
-            } else {
-                $guaranteeBalance += $balanceChange;
-                 if ($balanceChange >= 0) $guaranteeIn = $balanceChange;
-                else $guaranteeOut = abs($balanceChange);
+            $firstLine = $lines->first();
+            $journal = $firstLine->journal;
+            $jobOrder = $firstLine->jobOrder;
+            
+            foreach ($lines as $line) {
+                $credit = (float) $line->credit;
+                $debit = (float) $line->debit;
+                $balanceChange = $credit - $debit;
+                
+                if ($line->account->code == $savingsCode) {
+                    $savingsBalance += $balanceChange;
+                    if ($balanceChange >= 0) $savingsIn += $balanceChange;
+                    else $savingsOut += abs($balanceChange);
+                } else {
+                    $guaranteeBalance += $balanceChange;
+                    if ($balanceChange >= 0) $guaranteeIn += $balanceChange;
+                    else $guaranteeOut += abs($balanceChange);
+                }
             }
             
-            // Try to extract Trip Info
-            // Priority: JournalLine JO -> Journal Desc -> Manual parsing
+            // Extract trip info
             $tripDate = null;
-            $route = '-';
+            $routeInfo = null;
             $nopol = '-';
             $joNumber = '-';
+            $voucherNo = $journal->memo; // Default memo (usually holds voucher no or desc)
             
-            if ($line->jobOrder) {
-                $jo = $line->jobOrder;
-                $tripDate = $jo->shipmentLegs()->first()?->schedule_date ?? $line->journal->journal_date;
-                $route = ($jo->origin ?? '?') . ' - ' . ($jo->destination ?? '?');
-                $nopol = $jo->shipmentLegs()->first()?->truck?->plate_number ?? '-';
-                $joNumber = $jo->job_number;
-            } elseif ($line->journal->source_type === 'driver_withdrawal') {
-                $route = 'Pencairan Tabungan';
-                $joNumber = $line->journal->memo;
+            if ($jobOrder) {
+                $driverLeg = $jobOrder->shipmentLegs()->where('driver_id', $driver->id)->first();
+                // Use Schedule Date as main date, fallback to Journal Date
+                $tripDate = $driverLeg?->schedule_date ?? $journal->journal_date;
+                $routeInfo = ($jobOrder->origin ?? '?') . ' - ' . ($jobOrder->destination ?? '?');
+                $nopol = $driverLeg?->truck?->plate_number ?? '-';
+                $joNumber = $jobOrder->job_number;
+            } elseif ($journal->source_type === 'driver_withdrawal') {
+                $routeInfo = 'Penarikan Tabungan - ' . $journal->source_id; // Or use memo if it contains voucher no
+                // If memo contains meaningful info, prefer it. Usually source_id is just ID.
+                // Let's rely on memo or description.
+                // For cash_bank_transaction, the voucher number is generated.
+                // Let's assume journal memo has relevant info or we construct it.
+                // The user specifically asked for "no voucher kasbank".
+                // We might need to fetch the CashBankTransaction to get the real voucher number if memo is just generic.
+                if ($journal->source_type === 'driver_withdrawal' && $journal->source_id) {
+                     $cbTrx = \App\Models\Finance\CashBankTransaction::find($journal->source_id);
+                     if ($cbTrx) {
+                         $voucherNo = $cbTrx->transaction_number;
+                     }
+                }
+                $routeInfo = 'Penarikan Tabungan ' . $voucherNo;
+                $tripDate = $journal->journal_date;
+                $joNumber = '-';
             }
             
-            return (object) [
-                'date' => $line->journal->journal_date, // Posting Date
-                'trip_date' => $tripDate,
-                'description' => $line->description ?? $line->journal->memo,
-                'route' => $route,
+            // Description Column Content
+            // Request: "kolom rute juga isinya bisa replace isi di kolom keterangan"
+            $finalDescription = $routeInfo;
+            
+            $formattedMutations->push((object) [
+                'date' => $tripDate, // Use Trip Date as the main Display Date
+                'description' => $finalDescription,
                 'nopol' => $nopol,
                 'doc_ref' => $joNumber,
-                'job_order_id' => $line->job_order_id,
+                'job_order_id' => $firstLine->job_order_id,
                 
                 // Savings
-                'savings_in' => $savingsIn, // Credit
-                'savings_out' => $savingsOut, // Debit
+                'savings_in' => $savingsIn,
+                'savings_out' => $savingsOut,
                 'savings_balance' => $savingsBalance,
                 
                 // Guarantee
                 'guarantee_in' => $guaranteeIn,
                 'guarantee_out' => $guaranteeOut,
                 'guarantee_balance' => $guaranteeBalance,
-            ];
-        });
+            ]);
+        }
         
         // Final Totals for Summary Cards
         $totalSavings = $savingsBalance;

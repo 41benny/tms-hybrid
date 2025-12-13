@@ -38,8 +38,6 @@
                 <thead class="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-slate-700 dark:text-slate-400">
                     <tr>
                         <th rowspan="2" class="px-3 py-3 border-r dark:border-slate-600">Tanggal</th>
-                        <th rowspan="2" class="px-3 py-3 border-r dark:border-slate-600">Tgl Jalan</th>
-                        <th rowspan="2" class="px-3 py-3 border-r dark:border-slate-600">Rute</th>
                         <th rowspan="2" class="px-3 py-3 border-r dark:border-slate-600">Nopol</th>
                         <th rowspan="2" class="px-3 py-3 border-r dark:border-slate-600">No. Ref / JO</th>
                         <th rowspan="2" class="px-3 py-3 border-r dark:border-slate-600 w-1/4">Keterangan</th>
@@ -59,12 +57,10 @@
                 <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
                     @forelse($formattedMutations as $m)
                         <tr class="bg-white hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:hover:bg-slate-700 transition">
-                            <td class="px-3 py-2 whitespace-nowrap border-r dark:border-slate-600">{{ $m->date->format('d/m/Y') }}</td>
-                            <td class="px-3 py-2 whitespace-nowrap border-r dark:border-slate-600">{{ $m->trip_date ? $m->trip_date->format('d/m/Y') : '-' }}</td>
-                            <td class="px-3 py-2 border-r dark:border-slate-600 max-w-[150px] truncate">{{ Str::limit($m->route, 20) }}</td>
+                            <td class="px-3 py-2 whitespace-nowrap border-r dark:border-slate-600">{{ $m->date ? $m->date->format('d/m/Y') : '-' }}</td>
                             <td class="px-3 py-2 whitespace-nowrap border-r dark:border-slate-600">{{ $m->nopol }}</td>
                             <td class="px-3 py-2 whitespace-nowrap border-r dark:border-slate-600">{{ $m->doc_ref }}</td>
-                            <td class="px-3 py-2 border-r dark:border-slate-600 max-w-[200px] truncate">{{ Str::limit($m->description, 35) }}</td>
+                            <td class="px-3 py-2 border-r dark:border-slate-600 max-w-[200px] truncate">{{ Str::limit($m->description, 50) }}</td>
                             
                             {{-- Savings --}}
                             <td class="px-3 py-2 text-right border-r dark:border-slate-600 bg-blue-50/50 dark:bg-blue-900/10">
@@ -132,9 +128,10 @@
     <table class="w-full text-[10px] border-collapse border border-slate-900">
         <thead>
             <tr class="bg-gray-200">
-                <th rowspan="2" class="border border-slate-900 px-1 py-1 w-16 text-center">Tgl</th>
-                <th rowspan="2" class="border border-slate-900 px-1 py-1 w-24">No Ref</th>
-                <th rowspan="2" class="border border-slate-900 px-1 py-1">Keterangan / Rute</th>
+                <th rowspan="2" class="border border-slate-900 px-1 py-1 w-16 text-center">Tanggal</th>
+                <th rowspan="2" class="border border-slate-900 px-1 py-1 w-20">Nopol</th>
+                <th rowspan="2" class="border border-slate-900 px-1 py-1 w-24">No Ref / JO</th>
+                <th rowspan="2" class="border border-slate-900 px-1 py-1">Keterangan</th>
                 <th colspan="3" class="border border-slate-900 px-1 py-1 text-center bg-gray-300">Tabungan</th>
                 <th colspan="3" class="border border-slate-900 px-1 py-1 text-center bg-gray-300">Jaminan</th>
             </tr>
@@ -150,11 +147,11 @@
         <tbody>
             @foreach($formattedMutations as $m)
                 <tr>
-                    <td class="border border-slate-900 px-1 py-1 text-center font-mono">{{ $m->date->format('d/m/y') }}</td>
+                    <td class="border border-slate-900 px-1 py-1 text-center font-mono">{{ $m->date ? $m->date->format('d/m/y') : '-' }}</td>
+                    <td class="border border-slate-900 px-1 py-1 font-mono text-[9px]">{{ $m->nopol }}</td>
                     <td class="border border-slate-900 px-1 py-1 font-mono text-[9px]">{{ $m->doc_ref }}</td>
                     <td class="border border-slate-900 px-1 py-1">
-                        <div class="font-bold">{{ $m->route }}</div>
-                        <div class="text-[9px] text-slate-600 italic">{{ Str::limit($m->description, 40) }}</div>
+                        <div class="text-[10px]">{{ Str::limit($m->description, 50) }}</div>
                     </td>
                     
                     {{-- Tabungan --}}
