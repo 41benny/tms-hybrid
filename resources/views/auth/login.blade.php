@@ -286,7 +286,7 @@
           <div class="login-card p-6 sm:p-8">
             <div class="text-center">
               <div class="text-3xl font-semibold tracking-tight text-slate-900">
-                Vintama Logic
+                Welcome
               </div>
               <div class="mt-1 text-sm text-slate-500">
                 Enterprise Logistics & Accounting
