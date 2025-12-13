@@ -241,7 +241,7 @@
       <section class="hidden lg:block animate-entry">
         <div class="max-w-xl">
           <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 caption text-xs">
-            Urban Skyline Night • Enterprise Theme
+            Heavy Equipment and Transportation Service
           </div>
 
           <h1 class="mt-5 text-5xl font-semibold tracking-tight text-white">
