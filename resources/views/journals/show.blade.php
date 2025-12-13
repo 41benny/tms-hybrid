@@ -19,7 +19,7 @@
                             Edit
                         </x-button>
                     @endif
-                    <x-button :href="route('journals.index')" variant="ghost" size="sm">
+                    <x-button :href="url()->previous()" variant="ghost" size="sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>

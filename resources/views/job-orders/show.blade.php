@@ -10,7 +10,7 @@
         <x-slot:header>
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div class="flex items-center gap-3 jo-header-actions">
-                    <x-button :href="route('job-orders.index')" variant="ghost" size="sm" class="jo-action-btn jo-action-back">
+                    <x-button :href="url()->previous()" variant="ghost" size="sm" class="jo-action-btn jo-action-back">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>

@@ -4,7 +4,7 @@
 <div class="max-w-5xl mx-auto space-y-6">
     {{-- Header --}}
     <div class="flex items-center gap-3">
-        <x-button :href="route('driver-advances.index')" variant="ghost" size="sm">
+        <x-button :href="url()->previous()" variant="ghost" size="sm">
             ← Back
         </x-button>
         <div>
