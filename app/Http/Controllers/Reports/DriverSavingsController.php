@@ -106,9 +106,11 @@ class DriverSavingsController extends Controller
                 // Use Schedule Date as main date, fallback to Journal Date
                 $tripDate = $driverLeg?->schedule_date ?? $journal->journal_date;
                 
-                // Get truck name for description
-                $truckName = $driverLeg?->truck?->name ?? 'Unit N/A';
-                $nopol = $driverLeg?->truck?->plate_number ?? '-';
+                // Get truck name for description - use vehicle_type + plate_number
+                $truck = $driverLeg?->truck;
+                $truckName = $truck ? ($truck->vehicle_type ?? 'Unit') . ' ' . ($truck->plate_number ?? '') : 'Unit N/A';
+                $truckName = trim($truckName);
+                $nopol = $truck?->plate_number ?? '-';
                 
                 // Format: [Truck Name] - Origin - Destination
                 $routeInfo = $truckName . ' - ' . ($jobOrder->origin ?? '?') . ' - ' . ($jobOrder->destination ?? '?');
