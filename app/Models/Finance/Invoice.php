@@ -298,6 +298,11 @@ class Invoice extends Model
     
     public function isAccountingPeriodClosed(): bool
     {
+        // If invoice_date is null, period is not closed
+        if (!$this->invoice_date) {
+            return false;
+        }
+        
         // Check if accounting period for this invoice date is closed
         $period = \App\Models\Accounting\AccountingPeriod::where('year', $this->invoice_date->year)
             ->where('month', $this->invoice_date->month)
