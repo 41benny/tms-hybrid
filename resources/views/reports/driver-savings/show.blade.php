@@ -205,21 +205,34 @@
         @page { size: A4 landscape; margin: 10mm; }
         body { 
             background: white !important; 
-            font-family: 'Courier New', Courier, monospace; 
-            color: #000000 !important; 
+            font-family: Arial, sans-serif !important;
+            color: #000 !important; 
+            font-weight: 600 !important;
         }
         .screen-only, nav, header, aside, .no-print { display: none !important; }
-        .print-only { display: block !important; }
+        .print-only { 
+            display: block !important; 
+            color: #000 !important;
+        }
+        .print-only * {
+            color: #000 !important;
+            font-weight: 600 !important;
+        }
         .print-only table { 
             width: 100%; 
             border-collapse: collapse; 
             background: white !important;
+            color: #000 !important;
         }
         .print-only th, .print-only td, .print-only tr { 
             border: 1px solid #000 !important; 
-            color: #000000 !important; 
+            color: #000 !important; 
             background: white !important;
             background-color: white !important;
+            font-weight: 600 !important;
+        }
+        .print-only th {
+            font-weight: 700 !important;
         }
         /* Force white background on gray utility classes */
         .print-only .bg-gray-200,
@@ -228,6 +241,11 @@
         .print-only .bg-gray-50 {
             background: white !important;
             background-color: white !important;
+        }
+        /* Make all text elements bold and black */
+        .print-only p, .print-only div, .print-only span {
+            color: #000 !important;
+            font-weight: 600 !important;
         }
         tr { page-break-inside: avoid; }
     }
