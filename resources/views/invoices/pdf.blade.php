@@ -165,10 +165,12 @@
                     <td class="text-sm">Subtotal</td>
                     <td class="text-right text-sm">{{ number_format($subtotal, 2, ',', '.') }}</td>
                 </tr>
+                @if($tax > 0)
                 <tr>
                     <td class="text-sm">PPN</td>
                     <td class="text-right text-sm">{{ number_format($tax, 2, ',', '.') }}</td>
                 </tr>
+                @endif
                 @if($discount > 0)
                 <tr>
                     <td class="text-sm">Diskon</td>
@@ -238,7 +240,8 @@
         <!-- Wet Signature Section (Right) -->
         <div class="text-right text-sm" style="width: 40%;">
             <div class="mb-6">Hormat kami,</div>
-            <div style="margin-top:48px;border-top:1px solid #d0d7de;padding-top:4px;">(________________________)</div>
+            <!-- Space for materai/stamp -->
+            <div style="margin-top:80px;border-top:1px solid #d0d7de;padding-top:4px;">(________________________)</div>
         </div>
     </div>
 

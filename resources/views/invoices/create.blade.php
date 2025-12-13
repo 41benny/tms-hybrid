@@ -183,18 +183,18 @@
                         <label class="block text-sm text-slate-700 dark:text-slate-300 mb-1">
                             Tipe Transaksi (PPN)
                         </label>
-                        <select id="transaction_type_select" name="transaction_type" class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                        <select id="transaction_type_select" name="transaction_type" class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" onchange="if(typeof window.recalcPpn === 'function') window.recalcPpn();">
                             <option value="04" {{ old('transaction_type', '04') == '04' ? 'selected' : '' }}>04 - DPP Nilai Lain (11%)</option>
                             <option value="05" {{ old('transaction_type') == '05' ? 'selected' : '' }}>05 - Besaran Tertentu (1.1%)</option>
                             <option value="08" {{ old('transaction_type') == '08' ? 'selected' : '' }}>08 - Dibebaskan (0%)</option>
-                            <option value="01" {{ old('transaction_type') == '01' ? 'selected' : '' }}>01 - Kepada Pihak Lain Bukan Pemungut PPN</option>
-                            <option value="02" {{ old('transaction_type') == '02' ? 'selected' : '' }}>02 - Kepada Pemungut Bendaharawan</option>
-                            <option value="03" {{ old('transaction_type') == '03' ? 'selected' : '' }}>03 - Kepada Pemungut Selain Bendaharawan</option>
-                            <option value="06" {{ old('transaction_type') == '06' ? 'selected' : '' }}>06 - Penyerahan Lainnya</option>
-                            <option value="07" {{ old('transaction_type') == '07' ? 'selected' : '' }}>07 - Tidak Dipungut</option>
-                            <option value="09" {{ old('transaction_type') == '09' ? 'selected' : '' }}>09 - Aktiva Pasal 16D</option>
+                            <option value="01" {{ old('transaction_type') == '01' ? 'selected' : '' }}>01 - Kepada Pihak Lain Bukan Pemungut PPN (11%)</option>
+                            <option value="02" {{ old('transaction_type') == '02' ? 'selected' : '' }}>02 - Kepada Pemungut Bendaharawan (11%)</option>
+                            <option value="03" {{ old('transaction_type') == '03' ? 'selected' : '' }}>03 - Kepada Pemungut Selain Bendaharawan (11%)</option>
+                            <option value="06" {{ old('transaction_type') == '06' ? 'selected' : '' }}>06 - Penyerahan Lainnya (11%)</option>
+                            <option value="07" {{ old('transaction_type') == '07' ? 'selected' : '' }}>07 - Tidak Dipungut (0%)</option>
+                            <option value="09" {{ old('transaction_type') == '09' ? 'selected' : '' }}>09 - Aktiva Pasal 16D (11%)</option>
                         </select>
-                        <p class="text-xs text-slate-500 mt-1">Pilih tipe PPN untuk hitung otomatis.</p>
+                        <p class="text-xs text-slate-500 mt-1">PPN akan otomatis dihitung berdasarkan tipe transaksi: 05 (1.1%), 07/08 (0%), lainnya (11%).</p>
                     </div>
                 </div>
             </div>
