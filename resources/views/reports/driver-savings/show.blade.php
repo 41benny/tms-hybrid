@@ -207,20 +207,27 @@
             background: white !important; 
             font-family: 'Courier New', Courier, monospace; 
             color: #000000 !important; 
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
         }
         .screen-only, nav, header, aside, .no-print { display: none !important; }
         .print-only { display: block !important; }
-        .print-only table { width: 100%; border-collapse: collapse; }
-        .print-only th, .print-only td { 
+        .print-only table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            background: white !important;
+        }
+        .print-only th, .print-only td, .print-only tr { 
             border: 1px solid #000 !important; 
             color: #000000 !important; 
-            text-shadow: none !important;
+            background: white !important;
+            background-color: white !important;
         }
-        /* Make all text in print view black explicitly */
-        .print-only * {
-            color: #000000 !important;
+        /* Force white background on gray utility classes */
+        .print-only .bg-gray-200,
+        .print-only .bg-gray-300,
+        .print-only .bg-gray-100,
+        .print-only .bg-gray-50 {
+            background: white !important;
+            background-color: white !important;
         }
         tr { page-break-inside: avoid; }
     }
