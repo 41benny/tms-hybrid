@@ -216,6 +216,9 @@
                                     <div class="font-medium">{{ $it->description }}</div>
                                     @if($it->shipmentLeg)
                                         <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                            @if($it->shipmentLeg->equipment)
+                                                Unit: {{ $it->shipmentLeg->equipment->name }} •
+                                            @endif
                                             Leg: {{ $it->shipmentLeg->leg_code }}
                                         </div>
                                     @endif

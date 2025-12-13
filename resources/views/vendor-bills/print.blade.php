@@ -425,6 +425,9 @@
                                 <div>{{ $it->description }}</div>
                                 @if($it->shipmentLeg)
                                     <div style="font-size:11px; color:var(--muted); margin-top:2px;">
+                                        @if($it->shipmentLeg->equipment)
+                                            Unit: {{ $it->shipmentLeg->equipment->name }} •
+                                        @endif
                                         Leg: {{ $it->shipmentLeg->leg_code }}
                                         @if($it->shipmentLeg->jobOrder)
                                             • Job: {{ $it->shipmentLeg->jobOrder->job_number }}
