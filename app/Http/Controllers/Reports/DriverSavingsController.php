@@ -106,14 +106,19 @@ class DriverSavingsController extends Controller
                 // Use Schedule Date as main date, fallback to Journal Date
                 $tripDate = $driverLeg?->schedule_date ?? $journal->journal_date;
                 
-                // Get truck name for description - use vehicle_type + plate_number
-                $truck = $driverLeg?->truck;
-                $truckName = $truck ? ($truck->vehicle_type ?? 'Unit') . ' ' . ($truck->plate_number ?? '') : 'Unit N/A';
-                $truckName = trim($truckName);
-                $nopol = $truck?->plate_number ?? '-';
+                // Get cargo/equipment names (unit yang dimuat)
+                $equipmentNames = $jobOrder->items()
+                    ->with('equipment')
+                    ->get()
+                    ->pluck('equipment.name')
+                    ->filter()
+                    ->implode(', ');
                 
-                // Format: [Truck Name] - Origin - Destination
-                $routeInfo = $truckName . ' - ' . ($jobOrder->origin ?? '?') . ' - ' . ($jobOrder->destination ?? '?');
+                $cargoInfo = $equipmentNames ?: 'Muatan N/A';
+                $nopol = $driverLeg?->truck?->plate_number ?? '-';
+                
+                // Format: [Cargo/Equipment] - Origin - Destination
+                $routeInfo = $cargoInfo . ' - ' . ($jobOrder->origin ?? '?') . ' - ' . ($jobOrder->destination ?? '?');
                 $joNumber = $jobOrder->job_number;
             } elseif ($journal->source_type === 'driver_withdrawal') {
                 // For withdrawal, get the voucher number
