@@ -143,7 +143,8 @@
                         </div>
                     </th>
                     <th class="px-3 py-3" style="width: 180px">Customer</th>
-                    <th class="px-3 py-3" style="width: 120px">Cargo Unit</th>
+                    <th class="px-3 py-3" style="width: 140px">Cargo Unit</th>
+                    <th class="px-3 py-3" style="width: 50px">Qty</th>
                     <th class="px-3 py-3" style="width: 100px">Sales</th>
                     <th class="px-3 py-3" style="width: 50px">Legs</th>
                     <th class="px-3 py-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" style="width: 90px" onclick="sortTable('status')">
@@ -209,6 +210,9 @@
                         <input type="text" name="cargo_unit" value="{{ request('cargo_unit') }}" placeholder="Cari..." class="w-full px-2 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onkeypress="if(event.keyCode==13){this.form.submit()}">
                     </th>
                     <th class="px-1 py-1">
+                        {{-- Qty: no filter --}}
+                    </th>
+                    <th class="px-1 py-1">
                         <select name="sales_id" class="w-full px-1 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" onchange="this.form.submit()">
                             <option value="">All</option>
                             @foreach($salesList as $s)
@@ -255,16 +259,29 @@
                             <div class="truncate max-w-[160px]" title="{{ $order->customer->name }}">{{ $order->customer->name }}</div>
                         </td>
                         <td class="px-3 py-3">
+                            @php
+                                $allEquipmentNames = $order->items->map(function($item) {
+                                    return $item->equipment?->name ?? $item->cargo_type;
+                                })->filter()->implode(', ');
+                                $displayNames = $order->items->take(2)->map(function($item) {
+                                    return $item->equipment?->name ?? $item->cargo_type;
+                                })->filter()->implode(', ');
+                            @endphp
                             @if($order->items->count() > 0)
-                                <div class="text-slate-600 dark:text-slate-400 truncate max-w-[100px]">
-                                    @foreach($order->items->take(2) as $index => $item)
-                                        @if($index > 0), @endif
-                                        {{ $item->equipment?->name ?? $item->cargo_type }}
-                                    @endforeach
+                                <div class="text-slate-600 dark:text-slate-400 truncate max-w-[120px] cursor-help" 
+                                     title="{{ $allEquipmentNames }}">
+                                    {{ $displayNames }}
                                     @if($order->items->count() > 2)
                                         <span class="text-[10px] text-slate-500">+{{ $order->items->count() - 2 }}</span>
                                     @endif
                                 </div>
+                            @else
+                                <span class="text-slate-400">-</span>
+                            @endif
+                        </td>
+                        <td class="px-3 py-3 text-center">
+                            @if($order->items->count() > 0)
+                                <span class="text-slate-600 dark:text-slate-400">{{ number_format($order->items->sum('quantity'), 0) }}</span>
                             @else
                                 <span class="text-slate-400">-</span>
                             @endif
